@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# Copyright 2010 Johannes Dewender ( brainz at JonnyJD.net ) 
+#!/usr/bin/env python2
+# Copyright 2010-2012 Johannes Dewender ( brainz at JonnyJD.net ) 
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #
 # This is a tool to submit ISRCs from a disc to MusicBrainz.
 # icedax is used to gather the ISRCs and python-musicbrainz2 to submit them.
-# Version 0.2.4 from September 15th 2010
+# Version 0.2.5
 #
 # usage: ./isrcsubmit.py [-d] username [device]
 
