@@ -72,6 +72,11 @@ def askForOffset():
     num = raw_input("[0-%d] " % (releaseTrackCount - discTrackCount))
     trackOffset = int(num)
 
+def printError(*args):
+    stringArgs = tuple(map(str, args))
+    msg = " ".join(("ERROR:",) + stringArgs)
+    sys.stderr.write(msg + "\n")
+
 print "isrcsubmit using icedax for Linux, version", isrcsubmitVersion
 
 # gather arguments
@@ -101,7 +106,7 @@ try:
     # get disc ID
     disc = readDisc(deviceName=device)
 except DiscError, e:
-    print "DiscID calculation failed:", str(e)
+    printError("DiscID calculation failed:", str(e))
     sys.exit(1)
 
 discId = disc.getId()
@@ -124,10 +129,10 @@ filter = ReleaseFilter(discId=discId)
 try:
     results = q.getReleases(filter=filter)
 except ConnectionError, e:
-    print "Couldn't connect to the Server:", str(e)
+    printError("Couldn't connect to the Server:", str(e))
     sys.exit(1)
 except WebServiceError, e:
-    print "Couldn't fetch release:", str(e)
+    printError("Couldn't fetch release:", str(e))
     sys.exit(1)
 if len(results) == 0:
     print "This Disc ID is not in the Database."
@@ -137,8 +142,8 @@ if len(results) == 0:
         try:
             os.execlp('firefox', 'firefox', url)
         except OSError, e:
-            print "Couldn't open the url in firefox:", str(e)
-            print "Please submit it via:", url
+            printError("Couldn't open the url in firefox:", str(e))
+            printError("Please submit it via:", url)
             sys.exit(1)
     else:
         print "Please submit the Disc ID it with this url:"
@@ -162,10 +167,10 @@ include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = q.getReleaseById(result.getRelease().getId(), include=include)
 except ConnectionError, e:
-    print "Couldn't connect to the Server:", str(e)
+    printError("Couldn't connect to the Server:", str(e))
     sys.exit(1)
 except WebServiceError, e:
-    print "Couldn't fetch release:", str(e)
+    printError("Couldn't fetch release:", str(e))
     sys.exit(1)
 
 tracks = release.getTracks()
@@ -218,7 +223,7 @@ try:
     p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
     isrcout = p2.communicate()[0]
 except:
-    print "Couldn't gather ISRCs with icedax and grep!"
+    printError("Couldn't gather ISRCs with icedax and grep!")
     sys.exit(1)
 
 tracks2isrcs =dict()
@@ -242,8 +247,7 @@ for line in isrcout.splitlines():
                 else:
                     print isrc, "is already attached to track", trackNumber
             except IndexError, e:
-                print "ISRC", isrc, "fuer unbekannten Track ",
-                print trackNumber, "gefunden!"
+                printError("ISRC", isrc, "found for unknown track", trackNumber)
 
 print
 if len(tracks2isrcs) == 0:
@@ -254,11 +258,11 @@ else:
             q.submitISRCs(tracks2isrcs)
             print "Successfully submitted", len(tracks2isrcs), "ISRCs."
         except RequestError, e:
-            print "Invalid Request:", str(e)
+            printError("Invalid Request:", str(e))
         except AuthenticationError, e:
-            print "Invalid Credentials:", str(e)
+            printError("Invalid Credentials:", str(e))
         except WebServiceError, e:
-            print "Couldn't send ISRCs:", str(e)
+            printError("Couldn't send ISRCs:", str(e))
     else:
         print "Nothing was submitted to the server."
 
