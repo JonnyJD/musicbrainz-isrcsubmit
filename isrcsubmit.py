@@ -23,12 +23,15 @@ http://kraehen.org/isrcsubmit.py
 """
 
 isrcsubmitVersion = "0.2.5"
+agentName="isrcsubmit-jonnyjd-" + isrcsubmitVersion
 
 import getpass
 import sys
 import os
 import re
 from subprocess import Popen, PIPE
+from distutils.version import StrictVersion
+from musicbrainz2 import __version__ as musicbrainz2_version
 from musicbrainz2.disc import readDisc, DiscError, getSubmissionUrl
 from musicbrainz2.webservice import WebService, Query
 from musicbrainz2.webservice import ReleaseFilter, ReleaseIncludes
@@ -77,7 +80,27 @@ def printError(*args):
     msg = " ".join(("ERROR:",) + stringArgs)
     sys.stderr.write(msg + "\n")
 
-print "isrcsubmit using icedax for Linux, version", isrcsubmitVersion
+print "isrcsubmit", isrcsubmitVersion, "by JonnyJD"
+print "using python-musicbrainz2", musicbrainz2_version, "and icedax"
+
+# print warnings/errors if python-musicbrainz2 is outdated
+if StrictVersion(musicbrainz2_version) < "0.7.0":
+    printError("Your version of python-musicbrainz2 is outdated")
+    printError("You WILL NOT be able to even check ISRCs")
+    printError("Please use AT LEAST python-musicbrainz2 0.7.0")
+    sys.exit(-1) # the script can't do anything useful
+if StrictVersion(musicbrainz2_version) < "0.7.3":
+    printError("Cannot use AUTH DIGEST")
+    printError("You WILL NOT be able to submit ISRCs -> check-only")
+    printError("Please use python-musicbrainz2 0.7.3 or higher")
+    # do not exit, check-only is what happens most of the times anyways
+# We print two warnings for clients between 0.7.0 and 0.7.3,
+# because 0.7.4 is important. (-> no elif)
+if StrictVersion(musicbrainz2_version) < "0.7.4":
+    print "WARNING: Cannot set userAgent"
+    print "WARNING: You WILL have random connection problems due to throttling"
+    print "WARNING: Please use python-musicbrainz2 0.7.4 or higher"
+    print
 
 # gather arguments
 if len(sys.argv) < 2 or len(sys.argv) > 4:
@@ -121,8 +144,17 @@ password = getpass.getpass('Password: ')
 print
 
 # connect to the server
-service = WebService(username=username, password=password)
-q = Query(service)
+if StrictVersion(musicbrainz2_version) >= "0.7.4":
+    # There is a warning printed above, when < 0.7.4
+    service = WebService(username=username, password=password,
+            userAgent=agentName)
+else:
+    # standard userAgent: python-musicbrainz/__version__
+    service = WebService(username=username, password=password)
+
+# This clientId is currently only used for submitPUIDs and submitCDStub
+# which we both don't do directly.
+q = Query(service, clientId=agentName)
 
 # searching for release
 filter = ReleaseFilter(discId=discId)
