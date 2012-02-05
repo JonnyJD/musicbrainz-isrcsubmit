@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# Copyright 2010-2012 Johannes Dewender ( brainz at JonnyJD.net ) 
+# Copyright 2010-2012 Johannes Dewender
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,13 +13,16 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-#
-# This is a tool to submit ISRCs from a disc to MusicBrainz.
-# icedax is used to gather the ISRCs and python-musicbrainz2 to submit them.
-# Version 0.2.5
-#
-# usage: ./isrcsubmit.py [-d] username [device]
+"""This is a tool to submit ISRCs from a disc to MusicBrainz.
+
+Icedax is used to gather the ISRCs and python-musicbrainz2 to submit them.
+The project is hosted on
+https://github.com/JonnyJD/musicbrainz-isrcsubmit
+and the script is als available on
+http://kraehen.org/isrcsubmit.py
+"""
+
+isrcsubmitVersion = "0.2.5"
 
 import getpass
 import sys
@@ -59,7 +62,9 @@ Example:
 
 The offset we have to use is 30 (= 13 + 17)
 
-isrcsubmit only knows how many tracks the current disc has and the total number of tracks on the release given by the webservice. So the offset must be between 0 and 53 (= 72 - 19), which is the range isrcsubmit lets you choose from."""
+isrcsubmit only knows how many tracks the current disc has and the total number of tracks on the release given by the webservice. So the offset must be between 0 and 53 (= 72 - 19), which is the range isrcsubmit lets you choose from.
+
+Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit"""
 
 def askForOffset():
     print "Cannot guess the track offset."
@@ -67,7 +72,8 @@ def askForOffset():
     num = raw_input("[0-%d] " % (releaseTrackCount - discTrackCount))
     trackOffset = int(num)
 
-print "isrcsubmit using icedax for Linux, version 0.2.4"
+print "isrcsubmit using icedax for Linux, version", isrcsubmitVersion
+
 # gather arguments
 if len(sys.argv) < 2 or len(sys.argv) > 4:
     print_usage()
