@@ -32,13 +32,40 @@ from musicbrainz2.webservice import ReleaseFilter, ReleaseIncludes
 from musicbrainz2.webservice import RequestError, AuthenticationError
 from musicbrainz2.webservice import ConnectionError, WebServiceError
 
+scriptname = os.path.basename(sys.argv[0])
+
 def print_usage():
     print
-    print "usage:", os.path.basename(sys.argv[0]), "[-d] username [device]"
+    print "usage:", scriptname, "[-d] username [device]"
     print
     print " -d, --debug\tenable debug messages"
-    print " -h, --help\tprint this usage info"
+    print " -h, --help\tprint usage and multi-disc information"
     print
+
+multidisc_info = \
+"""A note on Multi-disc-releases:
+
+isrcsubmit uses the MB webservice version 1.
+This api is not tailored for MB NGS and expects to have one release per disc. So it does not know which tracks are on a specific disc and lists all tracks in the overall release.
+In order to attach the ISRCs to the correct tracks an offset is necessary for multi-disc-releases. For the first disc and last disc this can be guessed easily. Starting with 3 discs irscsubmit will ask you for the offset of the "middle discs".
+The offset is the sum of track counts on all previous discs.
+
+Example:
+    disc 1: (13 tracks)
+    disc 2: (17 tracks)
+    disc 3:  19 tracks (current disc)
+    disc 4: (23 tracks)
+    number of tracks altogether: 72
+
+The offset we have to use is 30 (= 13 + 17)
+
+isrcsubmit only knows how many tracks the current disc has and the total number of tracks on the release given by the webservice. So the offset must be between 0 and 53 (= 72 - 19), which is the range isrcsubmit lets you choose from."""
+
+def askForOffset():
+    print "Cannot guess the track offset."
+    print "How many tracks are on the previous discs altogether?"
+    num = raw_input("[0-%d] " % (releaseTrackCount - discTrackCount))
+    trackOffset = int(num)
 
 print "isrcsubmit using icedax for Linux, version 0.2.4"
 # gather arguments
@@ -56,27 +83,38 @@ else:
             debug = True
         elif arg == "-h" or arg == "--help":
             print_usage()
+            print
+            print multidisc_info
             sys.exit(0)
         elif username == None:
             username = arg
         else:
             device = arg
 
-# get disc ID
 try:
+    # get disc ID
     disc = readDisc(deviceName=device)
 except DiscError, e:
     print "DiscID calculation failed:", str(e)
     sys.exit(1)
 
-print 'DiscID:\t\t', disc.id
+discId = disc.getId()
+discTrackCount = len(disc.getTracks())
+
+print 'DiscID:\t\t', discId
+print 'Tracks on Disc:\t', discTrackCount
+
+print
+print "Please input your Musicbrainz password"
 password = getpass.getpass('Password: ')
+print
 
 # connect to the server
 service = WebService(username=username, password=password)
 q = Query(service)
 
-filter = ReleaseFilter(discId=disc.id)
+# searching for release
+filter = ReleaseFilter(discId=discId)
 try:
     results = q.getReleases(filter=filter)
 except ConnectionError, e:
@@ -113,7 +151,8 @@ elif len(results) > 1:
 else:
     result = results[0]
 
-include = ReleaseIncludes(artist=True, tracks=True, isrcs=True)
+# getting release details
+include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = q.getReleaseById(result.getRelease().getId(), include=include)
 except ConnectionError, e:
@@ -122,10 +161,52 @@ except ConnectionError, e:
 except WebServiceError, e:
     print "Couldn't fetch release:", str(e)
     sys.exit(1)
+
+tracks = release.getTracks()
+releaseTrackCount = len(tracks)
+discs = release.getDiscs()
+discCount = len(discs)
 print 'Artist:\t\t', release.getArtist().getName()
 print 'Release:\t', release.getTitle()
-tracks = release.getTracks()
+if releaseTrackCount != discTrackCount:
+    print "Tracks in Release:", releaseTrackCount
 
+if discCount > 1:
+    # Handling of multiple discs in the release:
+    # We can only get the overall Release from MB
+    # and not the Medium itself.
+    # This changed with NGS. Before there was one release per disc.
+    print
+    print "WARNING: Multi-disc-release given by webservice."
+    print "See '" + scriptname, "-h' for help"
+    print "Discs in Release: ", discCount
+    for i in range(discCount):
+        print "\t", discs[i].getId(),
+        if discs[i].getId() == discId:
+            discNumber = i + 1
+            print "[THIS DISC]"
+        else:
+            print
+    print
+    print "This is disc", discNumber, "of", discCount
+    if discNumber == 1:
+        # the first disc never needs an offset
+        trackOffset = 0
+        print "Guessing track offset as", trackOffset
+    elif discNumber == discCount:
+        # It is easy to guess the offset when this is the last disc,
+        # because we have no unknown track counts after this.
+        trackOffset = releaseTrackCount - discTrackCount
+        print "Guessing track offset as", trackOffset
+    else:
+        # for "middle" discs we have unknown track numbers
+        # before and after -> the user has to tell us an offset to use
+        trackOffset = askForOffset()
+else:
+    trackOffset = 0
+
+# getting the ISRCs with icedax
+print
 try:
     p1 = Popen(['icedax', '-J', '-H', '-D', device], stderr=PIPE)
     p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
@@ -133,6 +214,7 @@ try:
 except:
     print "Couldn't gather ISRCs with icedax and grep!"
     sys.exit(1)
+
 tracks2isrcs =dict()
 pattern = 'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
 for line in isrcout.splitlines():
@@ -143,17 +225,19 @@ for line in isrcout.splitlines():
             if m == None:
                 print "can't find ISRC in:", text
                 continue
+            trackNumber = int(m.group(1))
             isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
             try:
-                track = tracks[int(m.group(1))-1]
+                track = tracks[trackNumber + trackOffset - 1]
                 if isrc not in (track.getISRCs()):
                     tracks2isrcs[track.getId()] = isrc
-                    print "found new ISRC for track", m.group(1) + ":", isrc
+                    print "found new ISRC for track",
+                    print str(trackNumber) + ":", isrc
                 else:
-                    print isrc, "is already attached to track", m.group(1)
+                    print isrc, "is already attached to track", trackNumber
             except IndexError, e:
-                num = int(m.group(1))
-                print "ISRC", isrc, "fuer unbekannten Track ", num, "gefunden!"
+                print "ISRC", isrc, "fuer unbekannten Track ",
+                print trackNumber, "gefunden!"
 
 print
 if len(tracks2isrcs) == 0:
