@@ -189,6 +189,12 @@ elif len(results) > 1:
         print str(i)+":", release.getArtist().getName(),
         print "-", release.getTitle(),
         print "(" + release.getTypes()[1].rpartition('#')[2] + ")"
+        events = release.getReleaseEvents()
+        for event in events:
+            country = (event.getCountry() or "").ljust(2)
+            date = (event.getDate() or "").ljust(10)
+            barcode = (event.getBarcode() or "").rjust(13)
+            print "\t", country, "\t", date, "\t", barcode
     num =  raw_input("Which one do you want? [0-%d] " % i)
     result = results[int(num)]
 else:
