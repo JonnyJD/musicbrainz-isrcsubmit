@@ -208,44 +208,62 @@ except WebServiceError, e:
 tracks = release.getTracks()
 releaseTrackCount = len(tracks)
 discs = release.getDiscs()
+# discCount is actually the count of DiscIDs
+# there can be multiple DiscIDs for a single disc
 discCount = len(discs)
 print 'Artist:\t\t', release.getArtist().getName()
 print 'Release:\t', release.getTitle()
 if releaseTrackCount != discTrackCount:
+    # a track count mismatch due to:
+    # a) multiple discs in the release
+    # b) multiple DiscIDs for a single disc
+    # c) a)+b)
+    # d) unknown (see CRITICAL below)
     print "Tracks in Release:", releaseTrackCount
-
-if discCount > 1:
-    # Handling of multiple discs in the release:
-    # We can only get the overall Release from MB
-    # and not the Medium itself.
-    # This changed with NGS. Before there was one release per disc.
-    print
-    print "WARNING: Multi-disc-release given by webservice."
-    print "See '" + scriptname, "-h' for help"
-    print "Discs in Release: ", discCount
-    for i in range(discCount):
-        print "\t", discs[i].getId(),
-        if discs[i].getId() == discId:
-            discNumber = i + 1
-            print "[THIS DISC]"
+    if discCount > 1:
+        # Handling of multiple discs in the release:
+        # We can only get the overall Release from MB
+        # and not the Medium itself.
+        # This changed with NGS. Before there was one release per disc.
+        print
+        print "WARNING: Multi-disc-release given by webservice."
+        print "See '" + scriptname, "-h' for help"
+        print "Discs in Release: ", discCount
+        for i in range(discCount):
+            print "\t", discs[i].getId(),
+            if discs[i].getId() == discId:
+                discNumber = i + 1
+                print "[THIS DISC]"
+            else:
+                print
+        print
+        print "This is disc", discNumber, "of", discCount
+        if discNumber == 1:
+            # the first disc never needs an offset
+            trackOffset = 0
+            print "Guessing track offset as", trackOffset
+        elif discNumber == discCount:
+            # It is easy to guess the offset when this is the last disc,
+            # because we have no unknown track counts after this.
+            trackOffset = releaseTrackCount - discTrackCount
+            print "Guessing track offset as", trackOffset
         else:
-            print
-    print
-    print "This is disc", discNumber, "of", discCount
-    if discNumber == 1:
-        # the first disc never needs an offset
-        trackOffset = 0
-        print "Guessing track offset as", trackOffset
-    elif discNumber == discCount:
-        # It is easy to guess the offset when this is the last disc,
-        # because we have no unknown track counts after this.
-        trackOffset = releaseTrackCount - discTrackCount
-        print "Guessing track offset as", trackOffset
+            # for "middle" discs we have unknown track numbers
+            # before and after -> the user has to tell us an offset to use
+            trackOffset = askForOffset()
     else:
-        # for "middle" discs we have unknown track numbers
-        # before and after -> the user has to tell us an offset to use
-        trackOffset = askForOffset()
+        # This is actually a weird case
+        # Having only 1 disc, but not matching trackCounts
+        # Possibly some data/video track,
+        # but these should be suppressed on both ends the same
+        print "CRITICAL: track count mismatch!"
+        print "CRITICAL: There are", discTrackCount, "tracks on the disc,"
+        print "CRITICAL: but", releaseTrackCount,
+        print "tracks on a SINGLE-disc-release."
+        print "CRITICAL: This is not supposed to happen."
+        sys.exit(-1)
 else:
+    # the track count matches
     trackOffset = 0
 
 # getting the ISRCs with icedax
