@@ -73,7 +73,7 @@ def askForOffset():
     print "Cannot guess the track offset."
     print "How many tracks are on the previous discs altogether?"
     num = raw_input("[0-%d] " % (releaseTrackCount - discTrackCount))
-    trackOffset = int(num)
+    return int(num)
 
 def printError(*args):
     stringArgs = tuple(map(str, args))
