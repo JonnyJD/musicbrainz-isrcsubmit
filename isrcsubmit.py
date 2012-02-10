@@ -51,7 +51,7 @@ def print_usage():
 multidisc_info = \
 """A note on Multi-disc-releases:
 
-isrcsubmit uses the MB webservice version 1.
+Isrcsubmit uses the MB web service version 1.
 This api is not tailored for MB NGS and expects to have one release per disc. So it does not know which tracks are on a specific disc and lists all tracks in the overall release.
 In order to attach the ISRCs to the correct tracks an offset is necessary for multi-disc-releases. For the first disc and last disc this can be guessed easily. Starting with 3 discs irscsubmit will ask you for the offset of the "middle discs".
 The offset is the sum of track counts on all previous discs.
@@ -65,13 +65,16 @@ Example:
 
 The offset we have to use is 30 (= 13 + 17)
 
-isrcsubmit only knows how many tracks the current disc has and the total number of tracks on the release given by the webservice. So the offset must be between 0 and 53 (= 72 - 19), which is the range isrcsubmit lets you choose from.
+Isrcsubmit only knows how many tracks the current disc has and the total number of tracks on the release given by the web service. So the offset must be between 0 and 53 (= 72 - 19), which is the range isrcsubmit lets you choose from.
+
+The number of discs in the release and the position of this disc give by isrcsubmit is not necessarily correct. There can be multiple disc IDs per actual disc. You should only count tracks on your actual discs.
+Isrcsubmit can give you a link for an overview of the disc IDs for your release.
 
 Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit"""
 
 def askForOffset():
-    print "Cannot guess the track offset."
-    print "How many tracks are on the previous discs altogether?"
+    print
+    print "How many tracks are on the previous (actual) discs altogether?"
     num = raw_input("[0-%d] " % (releaseTrackCount - discTrackCount))
     return int(num)
 
@@ -169,8 +172,8 @@ except WebServiceError, e:
 if len(results) == 0:
     print "This Disc ID is not in the Database."
     url = getSubmissionUrl(disc)
-    print "Would you like to open Firefox to submit it? [y/N] ",
-    if sys.stdin.read(1) == "y":
+    print "Would you like to open Firefox to submit it?",
+    if raw_input("[y/N] ") == "y":
         try:
             os.execlp('firefox', 'firefox', url)
         except OSError, e:
@@ -201,9 +204,10 @@ else:
     result = results[0]
 
 # getting release details
+releaseId = result.getRelease().getId()
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
-    release = q.getReleaseById(result.getRelease().getId(), include=include)
+    release = q.getReleaseById(releaseId, include=include)
 except ConnectionError, e:
     printError("Couldn't connect to the Server:", str(e))
     sys.exit(1)
@@ -216,7 +220,7 @@ releaseTrackCount = len(tracks)
 discs = release.getDiscs()
 # discCount is actually the count of DiscIDs
 # there can be multiple DiscIDs for a single disc
-discCount = len(discs)
+discIdCount = len(discs)
 print 'Artist:\t\t', release.getArtist().getName()
 print 'Release:\t', release.getTitle()
 if releaseTrackCount != discTrackCount:
@@ -226,36 +230,56 @@ if releaseTrackCount != discTrackCount:
     # c) a)+b)
     # d) unknown (see CRITICAL below)
     print "Tracks in Release:", releaseTrackCount
-    if discCount > 1:
+    if discIdCount > 1:
         # Handling of multiple discs in the release:
-        # We can only get the overall Release from MB
+        # We can only get the overall release from MB
         # and not the Medium itself.
-        # This changed with NGS. Before there was one release per disc.
+        # This changed with NGS. Before there was one MB release per disc.
         print
-        print "WARNING: Multi-disc-release given by webservice."
+        print "WARNING: Multi-disc-release given by web service."
         print "See '" + scriptname, "-h' for help"
-        print "Discs in Release: ", discCount
-        for i in range(discCount):
+        print "Discs (or disc IDs) in Release: ", discIdCount
+        for i in range(discIdCount):
             print "\t", discs[i].getId(),
             if discs[i].getId() == discId:
-                discNumber = i + 1
+                discIdNumber = i + 1
                 print "[THIS DISC]"
             else:
                 print
+        print "There might be multiple disc IDs per disc"
+        print "so the number of actual discs could be lower."
         print
-        print "This is disc", discNumber, "of", discCount
-        if discNumber == 1:
+        print "This is disc (ID)", discIdNumber, "of", discIdCount
+        if discIdNumber == 1:
             # the first disc never needs an offset
             trackOffset = 0
             print "Guessing track offset as", trackOffset
-        elif discNumber == discCount:
+        elif discIdNumber == discIdCount:
             # It is easy to guess the offset when this is the last disc,
             # because we have no unknown track counts after this.
             trackOffset = releaseTrackCount - discTrackCount
             print "Guessing track offset as", trackOffset
         else:
-            # for "middle" discs we have unknown track numbers
-            # before and after -> the user has to tell us an offset to use
+            # For "middle" discs we have unknown track numbers
+            # before and after the current disc.
+            # -> the user has to tell us an offset to use
+            print "Cannot guess the track offset."
+
+            # There can also be multiple discIds for one disc of the release
+            # so we give a MB-link to help which IDs
+            # belong to which disc of the release.
+            # We can't provide that ourselfes without making
+            # many requests to MB or using the new web-api 2.
+            url = releaseId + "/discids" # The "releaseId" is an url itself
+            print "This url would provide some info about the disc IDs:"
+            print url
+            print "Would you like to open it in Firefox?",
+            if raw_input("[y/N] ") == "y":
+                try:
+                    os.spawnlp(os.P_NOWAIT, 'firefox', 'firefox', url)
+                except OSError, e:
+                    printError("Couldn't open the url in firefox:", str(e))
+
             trackOffset = askForOffset()
     else:
         # This is actually a weird case
