@@ -306,7 +306,8 @@ except:
     printError("Couldn't gather ISRCs with icedax and grep!")
     sys.exit(1)
 
-tracks2isrcs =dict()
+tracks2isrcs = dict()
+isrcs2tracks = dict()
 pattern = 'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
 for line in isrcout.splitlines():
     if debug: print line
@@ -318,8 +319,18 @@ for line in isrcout.splitlines():
                 continue
             trackNumber = int(m.group(1))
             isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+            # prepare to add the ISRC we found to the corresponding track
             try:
                 track = tracks[trackNumber + trackOffset - 1]
+                # check if we found this ISRC for another track already
+                if isrc in isrcs2tracks:
+                    isrcs2tracks[isrc].add(trackNumber)
+                    listOfTracks = ", ".join(map(str,isrcs2tracks[isrc]))
+                    printError("Icefox gave the same ISRC for two tracks!")
+                    printError("ISRC:", isrc, "\ttracks:", listOfTracks)
+                else:
+                    isrcs2tracks[isrc] = set([trackNumber])
+                # check if the ISRC was already added to the track
                 if isrc not in (track.getISRCs()):
                     tracks2isrcs[track.getId()] = isrc
                     print "found new ISRC for track",
