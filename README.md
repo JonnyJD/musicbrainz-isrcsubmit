@@ -52,3 +52,6 @@ into the Public Domain.
 
 You might find additional information about this script at the
 [MusicBrainz forums](http://forums.musicbrainz.org/viewtopic.php?id=1908).
+
+Please report bugs on
+[GitHub](https://github.com/JonnyJD/musicbrainz-isrcsubmit.).

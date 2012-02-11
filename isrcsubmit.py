@@ -42,17 +42,17 @@ scriptname = os.path.basename(sys.argv[0])
 
 def print_usage():
     print
-    print "usage:", scriptname, "[-d] username [device]"
+    print "usage:", scriptname, "[-d] USERNAME [DEVICE]"
     print
     print " -d, --debug\tenable debug messages"
     print " -h, --help\tprint usage and multi-disc information"
     print
 
-multidisc_info = \
+help_text = \
 """A note on Multi-disc-releases:
 
-Isrcsubmit uses the MB web service version 1.
-This api is not tailored for MB NGS and expects to have one release per disc. So it does not know which tracks are on a specific disc and lists all tracks in the overall release.
+Isrcsubmit uses the MusicBrainz web service version 1.
+This api is not tailored for MusicBrainz NGS (Next Generation Schema) and expects to have one release per disc. So it does not know which tracks are on a specific disc and lists all tracks in the overall release.
 In order to attach the ISRCs to the correct tracks an offset is necessary for multi-disc-releases. For the first disc and last disc this can be guessed easily. Starting with 3 discs irscsubmit will ask you for the offset of the "middle discs".
 The offset is the sum of track counts on all previous discs.
 
@@ -70,6 +70,8 @@ Isrcsubmit only knows how many tracks the current disc has and the total number 
 The number of discs in the release and the position of this disc give by isrcsubmit is not necessarily correct. There can be multiple disc IDs per actual disc. You should only count tracks on your actual discs.
 Isrcsubmit can give you a link for an overview of the disc IDs for your release.
 
+Isrcsubmit will warn you if there are any problems and won't actually submit anything to MusicBrainz without giving a final choice.
+
 Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit"""
 
 def askForOffset():
@@ -83,7 +85,7 @@ def printError(*args):
     msg = " ".join(("ERROR:",) + stringArgs)
     sys.stderr.write(msg + "\n")
 
-print "isrcsubmit", isrcsubmitVersion, "by JonnyJD"
+print "isrcsubmit", isrcsubmitVersion, "by JonnyJD for MusicBrainz"
 print "using python-musicbrainz2", musicbrainz2_version, "and icedax"
 
 # print warnings/errors if python-musicbrainz2 is outdated
@@ -121,7 +123,7 @@ else:
         elif arg == "-h" or arg == "--help":
             print_usage()
             print
-            print multidisc_info
+            print help_text
             sys.exit(0)
         elif username == None:
             username = arg
