@@ -40,7 +40,7 @@ from musicbrainz2.webservice import ConnectionError, WebServiceError
 
 scriptname = os.path.basename(sys.argv[0])
 
-def print_usage():
+def print_usage(scriptname):
     print
     print "usage:", scriptname, "[-d] USERNAME [DEVICE]"
     print
@@ -74,7 +74,7 @@ Isrcsubmit will warn you if there are any problems and won't actually submit any
 
 Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit"""
 
-def askForOffset():
+def askForOffset(discTrackCount, releaseTrackCount):
     print
     print "How many tracks are on the previous (actual) discs altogether?"
     num = raw_input("[0-%d] " % (releaseTrackCount - discTrackCount))
@@ -109,7 +109,7 @@ if StrictVersion(musicbrainz2_version) < "0.7.4":
 
 # gather arguments
 if len(sys.argv) < 2 or len(sys.argv) > 4:
-    print_usage()
+    print_usage(scriptname)
     sys.exit(1)
 else:
     # defaults
@@ -282,7 +282,7 @@ if releaseTrackCount != discTrackCount:
                 except OSError, e:
                     printError("Couldn't open the url in firefox:", str(e))
 
-            trackOffset = askForOffset()
+            trackOffset = askForOffset(discTrackCount, releaseTrackCount)
     else:
         # This is actually a weird case
         # Having only 1 disc, but not matching trackCounts
