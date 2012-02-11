@@ -33,6 +33,7 @@ from subprocess import Popen, PIPE
 from distutils.version import StrictVersion
 from musicbrainz2 import __version__ as musicbrainz2_version
 from musicbrainz2.disc import readDisc, DiscError, getSubmissionUrl
+from musicbrainz2.model import Track
 from musicbrainz2.webservice import WebService, Query
 from musicbrainz2.webservice import ReleaseFilter, ReleaseIncludes
 from musicbrainz2.webservice import RequestError, AuthenticationError
@@ -74,6 +75,63 @@ Isrcsubmit will warn you if there are any problems and won't actually submit any
 
 Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit"""
 
+
+class Isrc(object):
+    def __init__(self, isrc, track=None):
+        self._id = isrc
+        self._tracks = []
+        if track is not None:
+            self._tracks.append(track)
+
+    def addTrack(self, track):
+        if track not in self._tracks:
+            self._tracks.append(track)
+
+    def getTracks(self):
+        return self._tracks
+
+    def getTrackNumbers(self):
+        numbers = []
+        for track in self._tracks:
+            numbers.append(track.getNumber())
+        return ", ".join(map(str, numbers))
+
+
+class EqTrack(Track):
+    """track with equality checking
+
+    This makes it easy to check if this track is already in a collection.
+    Only the element already in the collection needs to be hashable.
+
+    """
+    def __init__(self, track):
+        self._track = track
+
+    def __eq__(self, other):
+        return self.getId() == other.getId()
+
+    def getId(self):
+        return self._track.getId()
+
+    def getArtist(self):
+        return self._track.getArtist()
+
+    def getTitle(self):
+        return self._track.getTitle()
+
+class OwnTrack(EqTrack):
+    """A track found on an analyzed (own) disc
+
+    """
+    def __init__(self, track, number):
+        self._track = track
+        self._number = number
+
+    def getNumber(self):
+        """The track number on the analyzed disc"""
+        return self._number
+
+
 def askForOffset(discTrackCount, releaseTrackCount):
     print
     print "How many tracks are on the previous (actual) discs altogether?"
@@ -84,6 +142,27 @@ def printError(*args):
     stringArgs = tuple(map(str, args))
     msg = " ".join(("ERROR:",) + stringArgs)
     sys.stderr.write(msg + "\n")
+
+def cleanupIsrcs(isrcs):
+    for isrc in isrcs:
+        tracks = isrcs[isrc].getTracks()
+        if len(tracks) > 1:
+            print
+            print "ISRC", isrc, "attached to:"
+            for track in tracks:
+                print "\t",
+                artist = track.getArtist()
+                if artist:
+                    print artist.getName(), "-",
+                print track.getTitle(),
+                if isinstance(track, OwnTrack):
+                    print "\t [OUR EVALUATION], track", track.getNumber()
+                else:
+                    print
+
+            url = "http://musicbrainz.org/isrc/" + isrc
+            if raw_input("Open ISRC in firefox? [Y/n] ") != "n":
+                os.spawnlp(os.P_NOWAIT, "firefox", "firefox", url)
 
 print "isrcsubmit", isrcsubmitVersion, "by JonnyJD for MusicBrainz"
 print "using python-musicbrainz2", musicbrainz2_version, "and icedax"
@@ -202,6 +281,7 @@ elif len(results) > 1:
             print "\t", country, "\t", date, "\t", barcode
     num =  raw_input("Which one do you want? [0-%d] " % i)
     result = results[int(num)]
+    print
 else:
     result = results[0]
 
@@ -309,7 +389,7 @@ except:
     sys.exit(1)
 
 tracks2isrcs = dict()
-isrcs2tracks = dict()
+isrcs = dict()
 pattern = 'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
 for line in isrcout.splitlines():
     if debug: print line
@@ -319,21 +399,23 @@ for line in isrcout.splitlines():
             if m == None:
                 print "can't find ISRC in:", text
                 continue
+            # found an ISRC
             trackNumber = int(m.group(1))
             isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+            if isrc not in isrcs:
+                isrcs[isrc] = Isrc(isrc)
             # prepare to add the ISRC we found to the corresponding track
             try:
                 track = tracks[trackNumber + trackOffset - 1]
+                ownTrack = OwnTrack(track, trackNumber)
+                isrcs[isrc].addTrack(ownTrack)
                 # check if we found this ISRC for another track already
-                if isrc in isrcs2tracks:
-                    isrcs2tracks[isrc].add(trackNumber)
-                    listOfTracks = ", ".join(map(str,isrcs2tracks[isrc]))
+                if len(isrcs[isrc].getTracks()) > 1:
+                    listOfTracks = isrcs[isrc].getTrackNumbers()
                     printError("Icefox gave the same ISRC for two tracks!")
                     printError("ISRC:", isrc, "\ttracks:", listOfTracks)
-                else:
-                    isrcs2tracks[isrc] = set([trackNumber])
                 # check if the ISRC was already added to the track
-                if isrc not in (track.getISRCs()):
+                if isrc not in track.getISRCs():
                     tracks2isrcs[track.getId()] = isrc
                     print "found new ISRC for track",
                     print str(trackNumber) + ":", isrc
@@ -343,6 +425,7 @@ for line in isrcout.splitlines():
                 printError("ISRC", isrc, "found for unknown track", trackNumber)
 
 print
+update_intention = True
 if len(tracks2isrcs) == 0:
     print "No new ISRCs could be found."
 else:
@@ -357,6 +440,28 @@ else:
         except WebServiceError, e:
             printError("Couldn't send ISRCs:", str(e))
     else:
+        update_intention = False
         print "Nothing was submitted to the server."
+
+if update_intention:
+    # check for overall duplicate ISRCs, including server provided
+    duplicates = 0
+    # add already attached ISRCs
+    for track in tracks:
+        for isrc in track.getISRCs():
+            # only check ISRCS we also found on our disc
+            if isrc in isrcs:
+                isrcs[isrc].addTrack(track)
+    # check if we have multiple tracks for one ISRC
+    for isrc in isrcs:
+        if len(isrcs[isrc].getTracks()) > 1:
+            duplicates += 1
+
+    if duplicates > 0:
+        print
+        print "There were", duplicates, "ISRCs",
+        print "that are attached to multiple tracks on this release."
+        if raw_input("Do you want to help clean those up? [y/N] ") == "y":
+            cleanupIsrcs(isrcs)
 
 # vim:set shiftwidth=4 smarttab expandtab:
