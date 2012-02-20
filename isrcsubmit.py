@@ -22,7 +22,7 @@ and the script is als available on
 http://kraehen.org/isrcsubmit.py
 """
 
-isrcsubmitVersion = "0.2.5"
+isrcsubmitVersion = "0.3"
 agentName="isrcsubmit-jonnyjd-" + isrcsubmitVersion
 
 import getpass
@@ -72,6 +72,11 @@ The number of discs in the release and the position of this disc give by isrcsub
 Isrcsubmit can give you a link for an overview of the disc IDs for your release.
 
 Isrcsubmit will warn you if there are any problems and won't actually submit anything to MusicBrainz without giving a final choice.
+
+
+Isrcsubmit will warn you if any duplicate ISRCs are detected and help you fix priviously inserted duplicate ISRCs.
+The ISRC-track relationship we found on our disc is taken as our correct evaluation.
+
 
 Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit"""
 
