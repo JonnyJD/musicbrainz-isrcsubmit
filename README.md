@@ -8,7 +8,15 @@ This python script extracts
 from audio cds using Icedax (in [cdrkit](http://en.wikipedia.org/wiki/Cdrkit))
 and submits them to [MusicBrainz](http://musicbrainz.org).
 
-You can also submit disc IDs if they are unknown to MusicBrainz.
+features:
+--------
+
+* read ISRCs from disc
+* search for releases with the TOC of the disc
+* display release information from MB
+* submit ISRCs
+* submit discIds / TOCs
+* duplicate ISRC detection (local and on server)
 
 
 usage:
