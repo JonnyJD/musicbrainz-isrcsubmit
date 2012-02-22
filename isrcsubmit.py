@@ -124,7 +124,10 @@ class EqTrack(Track):
     def getTitle(self):
         return self._track.getTitle()
 
-class OwnTrack(EqTrack):
+    def getISRCs(self):
+        return self._track.getISRCs()
+
+class NumberedTrack(EqTrack):
     """A track found on an analyzed (own) disc
 
     """
@@ -136,6 +139,11 @@ class OwnTrack(EqTrack):
         """The track number on the analyzed disc"""
         return self._number
 
+class OwnTrack(NumberedTrack):
+    """A track found on an analyzed (own) disc
+
+    """
+    pass
 
 def askForOffset(discTrackCount, releaseTrackCount):
     print
@@ -157,17 +165,37 @@ def cleanupIsrcs(isrcs):
             for track in tracks:
                 print "\t",
                 artist = track.getArtist()
+                string = ""
                 if artist:
-                    print artist.getName(), "-",
-                print track.getTitle(),
+                    string += artist.getName() + " - "
+                string += track.getTitle()
+                print string,
+                # tab alignment
+                if len(string) >= 32:
+                    print
+                    print " " * 40,
+                else:
+                    if len(string) < 7:
+                        print "\t",
+                    if len(string) < 15:
+                        print "\t",
+                    if len(string) < 23:
+                        print "\t",
+                    if len(string) < 31:
+                        print "\t",
+
+                # append track# and evaluation, if available
+                if isinstance(track, NumberedTrack):
+                    print "\t track", track.getNumber(),
                 if isinstance(track, OwnTrack):
-                    print "\t [OUR EVALUATION], track", track.getNumber()
+                    print "   [OUR EVALUATION]"
                 else:
                     print
 
             url = "http://musicbrainz.org/isrc/" + isrc
             if raw_input("Open ISRC in firefox? [Y/n] ") != "n":
                 os.spawnlp(os.P_NOWAIT, "firefox", "firefox", url)
+                raw_input("(press <return> when done with this ISRC) ")
 
 print "isrcsubmit", isrcsubmitVersion, "by JonnyJD for MusicBrainz"
 print "using python-musicbrainz2", musicbrainz2_version, "and icedax"
@@ -452,7 +480,11 @@ if update_intention:
     # check for overall duplicate ISRCs, including server provided
     duplicates = 0
     # add already attached ISRCs
-    for track in tracks:
+    for i in range(0, len(tracks)):
+        track = tracks[i]
+        if i in range(trackOffset, trackOffset + discTrackCount):
+            trackNumber = i - trackOffset + 1
+            track = NumberedTrack(track, trackNumber)
         for isrc in track.getISRCs():
             # only check ISRCS we also found on our disc
             if isrc in isrcs:
