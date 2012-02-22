@@ -22,7 +22,7 @@ and the script is als available on
 http://kraehen.org/isrcsubmit.py
 """
 
-isrcsubmitVersion = "0.3"
+isrcsubmitVersion = "0.3.1"
 agentName="isrcsubmit-jonnyjd-" + isrcsubmitVersion
 
 import getpass
