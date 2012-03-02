@@ -23,7 +23,9 @@ http://kraehen.org/isrcsubmit.py
 """
 
 isrcsubmitVersion = "0.3.1"
-agentName="isrcsubmit-jonnyjd-" + isrcsubmitVersion
+agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
+backends = ["cdda2wav", "icedax"]       # starting with highest priority
+packages = {"cdda2wav": "cdrtools", "icedax": "cdrkit"}
 
 import getpass
 import sys
@@ -145,6 +147,29 @@ class OwnTrack(NumberedTrack):
     """
     pass
 
+def get_prog_version(prog):
+    if prog == "icedax":
+        return Popen([prog, "--version"], stderr=PIPE).communicate()[1].strip()
+    elif prog == "cdda2wav":
+        outdata = Popen([prog, "-version"], stdout=PIPE).communicate()[0]
+        return " ".join(outdata.splitlines()[0].split()[0:2])
+    else:
+        return prog
+
+
+def has_backend(backend):
+    devnull = open(os.devnull, "w")
+    p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
+    backend_path = p_which.communicate()[0].strip()
+    if p_which.returncode == 0:
+        # check if it is only a symlink to another backend
+        real_backend = os.path.basename(os.path.realpath(backend_path))
+        if backend != real_backend and real_backend in backends: 
+            return False # use real backend instead, or higher priority
+        return True
+    else:
+        return False
+
 def askForOffset(discTrackCount, releaseTrackCount):
     print
     print "How many tracks are on the previous (actual) discs altogether?"
@@ -160,6 +185,35 @@ def printError2(*args):
     stringArgs = tuple(map(str, args))
     msg = " ".join(("      ",) + stringArgs)
     sys.stderr.write(msg + "\n")
+
+def gatherIsrcs(backend):
+    backend_output = []
+
+    if backend in ["cdda2wav", "icedax"]:
+        # getting the ISRCs with icedax
+        try:
+            p1 = Popen([backend, '-J', '-H', '-D', device], stderr=PIPE)
+            p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
+            isrcout = p2.communicate()[0]
+        except:
+            printError("Couldn't gather ISRCs with icedax and grep!")
+            sys.exit(1)
+        pattern = \
+            'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+        for line in isrcout.splitlines():
+            if debug: print line
+            for text in line.splitlines():
+                if text.startswith("T:"):
+                    m = re.search(pattern, text)
+                    if m == None:
+                        print "can't find ISRC in:", text
+                        continue
+                    # found an ISRC
+                    trackNumber = int(m.group(1))
+                    isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                    backend_output.append((trackNumber, isrc))
+
+    return backend_output
 
 def cleanupIsrcs(isrcs):
     for isrc in isrcs:
@@ -202,27 +256,8 @@ def cleanupIsrcs(isrcs):
                 os.spawnlp(os.P_NOWAIT, "firefox", "firefox", url)
                 raw_input("(press <return> when done with this ISRC) ")
 
-print "isrcsubmit", isrcsubmitVersion, "by JonnyJD for MusicBrainz"
-print "using python-musicbrainz2", musicbrainz2_version, "and icedax"
 
-# print warnings/errors if python-musicbrainz2 is outdated
-if StrictVersion(musicbrainz2_version) < "0.7.0":
-    printError("Your version of python-musicbrainz2 is outdated")
-    printError2("You WILL NOT be able to even check ISRCs")
-    printError2("Please use AT LEAST python-musicbrainz2 0.7.0")
-    sys.exit(-1) # the script can't do anything useful
-if StrictVersion(musicbrainz2_version) < "0.7.3":
-    printError("Cannot use AUTH DIGEST")
-    printError2("You WILL NOT be able to submit ISRCs -> check-only")
-    printError2("Please use python-musicbrainz2 0.7.3 or higher")
-    # do not exit, check-only is what happens most of the times anyways
-# We print two warnings for clients between 0.7.0 and 0.7.3,
-# because 0.7.4 is important. (-> no elif)
-if StrictVersion(musicbrainz2_version) < "0.7.4":
-    print "WARNING: Cannot set userAgent"
-    print "         You WILL have random connection problems due to throttling"
-    print "         Please use python-musicbrainz2 0.7.4 or higher"
-    print
+print "isrcsubmit", isrcsubmitVersion, "by JonnyJD for MusicBrainz"
 
 # gather arguments
 if len(sys.argv) < 2 or len(sys.argv) > 4:
@@ -247,6 +282,51 @@ else:
         else:
             device = arg
 
+print "using python-musicbrainz2", musicbrainz2_version
+if StrictVersion(musicbrainz2_version) < "0.7.0":
+    printError("Your version of python-musicbrainz2 is outdated")
+    printError2("You WILL NOT be able to even check ISRCs")
+    printError2("Please use AT LEAST python-musicbrainz2 0.7.0")
+    sys.exit(-1) # the script can't do anything useful
+if StrictVersion(musicbrainz2_version) < "0.7.3":
+    printError("Cannot use AUTH DIGEST")
+    printError2("You WILL NOT be able to submit ISRCs -> check-only")
+    printError2("Please use python-musicbrainz2 0.7.3 or higher")
+    # do not exit, check-only is what happens most of the times anyways
+# We print two warnings for clients between 0.7.0 and 0.7.3,
+# because 0.7.4 is important. (-> no elif)
+if StrictVersion(musicbrainz2_version) < "0.7.4":
+    print "WARNING: Cannot set userAgent"
+    print "         You WILL have random connection problems due to throttling"
+    print "         Please use python-musicbrainz2 0.7.4 or higher"
+    print
+
+# search for backend
+backend = None
+for prog in backends:
+    if has_backend(prog):
+        backend = prog
+        break
+
+if backend is None:
+    verbose_backends = []
+    for program in backends:
+        if program in packages:
+            verbose_backends.append(program + " (" + packages[program] + ")")
+        else:
+            verbose_backends.append(program)
+    printError("Cannot find a backend to extract the ISRCS!")
+    printError2("Isrcsubmit can work with one of the following:")
+    printError2("  " + ", ".join(verbose_backends))
+    sys.exit(-1)
+else:
+    print "using", get_prog_version(backend)
+
+print
+print "Please input your Musicbrainz password"
+password = getpass.getpass('Password: ')
+print
+
 try:
     # get disc ID
     disc = readDisc(deviceName=device)
@@ -259,11 +339,6 @@ discTrackCount = len(disc.getTracks())
 
 print 'DiscID:\t\t', discId
 print 'Tracks on Disc:\t', discTrackCount
-
-print
-print "Please input your Musicbrainz password"
-password = getpass.getpass('Password: ')
-print
 
 # connect to the server
 if StrictVersion(musicbrainz2_version) >= "0.7.4":
@@ -279,9 +354,9 @@ else:
 q = Query(service, clientId=agentName)
 
 # searching for release
-filter = ReleaseFilter(discId=discId)
+discId_filter = ReleaseFilter(discId=discId)
 try:
-    results = q.getReleases(filter=filter)
+    results = q.getReleases(filter=discId_filter)
 except ConnectionError, e:
     printError("Couldn't connect to the Server:", str(e))
     sys.exit(1)
@@ -416,53 +491,42 @@ else:
     # the track count matches
     trackOffset = 0
 
-# getting the ISRCs with icedax
 print
-try:
-    p1 = Popen(['icedax', '-J', '-H', '-D', device], stderr=PIPE)
-    p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
-    isrcout = p2.communicate()[0]
-except:
-    printError("Couldn't gather ISRCs with icedax and grep!")
-    sys.exit(1)
+# Extract ISRCs
+backend_output = gatherIsrcs(backend) # (track, isrc)
 
-tracks2isrcs = dict()
-isrcs = dict()
-pattern = 'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
-for line in isrcout.splitlines():
-    if debug: print line
-    for text in line.splitlines():
-        if text.startswith("T:"):
-            m = re.search(pattern, text)
-            if m == None:
-                print "can't find ISRC in:", text
-                continue
-            # found an ISRC
-            trackNumber = int(m.group(1))
-            isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
-            if isrc not in isrcs:
-                isrcs[isrc] = Isrc(isrc)
-            # prepare to add the ISRC we found to the corresponding track
-            try:
-                track = tracks[trackNumber + trackOffset - 1]
-                ownTrack = OwnTrack(track, trackNumber)
-                isrcs[isrc].addTrack(ownTrack)
-                # check if we found this ISRC for another track already
-                if len(isrcs[isrc].getTracks()) > 1:
-                    listOfTracks = isrcs[isrc].getTrackNumbers()
-                    printError("Icefox gave the same ISRC for two tracks!")
-                    printError2("ISRC:", isrc, "\ttracks:", listOfTracks)
-                # check if the ISRC was already added to the track
-                if isrc not in track.getISRCs():
-                    tracks2isrcs[track.getId()] = isrc
-                    print "found new ISRC for track",
-                    print str(trackNumber) + ":", isrc
-                else:
-                    print isrc, "is already attached to track", trackNumber
-            except IndexError, e:
-                printError("ISRC", isrc, "found for unknown track", trackNumber)
+# prepare to add the ISRC we found to the corresponding track
+# and check for local duplicates now and server duplicates later
+isrcs = dict()          # isrcs found on disc
+tracks2isrcs = dict()   # isrcs to be submitted
+for (trackNumber, isrc) in backend_output:
+    if isrc not in isrcs:
+        isrcs[isrc] = Isrc(isrc)
+        # check if we found this ISRC for multiple tracks
+        with_isrc = filter(lambda item: item[1] == isrc, backend_output)
+        if len(with_isrc) > 1:
+            listOfTracks = map(str, map(lambda l: l[0], with_isrc))
+            printError(backend + " gave the same ISRC for multiple tracks!")
+            printError2("ISRC:", isrc, "\ttracks:", ", ".join(listOfTracks))
+    try:
+        track = tracks[trackNumber + trackOffset - 1]
+        ownTrack = OwnTrack(track, trackNumber)
+        isrcs[isrc].addTrack(ownTrack)
+        # check if the ISRC was already added to the track
+        if isrc not in track.getISRCs():
+            tracks2isrcs[track.getId()] = isrc
+            print "found new ISRC for track",
+            print str(trackNumber) + ":", isrc
+        else:
+            print isrc, "is already attached to track", trackNumber
+    except IndexError, e:
+        printError("ISRC", isrc, "found for unknown track", trackNumber)
+for isrc in isrcs:
+    for track in isrcs[isrc].getTracks():
+        trackNumber = track.getNumber()
 
 print
+# try to submit the ISRCs
 update_intention = True
 if len(tracks2isrcs) == 0:
     print "No new ISRCs could be found."
@@ -481,8 +545,8 @@ else:
         update_intention = False
         print "Nothing was submitted to the server."
 
+# check for overall duplicate ISRCs, including server provided
 if update_intention:
-    # check for overall duplicate ISRCs, including server provided
     duplicates = 0
     # add already attached ISRCs
     for i in range(0, len(tracks)):
