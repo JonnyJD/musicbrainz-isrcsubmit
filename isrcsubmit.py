@@ -156,6 +156,11 @@ def printError(*args):
     msg = " ".join(("ERROR:",) + stringArgs)
     sys.stderr.write(msg + "\n")
 
+def printError2(*args):
+    stringArgs = tuple(map(str, args))
+    msg = " ".join(("      ",) + stringArgs)
+    sys.stderr.write(msg + "\n")
+
 def cleanupIsrcs(isrcs):
     for isrc in isrcs:
         tracks = isrcs[isrc].getTracks()
@@ -203,20 +208,20 @@ print "using python-musicbrainz2", musicbrainz2_version, "and icedax"
 # print warnings/errors if python-musicbrainz2 is outdated
 if StrictVersion(musicbrainz2_version) < "0.7.0":
     printError("Your version of python-musicbrainz2 is outdated")
-    printError("You WILL NOT be able to even check ISRCs")
-    printError("Please use AT LEAST python-musicbrainz2 0.7.0")
+    printError2("You WILL NOT be able to even check ISRCs")
+    printError2("Please use AT LEAST python-musicbrainz2 0.7.0")
     sys.exit(-1) # the script can't do anything useful
 if StrictVersion(musicbrainz2_version) < "0.7.3":
     printError("Cannot use AUTH DIGEST")
-    printError("You WILL NOT be able to submit ISRCs -> check-only")
-    printError("Please use python-musicbrainz2 0.7.3 or higher")
+    printError2("You WILL NOT be able to submit ISRCs -> check-only")
+    printError2("Please use python-musicbrainz2 0.7.3 or higher")
     # do not exit, check-only is what happens most of the times anyways
 # We print two warnings for clients between 0.7.0 and 0.7.3,
 # because 0.7.4 is important. (-> no elif)
 if StrictVersion(musicbrainz2_version) < "0.7.4":
     print "WARNING: Cannot set userAgent"
-    print "WARNING: You WILL have random connection problems due to throttling"
-    print "WARNING: Please use python-musicbrainz2 0.7.4 or higher"
+    print "         You WILL have random connection problems due to throttling"
+    print "         Please use python-musicbrainz2 0.7.4 or higher"
     print
 
 # gather arguments
@@ -292,7 +297,7 @@ if len(results) == 0:
             os.execlp('firefox', 'firefox', url)
         except OSError, e:
             printError("Couldn't open the url in firefox:", str(e))
-            printError("Please submit it via:", url)
+            printError2("Please submit it via:", url)
             sys.exit(1)
     else:
         print "Please submit the Disc ID it with this url:"
@@ -446,7 +451,7 @@ for line in isrcout.splitlines():
                 if len(isrcs[isrc].getTracks()) > 1:
                     listOfTracks = isrcs[isrc].getTrackNumbers()
                     printError("Icefox gave the same ISRC for two tracks!")
-                    printError("ISRC:", isrc, "\ttracks:", listOfTracks)
+                    printError2("ISRC:", isrc, "\ttracks:", listOfTracks)
                 # check if the ISRC was already added to the track
                 if isrc not in track.getISRCs():
                     tracks2isrcs[track.getId()] = isrc
