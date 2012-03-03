@@ -24,13 +24,16 @@ http://kraehen.org/isrcsubmit.py
 
 isrcsubmitVersion = "0.3.1"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
-backends = ["cdda2wav", "icedax"]       # starting with highest priority
+# starting with highest priority
+backends = ["cdrdao", "cdda2wav", "icedax"]
 packages = {"cdda2wav": "cdrtools", "icedax": "cdrkit"}
 
-import getpass
-import sys
 import os
 import re
+import sys
+import getpass
+import tempfile
+from datetime import datetime
 from subprocess import Popen, PIPE
 from distutils.version import StrictVersion
 from musicbrainz2 import __version__ as musicbrainz2_version
@@ -153,6 +156,9 @@ def get_prog_version(prog):
     elif prog == "cdda2wav":
         outdata = Popen([prog, "-version"], stdout=PIPE).communicate()[0]
         return " ".join(outdata.splitlines()[0].split()[0:2])
+    elif prog == "cdrdao":
+        outdata = Popen([prog], stderr=PIPE).communicate()[1]
+        return " ".join(outdata.splitlines()[0].split()[::2][0:2])
     else:
         return prog
 
@@ -186,21 +192,26 @@ def printError2(*args):
     msg = " ".join(("      ",) + stringArgs)
     sys.stderr.write(msg + "\n")
 
+def backendError(backend, e):
+    printError("Couldn't gather ISRCs with %s: %i - %s"
+            % (backend, e.errno, e.strerror))
+    sys.exit(1)
+
 def gatherIsrcs(backend):
     backend_output = []
+    devnull = open(os.devnull, "w")
 
     if backend in ["cdda2wav", "icedax"]:
-        # getting the ISRCs with icedax
+        pattern = \
+            'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p1 = Popen([backend, '-J', '-H', '-D', device], stderr=PIPE)
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
-            isrcout = p2.communicate()[0]
-        except:
-            printError("Couldn't gather ISRCs with icedax and grep!")
-            sys.exit(1)
-        pattern = \
-            'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
-        for line in isrcout.splitlines():
+            isrcout = p2.stdout
+        except OSError, e:
+            backendError(backend, e)
+        for line in isrcout:
+            # there are \n and \r in different places
             if debug: print line
             for text in line.splitlines():
                 if text.startswith("T:"):
@@ -208,10 +219,39 @@ def gatherIsrcs(backend):
                     if m == None:
                         print "can't find ISRC in:", text
                         continue
-                    # found an ISRC
                     trackNumber = int(m.group(1))
                     isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
                     backend_output.append((trackNumber, isrc))
+
+    elif backend == "cdrdao":
+        tmpname = "cdrdao-%s.toc" % datetime.now()
+        tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
+        if debug: print "Saving toc in %s.." % tmpfile
+        try:
+            p = Popen([backend, "read-toc", "--fast-toc", "--device", device,
+                "-v", "0", tmpfile],stdout=devnull, stderr=devnull)
+            if p.wait() != 0:
+                printError("%s returned with %i" % (backend, p.returncode))
+                sys.exit(1)
+        except OSError, e:
+            backendError(backend, e)
+        else:
+            with open(tmpfile, "r") as toc:
+                for line in toc:
+                    words = line.split()
+                    if len(words) > 0:
+                        if words[0] == "//":
+                            trackNumber = int(words[2])
+                        elif words[0] == "ISRC":
+                            isrc = words[1].strip('" ')
+                            backend_output.append((trackNumber, isrc))
+                            # safeguard against missing trackNumber lines
+                            trackNumber = None
+        finally:
+            try:
+                os.unlink(tmpfile)
+            except:
+                pass
 
     return backend_output
 

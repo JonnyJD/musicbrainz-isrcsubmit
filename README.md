@@ -1,7 +1,5 @@
 Isrcsubmit for MusicBrainz
 ==========================
-(Linux/Icedax)
----
 
 This python script extracts
 [ISRCs](http://en.wikipedia.org/wiki/International_Standard_Recording_Code)
@@ -12,6 +10,7 @@ and submits them to [MusicBrainz](http://musicbrainz.org).
 Usable backends:
 ---------------
 
+* [Cdrdao](http://en.wikipedia.org/wiki/Cdrdao)
 * Cdda2wav (in [cdrtools](http://en.wikipedia.org/wiki/Cdrtools))
 * Icedax (in [cdrkit](http://en.wikipedia.org/wiki/Cdrkit))
 
