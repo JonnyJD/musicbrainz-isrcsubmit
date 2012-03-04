@@ -1,5 +1,5 @@
-Isrcsubmit for MusicBrainz
-==========================
+Isrcsubmit 0.4 for MusicBrainz
+==============================
 
 This python script extracts
 [ISRCs](http://en.wikipedia.org/wiki/International_Standard_Recording_Code)
@@ -10,7 +10,8 @@ This script currently uses
 [python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
 to access the MusicBrainz API.
 Python2 >= 2.4 should be fine for both.
-This was tested on Linux, but should in general also work in Windows and OS X.
+You also need [libdiscid](http://musicbrainz.org/doc/libdiscid) and with python < 2.5 you also need [ctypes](http://starship.python.net/crew/theller/ctypes/)
+This was tested on Linux, but should in general also work on Windows and OS X.
 Reports are welcome.
 
 
@@ -20,6 +21,7 @@ Usable backends:
 * [Cdrdao](http://en.wikipedia.org/wiki/Cdrdao)
 * Cdda2wav (in [cdrtools](http://en.wikipedia.org/wiki/Cdrtools))
 * Icedax (in [cdrkit](http://en.wikipedia.org/wiki/Cdrkit))
+* drutil (preliminary, still needs someone testing with libdiscid)
 
 
 features:
@@ -36,7 +38,11 @@ features:
 usage:
 -----
 
-    isrcsubmit.py [-d] username [device]
+    isrcsubmit.py [options] username [device]
+
+for detailed usage see:
+
+    isrcsubmit.py -h
 
 That is the username at musicbrainz and the device should be something like
 `/dev/cdrom` (default) or `/dev/dvdrw`.
@@ -57,10 +63,9 @@ to the server.
 help:
 -----
 
-    isrcsubmit.py -h
+    isrcsubmit.py --help
 
 
-The script runs on Python version 2 and is tested with Python 2.7
 
 -
 
