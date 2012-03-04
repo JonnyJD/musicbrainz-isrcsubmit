@@ -25,7 +25,7 @@ http://kraehen.org/isrcsubmit.py
 isrcsubmitVersion = "0.3.1"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
 # starting with highest priority
-backends = ["cdrdao", "cdda2wav", "icedax"]
+backends = ["cdrdao", "cdda2wav", "icedax", "drutil"]
 packages = {"cdda2wav": "cdrtools", "icedax": "cdrkit"}
 
 import os
@@ -211,6 +211,12 @@ def getProgVersion(prog):
     elif prog == "cdrdao":
         outdata = Popen([prog], stderr=PIPE).communicate()[1]
         return " ".join(outdata.splitlines()[0].split()[::2][0:2])
+    elif prog == "drutil":
+        outdata = Popen([prog, "version"], stdout=PIPE).communicate()[0]
+        version = prog
+        for line in outdata.splitlines():
+            if len(line) > 0: version += " " + line.split(":")[1].strip()
+        return version
     else:
         return prog
 
@@ -307,6 +313,25 @@ def gatherIsrcs(backend, device):
                 os.unlink(tmpfile)
             except:
                 pass
+    elif backend == "drutil":
+        pattern = \
+        'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+        try:
+            p1 = Popen([backend, 'subchannel', '-drive', device], stdout=PIPE)
+            p2 = Popen(['grep', 'ISRC'], stdin=p1.stdout, stdout=PIPE)
+            isrcout = p2.stdout
+        except OSError, e:
+            backendError(backend, e)
+        for line in isrcout:
+            if debug: print line,
+            if line.startswith("Track") and line.find("block") > 0:
+                m = re.search(pattern, line)
+                if m == None:
+                    print "can't find ISRC in:", line
+                    continue
+                trackNumber = int(m.group(1))
+                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                backend_output.append((trackNumber, isrc))
 
     return backend_output
 
@@ -406,6 +431,9 @@ if backend is None:
 else:
     print "using", getProgVersion(backend)
 
+if backend == "drutils" and device == "/dev/cdrom":
+    # drutil expects 1,2,..
+    device = 1
 
 print
 print "Please input your Musicbrainz password"
