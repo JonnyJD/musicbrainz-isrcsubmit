@@ -6,6 +6,13 @@ This python script extracts
 from audio cds
 and submits them to [MusicBrainz](http://musicbrainz.org).
 
+This script currently uses
+[python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
+to access the MusicBrainz API.
+Python2 >= 2.4 should be fine for both.
+This was tested on Linux, but should in general also work in Windows and OS X.
+Reports are welcome.
+
 
 Usable backends:
 ---------------

@@ -34,6 +34,7 @@ import sys
 import getpass
 import tempfile
 from datetime import datetime
+from optparse import OptionParser
 from subprocess import Popen, PIPE
 from distutils.version import StrictVersion
 from musicbrainz2 import __version__ as musicbrainz2_version
@@ -46,16 +47,21 @@ from musicbrainz2.webservice import ConnectionError, WebServiceError
 
 scriptname = os.path.basename(sys.argv[0])
 
-def print_usage(scriptname):
-    print
-    print "usage:", scriptname, "[-d] USERNAME [DEVICE]"
-    print
-    print " -d, --debug\tenable debug messages"
-    print " -h, --help\tprint usage and multi-disc information"
-    print
+def scriptVersion(option=None, opt=None, value=None, parser=None):
+    return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmitVersion
 
-help_text = \
-"""A note on Multi-disc-releases:
+def printHelp(option=None, opt=None, value=None, parser=None):
+    print \
+"""
+This python script extracts ISRCs from audio cds and submits them to MusicBrainz (musicbrainz.org).
+You need to have a MusicBrainz account, specify the username and will be asked for your password every time you execute the script.
+
+Isrcsubmit will warn you if there are any problems and won't actually submit anything to MusicBrainz without giving a final choice.
+
+Isrcsubmit will warn you if any duplicate ISRCs are detected and help you fix priviously inserted duplicate ISRCs.
+The ISRC-track relationship we found on our disc is taken as our correct evaluation.
+
+A note on Multi-disc-releases:
 
 Isrcsubmit uses the MusicBrainz web service version 1.
 This api is not tailored for MusicBrainz NGS (Next Generation Schema) and expects to have one release per disc. So it does not know which tracks are on a specific disc and lists all tracks in the overall release.
@@ -75,15 +81,11 @@ Isrcsubmit only knows how many tracks the current disc has and the total number 
 
 The number of discs in the release and the position of this disc give by isrcsubmit is not necessarily correct. There can be multiple disc IDs per actual disc. You should only count tracks on your actual discs.
 Isrcsubmit can give you a link for an overview of the disc IDs for your release.
-
-Isrcsubmit will warn you if there are any problems and won't actually submit anything to MusicBrainz without giving a final choice.
-
-
-Isrcsubmit will warn you if any duplicate ISRCs are detected and help you fix priviously inserted duplicate ISRCs.
-The ISRC-track relationship we found on our disc is taken as our correct evaluation.
-
-
+"""
+    parser.print_usage()
+    print """\
 Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit"""
+    sys.exit(0)
 
 
 class Isrc(object):
@@ -150,7 +152,57 @@ class OwnTrack(NumberedTrack):
     """
     pass
 
-def get_prog_version(prog):
+def gatherOptions(argv):
+    defaultDevice = "/dev/cdrom"
+    parser = OptionParser(version=scriptVersion(), add_help_option=False)
+    parser.set_usage("%prog [options] user [device]\n       %prog -h")
+    parser.add_option("-h", action="help",
+            help="Short usage help")
+    parser.add_option("--help", action="callback", callback=printHelp,
+            help="Complete help for the script")
+    parser.add_option("-u", "--user", metavar="USERNAME",
+            help="MusicBrainz username, if not given as argument.")
+    # note that -d previously stand for debug
+    parser.add_option("-d", "--device", metavar="DEVICE",
+            help="CD device with a loaded audio cd, if not given as argument."
+            + " The default is " + defaultDevice)
+    parser.add_option("-b", "--backend", choices=backends, metavar="PROGRAM",
+            help="Force using a specifig backend to extract ISRCs from the"
+            + " disc. Possible backends are: %s." % ", ".join(backends)
+            + " They are tried in this order otherwise." )
+    parser.add_option("--debug", action="store_true", default=False,
+            help="Show debug messages."
+            + " Currently shows some backend messages.")
+    (options, args) = parser.parse_args(argv[1:])
+
+    # "optional" positional arguments
+    # only optional when the data is already added as option..
+    # not sure if that is convenience or makes it impossible to understand..
+    if options.user is None:
+        if len(args) > 0:
+            options.user = args[0]
+            args = args[1:]
+        else:
+            printError("No username given")
+            parser.print_usage()
+            sys.exit(-1)
+    if options.device is None:
+        if len(args) > 0:
+            options.device = args[0]
+            args = args[1:]
+        else:
+            options.device = "/dev/cdrom"
+    if len(args) > 0:
+        print "WARNING: Superfluous arguments:", ", ".join(args)
+    if options.backend and not has_backend(options.backend, strict=True):
+        printError("Chosen backend not found. No ISRC extraction possible!")
+        printError2("Make sure that %s is installed." % options.backend)
+        sys.exit(-1)
+
+    return options
+
+
+def getProgVersion(prog):
     if prog == "icedax":
         return Popen([prog, "--version"], stderr=PIPE).communicate()[1].strip()
     elif prog == "cdda2wav":
@@ -162,8 +214,7 @@ def get_prog_version(prog):
     else:
         return prog
 
-
-def has_backend(backend):
+def has_backend(backend, strict=False):
     devnull = open(os.devnull, "w")
     p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
     backend_path = p_which.communicate()[0].strip()
@@ -171,7 +222,11 @@ def has_backend(backend):
         # check if it is only a symlink to another backend
         real_backend = os.path.basename(os.path.realpath(backend_path))
         if backend != real_backend and real_backend in backends: 
-            return False # use real backend instead, or higher priority
+            if strict:
+                print "WARNING: %s is a symlink to %s" % (backend, real_backend)
+                return True
+            else:
+                return False # use real backend instead, or higher priority
         return True
     else:
         return False
@@ -197,7 +252,7 @@ def backendError(backend, e):
             % (backend, e.errno, e.strerror))
     sys.exit(1)
 
-def gatherIsrcs(backend):
+def gatherIsrcs(backend, device):
     backend_output = []
     devnull = open(os.devnull, "w")
 
@@ -255,6 +310,7 @@ def gatherIsrcs(backend):
 
     return backend_output
 
+
 def cleanupIsrcs(isrcs):
     for isrc in isrcs:
         tracks = isrcs[isrc].getTracks()
@@ -297,30 +353,17 @@ def cleanupIsrcs(isrcs):
                 raw_input("(press <return> when done with this ISRC) ")
 
 
-print "isrcsubmit", isrcsubmitVersion, "by JonnyJD for MusicBrainz"
+# "main" + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
 
-# gather arguments
-if len(sys.argv) < 2 or len(sys.argv) > 4:
-    print_usage(scriptname)
-    sys.exit(1)
-else:
-    # defaults
-    debug = False
-    username = None
-    device = "/dev/cdrom"
-    for i in range(1, len(sys.argv)):
-        arg = sys.argv[i]
-        if arg == "-d" or arg == "--debug":
-            debug = True
-        elif arg == "-h" or arg == "--help":
-            print_usage()
-            print
-            print help_text
-            sys.exit(0)
-        elif username == None:
-            username = arg
-        else:
-            device = arg
+print scriptVersion()
+print
+
+# gather chosen options
+options = gatherOptions(sys.argv)
+username = options.user
+device   = options.device
+backend  = options.backend
+debug    = options.debug
 
 print "using python-musicbrainz2", musicbrainz2_version
 if StrictVersion(musicbrainz2_version) < "0.7.0":
@@ -342,12 +385,13 @@ if StrictVersion(musicbrainz2_version) < "0.7.4":
     print
 
 # search for backend
-backend = None
-for prog in backends:
-    if has_backend(prog):
-        backend = prog
-        break
+if backend is None:
+    for prog in backends:
+        if has_backend(prog):
+            backend = prog
+            break
 
+# (still) no backend available?
 if backend is None:
     verbose_backends = []
     for program in backends:
@@ -360,7 +404,8 @@ if backend is None:
     printError2("  " + ", ".join(verbose_backends))
     sys.exit(-1)
 else:
-    print "using", get_prog_version(backend)
+    print "using", getProgVersion(backend)
+
 
 print
 print "Please input your Musicbrainz password"
@@ -533,7 +578,7 @@ else:
 
 print
 # Extract ISRCs
-backend_output = gatherIsrcs(backend) # (track, isrc)
+backend_output = gatherIsrcs(backend, device) # (track, isrc)
 
 # prepare to add the ISRC we found to the corresponding track
 # and check for local duplicates now and server duplicates later
@@ -609,5 +654,6 @@ if update_intention:
         print "that are attached to multiple tracks on this release."
         if raw_input("Do you want to help clean those up? [y/N] ") == "y":
             cleanupIsrcs(isrcs)
+
 
 # vim:set shiftwidth=4 smarttab expandtab:
