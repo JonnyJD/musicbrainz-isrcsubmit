@@ -195,7 +195,7 @@ def gatherOptions(argv):
             options.device = defaultDevice
     if len(args) > 0:
         print "WARNING: Superfluous arguments:", ", ".join(args)
-    if options.backend and not has_backend(options.backend, strict=True):
+    if options.backend and not hasBackend(options.backend, strict=True):
         printError("Chosen backend not found. No ISRC extraction possible!")
         printError2("Make sure that %s is installed." % options.backend)
         sys.exit(-1)
@@ -221,7 +221,7 @@ def getProgVersion(prog):
     else:
         return prog
 
-def has_backend(backend, strict=False):
+def hasBackend(backend, strict=False):
     devnull = open(os.devnull, "w")
     p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
     backend_path = p_which.communicate()[0].strip()
@@ -417,7 +417,7 @@ if StrictVersion(musicbrainz2_version) < "0.7.4":
 # search for backend
 if backend is None:
     for prog in backends:
-        if has_backend(prog):
+        if hasBackend(prog):
             backend = prog
             break
 
