@@ -12,8 +12,9 @@ This script currently uses
 [python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
 to access the MusicBrainz API.
 Python2 >= 2.4 should be fine for both.
-You also need [libdiscid](https://github.com/JonnyJD/musicbrainz-isrcsubmit/wiki/libdiscid) and with python < 2.5 you also need [ctypes](http://starship.python.net/crew/theller/ctypes/)
-The script works for Linux and Mac OS X.
+You also need [libdiscid](https://github.com/JonnyJD/musicbrainz-isrcsubmit/wiki/libdiscid) and with python < 2.5 you also need [ctypes](http://starship.python.net/crew/theller/ctypes/).
+
+The script works for Linux and Mac OS X. However, drutils, the backend for Mac WILL take a long time (several minutes) per disc and might give duplicates more often. Isrcsubmit will tell you about it though.
 
 
 Usable backends:
