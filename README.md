@@ -1,5 +1,7 @@
 Isrcsubmit 0.4 for MusicBrainz
 ==============================
+(Linux/Mac OS X)
+----------------
 
 This python script extracts
 [ISRCs](http://en.wikipedia.org/wiki/International_Standard_Recording_Code)
@@ -10,9 +12,8 @@ This script currently uses
 [python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
 to access the MusicBrainz API.
 Python2 >= 2.4 should be fine for both.
-You also need [libdiscid](http://musicbrainz.org/doc/libdiscid) and with python < 2.5 you also need [ctypes](http://starship.python.net/crew/theller/ctypes/)
-This was tested on Linux, but should in general also work on Windows and OS X.
-Reports are welcome.
+You also need [libdiscid](https://github.com/JonnyJD/musicbrainz-isrcsubmit/wiki/libdiscid) and with python < 2.5 you also need [ctypes](http://starship.python.net/crew/theller/ctypes/)
+The script works for Linux and Mac OS X.
 
 
 Usable backends:
@@ -21,7 +22,7 @@ Usable backends:
 * [Cdrdao](http://en.wikipedia.org/wiki/Cdrdao)
 * Cdda2wav (in [cdrtools](http://en.wikipedia.org/wiki/Cdrtools))
 * Icedax (in [cdrkit](http://en.wikipedia.org/wiki/Cdrkit))
-* drutil (preliminary, still needs someone testing with libdiscid)
+* drutil (in Mac OS X)
 
 
 features:

@@ -165,7 +165,7 @@ def gatherOptions(argv):
     # note that -d previously stand for debug
     parser.add_option("-d", "--device", metavar="DEVICE",
             help="CD device with a loaded audio cd, if not given as argument."
-            + " The default is " + defaultDevice)
+            + " The default is " + defaultDevice + " for linux and '1' for mac")
     parser.add_option("-b", "--backend", choices=backends, metavar="PROGRAM",
             help="Force using a specifig backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(backends)
@@ -191,7 +191,8 @@ def gatherOptions(argv):
             options.device = args[0]
             args = args[1:]
         else:
-            options.device = "/dev/cdrom"
+            # device is changed again for Mac, when we know the final backend
+            options.device = defaultDevice
     if len(args) > 0:
         print "WARNING: Superfluous arguments:", ", ".join(args)
     if options.backend and not has_backend(options.backend, strict=True):
@@ -236,6 +237,10 @@ def has_backend(backend, strict=False):
         return True
     else:
         return False
+
+def getRealMacDevice(optionDevice):
+    p = Popen(["drutil", "status", "-drive", optionDevice], stdout=PIPE)
+    return p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
 
 def askForOffset(discTrackCount, releaseTrackCount):
     print
@@ -386,7 +391,7 @@ print
 # gather chosen options
 options = gatherOptions(sys.argv)
 username = options.user
-device   = options.device
+# we set the device after we know which backen we will use
 backend  = options.backend
 debug    = options.debug
 
@@ -431,9 +436,21 @@ if backend is None:
 else:
     print "using", getProgVersion(backend)
 
-if backend == "drutils" and device == "/dev/cdrom":
-    # drutil expects 1,2,..
-    device = 1
+if backend == "drutil":
+    # drutil (Mac OS X) expects 1,2,..
+    # convert linux default
+    if options.device == "/dev/cdrom":
+        options.device = "1"
+    # libdiscid needs to know what disk that corresponds to
+    # drutil will tell us
+    device = getRealMacDevice(options.device)
+    if debug:
+        print "CD drive #%s corresponds to %s internally" % (
+                                                options.device, device)
+else:
+    # for linux the real device is the same as given in the options
+    device = options.device
+
 
 print
 print "Please input your Musicbrainz password"
@@ -606,7 +623,7 @@ else:
 
 print
 # Extract ISRCs
-backend_output = gatherIsrcs(backend, device) # (track, isrc)
+backend_output = gatherIsrcs(backend, options.device) # (track, isrc)
 
 # prepare to add the ISRC we found to the corresponding track
 # and check for local duplicates now and server duplicates later
