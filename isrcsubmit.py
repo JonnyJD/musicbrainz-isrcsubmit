@@ -240,7 +240,9 @@ def hasBackend(backend, strict=False):
 
 def getRealMacDevice(optionDevice):
     p = Popen(["drutil", "status", "-drive", optionDevice], stdout=PIPE)
-    return p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
+    given = p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
+    # libdiscid needs the "raw" version
+    return given.replace("/disk", "/rdisk")
 
 def askForOffset(discTrackCount, releaseTrackCount):
     print
