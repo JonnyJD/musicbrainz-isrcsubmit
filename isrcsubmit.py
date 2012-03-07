@@ -45,7 +45,12 @@ from musicbrainz2.webservice import ReleaseFilter, ReleaseIncludes
 from musicbrainz2.webservice import RequestError, AuthenticationError
 from musicbrainz2.webservice import ConnectionError, WebServiceError
 
-scriptname = os.path.basename(sys.argv[0])
+# using a shellscript to get the correct python version (2.5 - 2.7)
+shellname = "isrcsubmit.sh"
+if os.path.isfile(shellname):
+    scriptname = shellname
+else:
+    scriptname = os.path.basename(sys.argv[0])
 
 def scriptVersion(option=None, opt=None, value=None, parser=None):
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmitVersion
@@ -154,8 +159,9 @@ class OwnTrack(NumberedTrack):
 
 def gatherOptions(argv):
     defaultDevice = "/dev/cdrom"
+    prog = scriptname
     parser = OptionParser(version=scriptVersion(), add_help_option=False)
-    parser.set_usage("%prog [options] user [device]\n       %prog -h")
+    parser.set_usage("%s [options] user [device]\n       %s -h" % (prog, prog))
     parser.add_option("-h", action="help",
             help="Short usage help")
     parser.add_option("--help", action="callback", callback=printHelp,
