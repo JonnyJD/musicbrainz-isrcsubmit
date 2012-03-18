@@ -3,7 +3,7 @@
 <head>
   <meta charset='utf-8'>
 
-  <title>Isrcsubmit for MusicBrainz @ GitHub</title>
+  <title>Isrcsubmit for MusicBrainz - {{ page.title }}</title>
 
   <style type="text/css">
     body {
@@ -83,9 +83,14 @@
       </div>
     </div>
     <div class="nav">
-      <a href="">home</a>
-      <a href="libdiscid">libdiscid</a>
-      <a href="download">download</a>
+    {% for link in site.nav %}
+      {% assign class = 'inactive' %}
+      {% if page.title == link.title %}
+        {% assign class = 'current' %}
+      {% endif %}
+      <a class="{{ class }}" href="{{ link.url }}">{{ link.text }}</a>
+    {% endfor %}
+    {% assign class = nil %}
     </div>
 
     

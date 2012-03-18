@@ -1,0 +1,7 @@
+# create URLs without .html suffix
+# I consider this to be an implementation detail
+
+RewriteEngine On
+
+RewriteRule ^download$ download.html
+RewriteRule ^libdiscid$ libdiscid.html

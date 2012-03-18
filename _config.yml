@@ -1,0 +1,6 @@
+nav:
+- title: home
+- title: download
+  url: download
+- title: libdiscid
+  url: libdiscid
