@@ -15,13 +15,15 @@
     #container {
       margin: 0 auto;
       width: 700px;
+      background-color: #FFFFFF;
+      padding: 15px;
     }
-    h1 { font-size: 3.8em; color: #8c9254; margin-bottom: 3px; }
+    h1 { font-size: 3.8em; margin-bottom: 3px; }
     h1 .small { font-size: 0.4em; }
     h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #8c9254; }
-    h3 { text-align: center; color: #8c9254; }
-    a { color: #8c9254; }
+    h2 { font-size: 1.5em; }
+    h3 { text-align: center; }
+    a { }
     .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
     .download { float: right; }
     pre { background: #000; color: #fff; padding: 15px;}
@@ -51,15 +53,18 @@
 
     
       <p>This python script extracts
-[ISRCs](http://en.wikipedia.org/wiki/International_Standard_Recording_Code)
+<a href="http://en.wikipedia.org/wiki/International_Standard_Recording_Code">ISRCs</a>
 from audio cds
-and submits them to [MusicBrainz](http://musicbrainz.org).
+and submits them to <a href="http://musicbrainz.org">MusicBrainz</a>.
 
 This script currently uses
-[python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
+<a href="http://musicbrainz.org/doc/python-musicbrainz2">python-musicbrainz2</a>
 to access the MusicBrainz API.
-Python2 >= 2.4 should be fine for both.
-You also need [libdiscid](https://github.com/JonnyJD/musicbrainz-isrcsubmit/wiki/libdiscid) and with python < 2.5 you also need [ctypes](http://starship.python.net/crew/theller/ctypes/).
+Python2 &gt;= 2.4 should be fine for both.
+You also need
+<a href="https://github.com/JonnyJD/musicbrainz-isrcsubmit/wiki/libdiscid">libdiscid</a>
+and with python &lt; 2.5 you also need
+<a href="http://starship.python.net/crew/theller/ctypes/">ctypes</a>.
 
 The script works for Linux and Mac OS X. However, drutils, the backend for Mac WILL take a long time (several minutes) per disc and might give duplicates more often. Isrcsubmit will tell you about it though.
 </p>
@@ -67,27 +72,27 @@ The script works for Linux and Mac OS X. However, drutils, the backend for Mac W
 
     
       <h2>Dependencies</h2>
-      <p>python-musicbrainz2</p>
+      <p><a href="http://musicbrainz.org/doc/python-musicbrainz2">python-musicbrainz2</a></p>
     
 
     
       <h2>Install</h2>
-      <p>just run isrcsubmit.py</p>
+      <p>Not necessary, just run isrcsubmit.py</p>
     
 
     
       <h2>License</h2>
-      <p>GPL3</p>
+      <p><a href="http://www.gnu.org/licenses/gpl-3.0.html">GPL3</a></p>
     
 
     
       <h2>Authors</h2>
-      <p>Johannes Dewender (github@JonnyJD.net)<br/>      </p>
+      <p>Johannes Dewender (github@JonnyJD.net)<br/>      </p>
     
 
     
       <h2>Contact</h2>
-      <p>Johannes Dewender (github@JonnyJD.net)<br/>      </p>
+      <p>Johannes Dewender (github@JonnyJD.net)<br/>      </p>
     
 
     <h2>Download</h2>
