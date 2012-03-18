@@ -86,27 +86,44 @@
 
     
     <div class="content">
-      <p>This python script extracts
+      <p>
+This python script extracts
 <a href="http://en.wikipedia.org/wiki/International_Standard_Recording_Code">ISRCs</a>
 from audio cds
 and submits them to <a href="http://musicbrainz.org">MusicBrainz</a>.
+      </p>
 
-This script currently uses
-<a href="http://musicbrainz.org/doc/python-musicbrainz2">python-musicbrainz2</a>
-to access the MusicBrainz API.
-Python2 &gt;= 2.4 should be fine for both.
-You also need
-<a href="https://github.com/JonnyJD/musicbrainz-isrcsubmit/wiki/libdiscid">libdiscid</a>
-and with python &lt; 2.5 you also need
-<a href="http://starship.python.net/crew/theller/ctypes/">ctypes</a>.
-
+      <p>
 The script works for Linux and Mac OS X. However, drutils, the backend for Mac WILL take a long time (several minutes) per disc and might give duplicates more often. Isrcsubmit will tell you about it though.
-</p>
+      </p>
     
 
     
       <h2>Dependencies</h2>
-      <p><a href="http://musicbrainz.org/doc/python-musicbrainz2">python-musicbrainz2</a></p>
+      <ul>
+        <li>Python2 &gt;= 2.4</li>
+        <li>
+<a href="http://musicbrainz.org/doc/python-musicbrainz2">python-musicbrainz2</a>
+to access the MusicBrainz XMP API version 1
+        </li>
+        <li>
+<a href="https://github.com/JonnyJD/musicbrainz-isrcsubmit/wiki/libdiscid">libdiscid</a>
+to calculate an ID for a disc
+        </li>
+        <li>
+        (<a href="http://starship.python.net/crew/theller/ctypes/">ctypes</a>
+        with Python &lt; 2.5)
+        </li>
+        <li>one of the usable backends
+      </ul>
+
+      <h3>Usable Backends</h3>
+      <ul>
+        <li><a href="http://en.wikipedia.org/wiki/Cdrdao">Cdrdao</a></li>
+        <li>Cdda2wav (in <a href="http://en.wikipedia.org/wiki/Cdrtools">cdrtools</a>)</li>
+        <li>Icedax (in <a href="http://en.wikipedia.org/wiki/Cdrkit">cdrkit</a>)</li>
+        <li>drutil (in Mac OS X)</li>
+      </ul>
     
 
     
@@ -137,7 +154,7 @@ The script works for Linux and Mac OS X. However, drutils, the backend for Mac W
     </p>
     <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
       by running:
-      <pre>$ git clone git://github.com/JonnyJD/musicbrainz-isrcsubmit</pre>
+      <pre>$ git clone https://github.com/JonnyJD/musicbrainz-isrcsubmit</pre>
     </p>
     </div>
 
