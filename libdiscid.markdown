@@ -2,6 +2,7 @@
 layout: default
 title: libdiscid
 ---
+## libdiscid
 This library is needed by pyton-musicbrainz2 in order to get the ID from the disc, which is then used to lookup the disc at [MusicBrainz](http://musicbrainz.org).
 
 ### Linux
