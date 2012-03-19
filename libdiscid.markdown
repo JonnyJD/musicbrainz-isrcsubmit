@@ -8,7 +8,7 @@ This library is needed by pyton-musicbrainz2 in order to get the ID from the dis
 You should check if the package is in a repository for your distribution. It mostly is.
 
 ### Mac OS X
-There are packages with pre-compiled libdiscid versions for Intel Macs (32 and 64 bit) and PPC in the [Download section](https://github.com/JonnyJD/musicbrainz-isrcsubmit/downloads).
+There are packages with pre-compiled libdiscid versions for Intel Macs (32 and 64 bit) and PPC in the <a href="download">Download section</a>.
 32 bit versions are taken from [Picard](http://wiki.musicbrainz.org/MusicBrainz_Picard) compiles. I compiled a 64 bit version.
 
 ### Compile it yourself

@@ -1,5 +1,9 @@
+---
+layout: default
+title: download
+---
 <div class="download">
-<a href="https://github.com/JonnyJD/musicbrainz-isrcsubmit/downloads">
+<a href="https://github.com/{{ site.github.url }}/downloads">
 <img src="img/download_128.png"></a>
 </div>
 
@@ -32,6 +36,3 @@ isrcsubmit-\*.tar.gz:
 
 This is the official release version.
 This is basically the same as downloading the tag in github. There might be minor packaging differences and the folder name is different.
-
-
-https://github.com/JonnyJD/musicbrainz-isrcsubmit

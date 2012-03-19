@@ -1,5 +1,8 @@
+github:
+  url: JonnyJD/musicbrainz-isrcsubmit
 nav:
 - title: home
+  url: ./
 - title: download
   url: download
 - title: libdiscid
