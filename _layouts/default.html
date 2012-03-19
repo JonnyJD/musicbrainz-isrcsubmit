@@ -17,19 +17,19 @@
       background-color: #fff;
       border: 1px solid #736DAB;
     }
-    h1 { font-size: 3.8em; margin-bottom: 3px; }
+    h1 { font-size: 3.8em; margin: 0px; }
     h1 .small { font-size: 0.4em; }
     h1 a { text-decoration: none }
     h2 { font-size: 1.5em; }
     h3 { text-align: center; }
-    a { }
+    a.current { font-weight: bold; }
     .description {
       font-size: 1.2em;
       font-style: italic;
     }
     .download {
       float: right;
-      background-color: #736DAB;
+      margin: 10px;
     }
     .head {
       padding: 0px 15px;
@@ -58,6 +58,9 @@
       font-style: italic;
       background-color: #736DAB;
     }
+    .footer a {
+      color: #000;
+    }
   </style>
 </head>
 
@@ -65,16 +68,11 @@
   <a href="https://github.com/JonnyJD/musicbrainz-isrcsubmit"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
 
   <div id="container">
-
     <div class="head">
       <div class="download">
-        <a href="https://github.com/JonnyJD/musicbrainz-isrcsubmit/zipball/master">
-          <img border="0" width="90" src="https://github.com/images/modules/download/zip.png"></a>
-        <a href="https://github.com/JonnyJD/musicbrainz-isrcsubmit/tarball/master">
-          <img border="0" width="90" src="https://github.com/images/modules/download/tar.png"></a>
+        <a href="download"><img src="img/download_48.png"></a>
       </div>
 
-      <br />
       <h1><a href="https://github.com/JonnyJD/musicbrainz-isrcsubmit">Isrcsubmit for MusicBrainz</a>
         <span class="small">by <a href="https://github.com/JonnyJD">JonnyJD</a></span></h1>
       <h2>(Linux / Mac OS X)</h2>
@@ -82,18 +80,14 @@
         A script to submit ISRCs from disc to MusicBrainz.
       </div>
     </div>
-    <div class="nav">
-    {% for link in site.nav %}
+    <div class="nav">{% for link in site.nav %}
       {% assign class = 'inactive' %}
-      {% if page.title == link.title %}
-        {% assign class = 'current' %}
-      {% endif %}
-      <a class="{{ class }}" href="{{ link.url }}">{{ link.text }}</a>
-    {% endfor %}
+      {% if page.title == link.title %}{% assign class = 'current' %}{% endif %}
+      <a class="{{ class }}" href="{{ link.url }}">{{ link.title }}</a>
+    {% endfor %}</div>
     {% assign class = nil %}
-    </div>
-
     
+
     <div class="content">
       {{ content }}
     </div>
