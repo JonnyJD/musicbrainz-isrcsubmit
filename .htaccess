@@ -5,3 +5,4 @@ RewriteEngine On
 
 RewriteRule ^download$ download.html
 RewriteRule ^libdiscid$ libdiscid.html
+RewriteRule ^links$ inks.html
