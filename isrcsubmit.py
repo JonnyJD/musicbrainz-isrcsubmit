@@ -313,7 +313,7 @@ def gatherIsrcs(backend, device):
             with open(tmpfile, "r") as toc:
                 for line in toc:
                     words = line.split()
-                    if len(words) > 0:
+                    if not line.startswith(" ") and len(words) > 0:
                         if words[0] == "//":
                             trackNumber = int(words[2])
                         elif words[0] == "ISRC":
