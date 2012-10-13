@@ -316,7 +316,7 @@ def gatherIsrcs(backend, device):
                     if len(words) > 0:
                         if words[0] == "//":
                             trackNumber = int(words[2])
-                        elif (words[0] == "ISRC" and trackNumber != None):
+                        elif words[0] == "ISRC" and trackNumber is not None:
                             isrc = words[1].strip('" ')
                             backend_output.append((trackNumber, isrc))
                             # safeguard against missing trackNumber lines
