@@ -22,7 +22,7 @@ and the script is als available on
 http://kraehen.org/isrcsubmit.py
 """
 
-isrcsubmitVersion = "0.4.1"
+isrcsubmitVersion = "0.4.2"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
 # starting with highest priority
 backends = ["cdrdao", "cdda2wav", "icedax", "drutil"]
