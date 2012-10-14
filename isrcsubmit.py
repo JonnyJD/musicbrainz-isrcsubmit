@@ -271,6 +271,9 @@ def backendError(backend, e):
             % (backend, e.errno, e.strerror))
     sys.exit(1)
 
+def sanitizeIsrc(isrc):
+    return isrc.strip('" ').replace("-", "")
+
 def gatherIsrcs(backend, device):
     backend_output = []
     devnull = open(os.devnull, "w")
@@ -294,7 +297,8 @@ def gatherIsrcs(backend, device):
                         print "can't find ISRC in:", text
                         continue
                     trackNumber = int(m.group(1))
-                    isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                    isrc = sanitizeIsrc(m.group(2) + m.group(3) +
+                                        m.group(4) + m.group(5))
                     backend_output.append((trackNumber, isrc))
 
     elif backend == "cdrdao":
@@ -316,8 +320,8 @@ def gatherIsrcs(backend, device):
                     if len(words) > 0:
                         if words[0] == "//":
                             trackNumber = int(words[2])
-                        elif words[0] == "ISRC":
-                            isrc = words[1].strip('" ')
+                        elif words[0] == "ISRC" and trackNumber is not None:
+                            isrc = sanitizeIsrc(words[1])
                             backend_output.append((trackNumber, isrc))
                             # safeguard against missing trackNumber lines
                             trackNumber = None
@@ -343,7 +347,8 @@ def gatherIsrcs(backend, device):
                     print "can't find ISRC in:", line
                     continue
                 trackNumber = int(m.group(1))
-                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = sanitizeIsrc(m.group(2) + m.group(3) + m.group(4) +
+                                    m.group(5))
                 backend_output.append((trackNumber, isrc))
 
     return backend_output
