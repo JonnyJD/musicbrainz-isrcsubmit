@@ -277,23 +277,29 @@ class DemandQuery():
 
     def __init__(self, username, agent):
         self._query = None
+        self.auth = False
         self.username = username
         self.agent = agent
 
-    def create(self):
-        print
-        print "Please input your Musicbrainz password"
-        password = getpass.getpass('Password: ')
-        print
-
-        # connect to the server
-        if StrictVersion(musicbrainz2_version) >= "0.7.4":
-            # There is a warning printed above, when < 0.7.4
-            service = WebService(username=self.username, password=password,
-                    userAgent=self.agent)
+    def create(self, auth=False):
+        if auth:
+            print
+            print "Please input your Musicbrainz password"
+            password = getpass.getpass('Password: ')
+            print
+            if StrictVersion(musicbrainz2_version) >= "0.7.4":
+                # There is a warning printed above, when < 0.7.4
+                service = WebService(username=self.username, password=password,
+                        userAgent=self.agent)
+            else:
+                # standard userAgent: python-musicbrainz/__version__
+                service = WebService(username=self.username, password=password)
+            self.auth = True
         else:
-            # standard userAgent: python-musicbrainz/__version__
-            service = WebService(username=self.username, password=password)
+            if StrictVersion(musicbrainz2_version) >= "0.7.4":
+                service = WebService(userAgent=self.agent)
+            else:
+                service = WebService()
 
         # This clientId is currently only used for submitPUIDs and submitCDStub
         # which we both don't do directly.
@@ -308,7 +314,7 @@ class DemandQuery():
         return self._query.getReleaseById(releaseId, include=include)
 
     def submitISRCs(self, tracks2isrcs):
-        if self._query is None: self.create()
+        if not self.auth: self.create(auth=True)
         self._query.submitISRCs(tracks2isrcs)
 
 def getDisc(device, submit=False):
