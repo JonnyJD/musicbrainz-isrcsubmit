@@ -271,6 +271,70 @@ def backendError(backend, e):
             % (backend, e.errno, e.strerror))
     sys.exit(1)
 
+def getDisc(device, submit=False):
+    try:
+        # calculate disc ID from disc
+        disc = readDisc(deviceName=device)
+    except DiscError, e:
+        printError("DiscID calculation failed:", str(e))
+        sys.exit(1)
+
+    discId = disc.getId()
+    discTrackCount = len(disc.getTracks())
+
+    print 'DiscID:\t\t', discId
+    print 'Tracks on Disc:\t', discTrackCount
+
+    # searching for release
+    discId_filter = ReleaseFilter(discId=discId)
+    try:
+        results = q.getReleases(filter=discId_filter)
+    except ConnectionError, e:
+        printError("Couldn't connect to the Server:", str(e))
+        sys.exit(1)
+    except WebServiceError, e:
+        printError("Couldn't fetch release:", str(e))
+        sys.exit(1)
+    if len(results) == 0:
+        print "This Disc ID is not in the Database."
+        if submit:
+            url = getSubmissionUrl(disc)
+            print "Would you like to open Firefox to submit it?",
+            if raw_input("[y/N] ") == "y":
+                try:
+                    os.execlp('firefox', 'firefox', url)
+                except OSError, e:
+                    printError("Couldn't open the url in firefox:", str(e))
+                    printError2("Please submit it via:", url)
+                    sys.exit(1)
+            else:
+                print "Please submit the Disc ID it with this url:"
+                print url
+                sys.exit(1)
+        else:
+            print "recalculating to re-check.."
+            print
+            return None, discTrackCount
+
+    elif len(results) > 1:
+        print "This Disc ID is ambiguous:"
+        for i in range(len(results)):
+            release = results[i].release
+            print str(i)+":", release.getArtist().getName(),
+            print "-", release.getTitle(),
+            print "(" + release.getTypes()[1].rpartition('#')[2] + ")"
+            events = release.getReleaseEvents()
+            for event in events:
+                country = (event.getCountry() or "").ljust(2)
+                date = (event.getDate() or "").ljust(10)
+                barcode = (event.getBarcode() or "").rjust(13)
+                print "\t", country, "\t", date, "\t", barcode
+        num =  raw_input("Which one do you want? [0-%d] " % i)
+        print
+        return results[int(num)], discTrackCount
+    else:
+        return results[0], discTrackCount
+
 def gatherIsrcs(backend, device):
     backend_output = []
     devnull = open(os.devnull, "w")
@@ -467,19 +531,6 @@ print "Please input your Musicbrainz password"
 password = getpass.getpass('Password: ')
 print
 
-try:
-    # get disc ID
-    disc = readDisc(deviceName=device)
-except DiscError, e:
-    printError("DiscID calculation failed:", str(e))
-    sys.exit(1)
-
-discId = disc.getId()
-discTrackCount = len(disc.getTracks())
-
-print 'DiscID:\t\t', discId
-print 'Tracks on Disc:\t', discTrackCount
-
 # connect to the server
 if StrictVersion(musicbrainz2_version) >= "0.7.4":
     # There is a warning printed above, when < 0.7.4
@@ -493,50 +544,11 @@ else:
 # which we both don't do directly.
 q = Query(service, clientId=agentName)
 
-# searching for release
-discId_filter = ReleaseFilter(discId=discId)
-try:
-    results = q.getReleases(filter=discId_filter)
-except ConnectionError, e:
-    printError("Couldn't connect to the Server:", str(e))
-    sys.exit(1)
-except WebServiceError, e:
-    printError("Couldn't fetch release:", str(e))
-    sys.exit(1)
-if len(results) == 0:
-    print "This Disc ID is not in the Database."
-    url = getSubmissionUrl(disc)
-    print "Would you like to open Firefox to submit it?",
-    if raw_input("[y/N] ") == "y":
-        try:
-            os.execlp('firefox', 'firefox', url)
-        except OSError, e:
-            printError("Couldn't open the url in firefox:", str(e))
-            printError2("Please submit it via:", url)
-            sys.exit(1)
-    else:
-        print "Please submit the Disc ID it with this url:"
-        print url
-        sys.exit(1)
-
-elif len(results) > 1:
-    print "This Disc ID is ambiguous:"
-    for i in range(len(results)):
-        release = results[i].release
-        print str(i)+":", release.getArtist().getName(),
-        print "-", release.getTitle(),
-        print "(" + release.getTypes()[1].rpartition('#')[2] + ")"
-        events = release.getReleaseEvents()
-        for event in events:
-            country = (event.getCountry() or "").ljust(2)
-            date = (event.getDate() or "").ljust(10)
-            barcode = (event.getBarcode() or "").rjust(13)
-            print "\t", country, "\t", date, "\t", barcode
-    num =  raw_input("Which one do you want? [0-%d] " % i)
-    result = results[int(num)]
-    print
-else:
-    result = results[0]
+result, discTrackCount = getDisc(device, submit=False)
+if result is None:
+    # recalculate discId and submit it
+    # the script will exit after providing the submission url
+    getDisc(device, submit=True)
 
 # getting release details
 releaseId = result.getRelease().getId()
