@@ -271,6 +271,46 @@ def backendError(backend, e):
             % (backend, e.errno, e.strerror))
     sys.exit(1)
 
+class DemandQuery():
+    """A Query object that opens an actual query on first use
+    """
+
+    def __init__(self, username, agent):
+        self._query = None
+        self.username = username
+        self.agent = agent
+
+    def create(self):
+        print
+        print "Please input your Musicbrainz password"
+        password = getpass.getpass('Password: ')
+        print
+
+        # connect to the server
+        if StrictVersion(musicbrainz2_version) >= "0.7.4":
+            # There is a warning printed above, when < 0.7.4
+            service = WebService(username=self.username, password=password,
+                    userAgent=self.agent)
+        else:
+            # standard userAgent: python-musicbrainz/__version__
+            service = WebService(username=self.username, password=password)
+
+        # This clientId is currently only used for submitPUIDs and submitCDStub
+        # which we both don't do directly.
+        self._query = Query(service, clientId=self.agent)
+
+    def getReleases(self, filter):
+        if self._query is None: self.create()
+        return self._query.getReleases(filter=filter)
+
+    def getReleaseById(self, releaseId, include):
+        if self._query is None: self.create()
+        return self._query.getReleaseById(releaseId, include=include)
+
+    def submitISRCs(self, tracks2isrcs):
+        if self._query is None: self.create()
+        self._query.submitISRCs(tracks2isrcs)
+
 def getDisc(device, submit=False):
     try:
         # calculate disc ID from disc
@@ -282,13 +322,14 @@ def getDisc(device, submit=False):
     discId = disc.getId()
     discTrackCount = len(disc.getTracks())
 
+    print
     print 'DiscID:\t\t', discId
     print 'Tracks on Disc:\t', discTrackCount
 
     # searching for release
     discId_filter = ReleaseFilter(discId=discId)
     try:
-        results = q.getReleases(filter=discId_filter)
+        results = query.getReleases(filter=discId_filter)
     except ConnectionError, e:
         printError("Couldn't connect to the Server:", str(e))
         sys.exit(1)
@@ -313,7 +354,6 @@ def getDisc(device, submit=False):
                 sys.exit(1)
         else:
             print "recalculating to re-check.."
-            print
             return None, discTrackCount
 
     elif len(results) > 1:
@@ -464,10 +504,11 @@ print
 
 # gather chosen options
 options = gatherOptions(sys.argv)
-username = options.user
 # we set the device after we know which backen we will use
-backend  = options.backend
-debug    = options.debug
+backend = options.backend
+debug = options.debug
+# the actuall query will be created when it is used the first time
+query = DemandQuery(options.user, agentName)
 
 print "using python-musicbrainz2", musicbrainz2_version
 if StrictVersion(musicbrainz2_version) < "0.7.0":
@@ -525,25 +566,6 @@ else:
     # for linux the real device is the same as given in the options
     device = options.device
 
-
-print
-print "Please input your Musicbrainz password"
-password = getpass.getpass('Password: ')
-print
-
-# connect to the server
-if StrictVersion(musicbrainz2_version) >= "0.7.4":
-    # There is a warning printed above, when < 0.7.4
-    service = WebService(username=username, password=password,
-            userAgent=agentName)
-else:
-    # standard userAgent: python-musicbrainz/__version__
-    service = WebService(username=username, password=password)
-
-# This clientId is currently only used for submitPUIDs and submitCDStub
-# which we both don't do directly.
-q = Query(service, clientId=agentName)
-
 result, discTrackCount = getDisc(device, submit=False)
 if result is None:
     # recalculate discId and submit it
@@ -554,7 +576,7 @@ if result is None:
 releaseId = result.getRelease().getId()
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
-    release = q.getReleaseById(releaseId, include=include)
+    release = query.getReleaseById(releaseId, include=include)
 except ConnectionError, e:
     printError("Couldn't connect to the Server:", str(e))
     sys.exit(1)
@@ -693,7 +715,7 @@ if len(tracks2isrcs) == 0:
 else:
     if raw_input("Is this correct? [y/N] ") == "y":
         try:
-            q.submitISRCs(tracks2isrcs)
+            query.submitISRCs(tracks2isrcs)
             print "Successfully submitted", len(tracks2isrcs), "ISRCs."
         except RequestError, e:
             printError("Invalid Request:", str(e))
