@@ -311,15 +311,17 @@ def gatherIsrcs(backend, device):
             backendError(backend, e)
         else:
             with open(tmpfile, "r") as toc:
+                trackNumber = None
                 for line in toc:
                     words = line.split()
                     if len(words) > 0:
                         if words[0] == "//":
                             trackNumber = int(words[2])
-                        elif words[0] == "ISRC":
-                            isrc = words[1].strip('" ')
+                        elif words[0] == "ISRC" and trackNumber is not None:
+                            isrc = words[1].strip('" ').replace("-", "")
                             backend_output.append((trackNumber, isrc))
                             # safeguard against missing trackNumber lines
+                            # or duplicated ISRC tags (like in CD-Text)
                             trackNumber = None
         finally:
             try:
