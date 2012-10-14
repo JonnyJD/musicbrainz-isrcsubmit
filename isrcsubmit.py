@@ -687,6 +687,7 @@ backend_output = gatherIsrcs(backend, options.device) # (track, isrc)
 # and check for local duplicates now and server duplicates later
 isrcs = dict()          # isrcs found on disc
 tracks2isrcs = dict()   # isrcs to be submitted
+errors = 0
 for (trackNumber, isrc) in backend_output:
     if isrc not in isrcs:
         isrcs[isrc] = Isrc(isrc)
@@ -696,6 +697,7 @@ for (trackNumber, isrc) in backend_output:
             listOfTracks = map(str, map(lambda l: l[0], with_isrc))
             printError(backend + " gave the same ISRC for multiple tracks!")
             printError2("ISRC:", isrc, "\ttracks:", ", ".join(listOfTracks))
+            errors += 1
     try:
         track = tracks[trackNumber + trackOffset - 1]
         ownTrack = OwnTrack(track, trackNumber)
@@ -709,6 +711,7 @@ for (trackNumber, isrc) in backend_output:
             print isrc, "is already attached to track", trackNumber
     except IndexError, e:
         printError("ISRC", isrc, "found for unknown track", trackNumber)
+        errors += 1
 for isrc in isrcs:
     for track in isrcs[isrc].getTracks():
         trackNumber = track.getNumber()
@@ -719,7 +722,9 @@ update_intention = True
 if len(tracks2isrcs) == 0:
     print "No new ISRCs could be found."
 else:
-    if raw_input("Is this correct? [y/N] ") == "y":
+    if errors > 0:
+        printError(errors, "problems detected")
+    if raw_input("Do you want to submit? [y/N] ") == "y":
         try:
             query.submitISRCs(tracks2isrcs)
             print "Successfully submitted", len(tracks2isrcs), "ISRCs."
