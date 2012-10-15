@@ -319,11 +319,12 @@ class DemandQuery():
 
 
 class Disc(object):
-    def __init__(self, device):
+    def __init__(self, device, submit=False):
         try:
             # calculate disc ID from disc
             self._disc = readDisc(deviceName=device)
             self._release = None
+            self._submit = submit
         except DiscError, e:
             printError("DiscID calculation failed:", str(e))
             sys.exit(1)
@@ -337,10 +338,14 @@ class Disc(object):
         return len(self._disc.getTracks())
 
     @property
+    def submissionUrl(self):
+        return getSubmissionUrl(self._disc)
+
+    @property
     def release(self):
         """The corresponding MusicBrainz release, chosen by the user"""
         if self._release is None:
-            self._release = self.getRelease()
+            self._release = self.getRelease(self._submit)
             # can still be None
         return self._release
 
@@ -359,7 +364,7 @@ class Disc(object):
         if len(results) == 0:
             print "This Disc ID is not in the Database."
             if submit:
-                url = getSubmissionUrl(disc)
+                url = disc.submissionUrl
                 print "Would you like to open Firefox to submit it?",
                 if raw_input("[y/N] ") == "y":
                     try:
@@ -397,7 +402,7 @@ class Disc(object):
         return self._release
 
 def getDisc(device, submit=False):
-    disc = Disc(device)
+    disc = Disc(device, submit)
     print
     print 'DiscID:\t\t', disc.id
     print 'Tracks on Disc:\t', disc.trackCount
