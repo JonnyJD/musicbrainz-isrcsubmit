@@ -317,70 +317,92 @@ class DemandQuery():
         if not self.auth: self.create(auth=True)
         self._query.submitISRCs(tracks2isrcs)
 
-def getDisc(device, submit=False):
-    try:
-        # calculate disc ID from disc
-        disc = readDisc(deviceName=device)
-    except DiscError, e:
-        printError("DiscID calculation failed:", str(e))
-        sys.exit(1)
 
-    global discId
-    discId = disc.getId()
-    discTrackCount = len(disc.getTracks())
+class Disc(object):
+    def __init__(self, device):
+        try:
+            # calculate disc ID from disc
+            self._disc = readDisc(deviceName=device)
+            self._release = None
+        except DiscError, e:
+            printError("DiscID calculation failed:", str(e))
+            sys.exit(1)
 
-    print
-    print 'DiscID:\t\t', discId
-    print 'Tracks on Disc:\t', discTrackCount
+    @property
+    def id(self):
+        return self._disc.getId()
 
-    # searching for release
-    discId_filter = ReleaseFilter(discId=discId)
-    try:
-        results = query.getReleases(filter=discId_filter)
-    except ConnectionError, e:
-        printError("Couldn't connect to the Server:", str(e))
-        sys.exit(1)
-    except WebServiceError, e:
-        printError("Couldn't fetch release:", str(e))
-        sys.exit(1)
-    if len(results) == 0:
-        print "This Disc ID is not in the Database."
-        if submit:
-            url = getSubmissionUrl(disc)
-            print "Would you like to open Firefox to submit it?",
-            if raw_input("[y/N] ") == "y":
-                try:
-                    os.execlp('firefox', 'firefox', url)
-                except OSError, e:
-                    printError("Couldn't open the url in firefox:", str(e))
-                    printError2("Please submit it via:", url)
+    @property
+    def trackCount(self):
+        return len(self._disc.getTracks())
+
+    @property
+    def release(self):
+        """The corresponding MusicBrainz release, chosen by the user"""
+        if self._release is None:
+            self._release = self.getRelease()
+            # can still be None
+        return self._release
+
+    def getRelease(self, submit=False):
+        """Find the corresponding MusicBrainz release
+        """
+        discId_filter = ReleaseFilter(discId=self.id)
+        try:
+            results = query.getReleases(filter=discId_filter)
+        except ConnectionError, e:
+            printError("Couldn't connect to the Server:", str(e))
+            sys.exit(1)
+        except WebServiceError, e:
+            printError("Couldn't fetch release:", str(e))
+            sys.exit(1)
+        if len(results) == 0:
+            print "This Disc ID is not in the Database."
+            if submit:
+                url = getSubmissionUrl(disc)
+                print "Would you like to open Firefox to submit it?",
+                if raw_input("[y/N] ") == "y":
+                    try:
+                        os.execlp('firefox', 'firefox', url)
+                    except OSError, e:
+                        printError("Couldn't open the url in firefox:", str(e))
+                        printError2("Please submit it via:", url)
+                        sys.exit(1)
+                else:
+                    print "Please submit the Disc ID it with this url:"
+                    print url
                     sys.exit(1)
             else:
-                print "Please submit the Disc ID it with this url:"
-                print url
-                sys.exit(1)
+                print "recalculating to re-check.."
+                self._release = None
+        elif len(results) > 1:
+            print "This Disc ID is ambiguous:"
+            for i in range(len(results)):
+                release = results[i].release
+                print str(i)+":", release.getArtist().getName(),
+                print "-", release.getTitle(),
+                print "(" + release.getTypes()[1].rpartition('#')[2] + ")"
+                events = release.getReleaseEvents()
+                for event in events:
+                    country = (event.getCountry() or "").ljust(2)
+                    date = (event.getDate() or "").ljust(10)
+                    barcode = (event.getBarcode() or "").rjust(13)
+                    print "\t", country, "\t", date, "\t", barcode
+            num =  raw_input("Which one do you want? [0-%d] " % i)
+            print
+            self._release = results[int(num)].getRelease()
         else:
-            print "recalculating to re-check.."
-            return None, discTrackCount
+            self._release = results[0].getRelease()
 
-    elif len(results) > 1:
-        print "This Disc ID is ambiguous:"
-        for i in range(len(results)):
-            release = results[i].release
-            print str(i)+":", release.getArtist().getName(),
-            print "-", release.getTitle(),
-            print "(" + release.getTypes()[1].rpartition('#')[2] + ")"
-            events = release.getReleaseEvents()
-            for event in events:
-                country = (event.getCountry() or "").ljust(2)
-                date = (event.getDate() or "").ljust(10)
-                barcode = (event.getBarcode() or "").rjust(13)
-                print "\t", country, "\t", date, "\t", barcode
-        num =  raw_input("Which one do you want? [0-%d] " % i)
-        print
-        return results[int(num)], discTrackCount
-    else:
-        return results[0], discTrackCount
+        return self._release
+
+def getDisc(device, submit=False):
+    disc = Disc(device)
+    print
+    print 'DiscID:\t\t', disc.id
+    print 'Tracks on Disc:\t', disc.trackCount
+    return disc
+
 
 def gatherIsrcs(backend, device):
     backend_output = []
@@ -509,6 +531,7 @@ def cleanupIsrcs(isrcs):
 print scriptVersion()
 print
 
+# - - - - "global" variables - - - -
 # gather chosen options
 options = gatherOptions(sys.argv)
 # we set the device after we know which backen we will use
@@ -516,6 +539,7 @@ backend = options.backend
 debug = options.debug
 # the actuall query will be created when it is used the first time
 query = DemandQuery(options.user, agentName)
+disc = None
 
 print "using python-musicbrainz2", musicbrainz2_version
 if StrictVersion(musicbrainz2_version) < "0.7.0":
@@ -573,14 +597,14 @@ else:
     # for linux the real device is the same as given in the options
     device = options.device
 
-result, discTrackCount = getDisc(device, submit=False)
-if result is None:
+disc = getDisc(device, submit=False)
+if disc.getRelease() is None:
     # recalculate discId and submit it
     # the script will exit after providing the submission url
-    getDisc(device, submit=True)
+    disc = getDisc(device, submit=True)
 
 # getting release details
-releaseId = result.getRelease().getId()
+releaseId = disc.release.getId()
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = query.getReleaseById(releaseId, include=include)
@@ -599,7 +623,7 @@ discs = release.getDiscs()
 discIdCount = len(discs)
 print 'Artist:\t\t', release.getArtist().getName()
 print 'Release:\t', release.getTitle()
-if releaseTrackCount != discTrackCount:
+if releaseTrackCount != disc.trackCount:
     # a track count mismatch probably due to
     # multiple discs in the release
     print "Tracks in Release:", releaseTrackCount
@@ -617,7 +641,7 @@ if releaseTrackCount != discTrackCount:
         # Possibly some data/video track.
         # but also possible that there is a bonus DVD (no disc ID possible)
         print "Track count mismatch!"
-        print "There are", discTrackCount, "tracks on the disc,"
+        print "There are", disc.trackCount, "tracks on the disc,"
         print "but", releaseTrackCount,"tracks"
         print "given for just one DiscID."
         print
@@ -626,7 +650,7 @@ if releaseTrackCount != discTrackCount:
         print "Discs (or disc IDs) in Release: ", discIdCount
         for i in range(discIdCount):
             print "\t", discs[i].getId(),
-            if discs[i].getId() == discId:
+            if discs[i].getId() == disc.id:
                 discIdNumber = i + 1
                 print "[THIS DISC]"
             else:
@@ -641,7 +665,7 @@ if releaseTrackCount != discTrackCount:
         # unless we have a track count mismatch and only one disc id given
         trackOffset = 0
         print "Guessing track offset as", trackOffset
-    elif discIdCount == 1 and discTrackCount < releaseTrackCount:
+    elif discIdCount == 1 and disc.trackCount < releaseTrackCount:
         # bonus DVD (without disc ID) given in MB?
         # better handling in version 2 api
         trackOffset = 0
@@ -650,7 +674,7 @@ if releaseTrackCount != discTrackCount:
     elif discIdCount > 1 and discIdNumber == discIdCount:
         # It is easy to guess the offset when this is the last disc,
         # because we have no unknown track counts after this.
-        trackOffset = releaseTrackCount - discTrackCount
+        trackOffset = releaseTrackCount - disc.trackCount
         print "Guessing track offset as", trackOffset
     else:
         # For "middle" discs we have unknown track numbers
@@ -674,7 +698,7 @@ if releaseTrackCount != discTrackCount:
             except OSError, e:
                 printError("Couldn't open the url in firefox:", str(e))
 
-        trackOffset = askForOffset(discTrackCount, releaseTrackCount)
+        trackOffset = askForOffset(disc.trackCount, releaseTrackCount)
 else:
     # the track count matches
     trackOffset = 0
@@ -745,7 +769,7 @@ if update_intention:
     # add already attached ISRCs
     for i in range(0, len(tracks)):
         track = tracks[i]
-        if i in range(trackOffset, trackOffset + discTrackCount):
+        if i in range(trackOffset, trackOffset + disc.trackCount):
             trackNumber = i - trackOffset + 1
             track = NumberedTrack(track, trackNumber)
         for isrc in track.getISRCs():
