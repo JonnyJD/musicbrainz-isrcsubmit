@@ -325,6 +325,7 @@ def getDisc(device, submit=False):
         printError("DiscID calculation failed:", str(e))
         sys.exit(1)
 
+    global discId
     discId = disc.getId()
     discTrackCount = len(disc.getTracks())
 
