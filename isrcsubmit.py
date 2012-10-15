@@ -419,7 +419,7 @@ def gatherIsrcs(backend, device):
             backendError(backend, e)
         for line in isrcout:
             # there are \n and \r in different places
-            if debug: print line
+            if debug: print line,
             for text in line.splitlines():
                 if text.startswith("T:"):
                     m = re.search(pattern, text)
@@ -446,7 +446,7 @@ def gatherIsrcs(backend, device):
             with open(tmpfile, "r") as toc:
                 trackNumber = None
                 for line in toc:
-                    if debug: print line
+                    if debug: print line,
                     words = line.split()
                     if len(words) > 0:
                         if words[0] == "//":
