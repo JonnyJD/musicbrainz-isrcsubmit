@@ -423,6 +423,7 @@ def gatherIsrcs(backend, device):
             with open(tmpfile, "r") as toc:
                 trackNumber = None
                 for line in toc:
+                    if debug: print line
                     words = line.split()
                     if len(words) > 0:
                         if words[0] == "//":
