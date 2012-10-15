@@ -364,7 +364,7 @@ class Disc(object):
         if len(results) == 0:
             print "This Disc ID is not in the Database."
             if submit:
-                url = disc.submissionUrl
+                url = self.submissionUrl
                 print "Would you like to open Firefox to submit it?",
                 if raw_input("[y/N] ") == "y":
                     try:
