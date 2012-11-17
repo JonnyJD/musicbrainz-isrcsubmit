@@ -416,7 +416,7 @@ class Disc(object):
                     sys.exit(1)
             else:
                 print "recalculating to re-check.."
-                # another call of getRelease with submit=True will follow
+                self.getRelease(submit=True)
 
         return self._release
 
@@ -623,13 +623,7 @@ else:
     device = options.device
 
 disc = getDisc(device, submit=False)
-if disc.getRelease() is None:
-    # recalculate discId and submit it
-    # the script will exit after providing the submission url
-    disc = getDisc(device, submit=True)
-
-# getting release details
-releaseId = disc.release.getId()
+releaseId = disc.release.getId()        # implicitly fetches release
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = query.getReleaseById(releaseId, include=include)
