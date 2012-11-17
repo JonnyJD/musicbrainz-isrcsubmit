@@ -383,12 +383,20 @@ class Disc(object):
         else:
             self._release = results[0].getRelease()
 
-        if self._release is None or self._release.getId() is None:
+        if self._release and self._release.getId() is None:
             # a "release" that is only a stub has no musicbrainz id
-            self._release = None        # don't use stubs
+            print
+            print "There is only a stub in the database:"
+            print self._release.getArtist().getName(),
+            print "-", self._release.getTitle()
+            print
+            self._release = None        # don't use stub
+            submit = True               # the id is verified by the stub
+
+        if self._release is None:
             if submit:
                 url = self.submissionUrl
-                print "Would you like to open Firefox to submit it?",
+                print "Would you like to open Firefox to submit the disc?",
                 if raw_input("[y/N] ") == "y":
                     try:
                         os.execlp('firefox', 'firefox', url)
