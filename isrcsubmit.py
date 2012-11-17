@@ -389,6 +389,12 @@ class Disc(object):
             print "There is only a stub in the database:"
             print self._release.getArtist().getName(),
             print "-", self._release.getTitle()
+            url = "https://musicbrainz.org/cdstub/" + self.id
+            print "Would you like to open it in Firefox?",
+            if raw_input("[y/N] ") == "y":
+                os.spawnlp(os.P_NOWAIT, 'firefox', 'firefox', url)
+            else:
+                print url
             print
             self._release = None        # don't use stub
             submit = True               # the id is verified by the stub
