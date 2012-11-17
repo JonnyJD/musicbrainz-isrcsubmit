@@ -22,7 +22,7 @@ and the script is als available on
 http://kraehen.org/isrcsubmit.py
 """
 
-isrcsubmitVersion = "0.4.2"
+isrcsubmitVersion = "0.4.3"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
 # starting with highest priority
 backends = ["cdrdao", "cdda2wav", "icedax", "drutil"]
@@ -363,23 +363,7 @@ class Disc(object):
             sys.exit(1)
         if len(results) == 0:
             print "This Disc ID is not in the Database."
-            if submit:
-                url = self.submissionUrl
-                print "Would you like to open Firefox to submit it?",
-                if raw_input("[y/N] ") == "y":
-                    try:
-                        os.execlp('firefox', 'firefox', url)
-                    except OSError, e:
-                        printError("Couldn't open the url in firefox:", str(e))
-                        printError2("Please submit it via:", url)
-                        sys.exit(1)
-                else:
-                    print "Please submit the Disc ID it with this url:"
-                    print url
-                    sys.exit(1)
-            else:
-                print "recalculating to re-check.."
-                self._release = None
+            self._release = None
         elif len(results) > 1:
             print "This Disc ID is ambiguous:"
             for i in range(len(results)):
@@ -398,6 +382,27 @@ class Disc(object):
             self._release = results[int(num)].getRelease()
         else:
             self._release = results[0].getRelease()
+
+        if self._release is None or self._release.getId() is None:
+            # a "release" that is only a stub has no musicbrainz id
+            self._release = None        # don't use stubs
+            if submit:
+                url = self.submissionUrl
+                print "Would you like to open Firefox to submit it?",
+                if raw_input("[y/N] ") == "y":
+                    try:
+                        os.execlp('firefox', 'firefox', url)
+                    except OSError, e:
+                        printError("Couldn't open the url in firefox:", str(e))
+                        printError2("Please submit it via:", url)
+                        sys.exit(1)
+                else:
+                    print "Please submit the Disc ID with this url:"
+                    print url
+                    sys.exit(1)
+            else:
+                print "recalculating to re-check.."
+                # another call of getRelease with submit=True will follow
 
         return self._release
 
