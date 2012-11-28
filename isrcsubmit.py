@@ -22,7 +22,7 @@ and the script is als available on
 http://kraehen.org/isrcsubmit.py
 """
 
-isrcsubmitVersion = "0.4.3"
+isrcsubmitVersion = "0.4.4"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
 # starting with highest priority
 backends = ["cdrdao", "cdda2wav", "icedax", "drutil"]
@@ -251,10 +251,23 @@ def getRealMacDevice(optionDevice):
     return given.replace("/disk", "/rdisk")
 
 def askForOffset(discTrackCount, releaseTrackCount):
-    print
-    print "How many tracks are on the previous (actual) discs altogether?"
-    num = raw_input("[0-%d] " % (releaseTrackCount - discTrackCount))
-    return int(num)
+    limit = releaseTrackCount - discTrackCount
+    while True:
+        print
+        print "How many tracks are on the previous (actual) discs altogether?"
+        try:
+            choice = raw_input("[0-%d] " % limit)
+        except KeyboardInterrupt:
+            print
+            print "exiting.."
+            sys.exit(1)
+        try:
+            num = int(choice)
+        except ValueError:
+            printError("Not a number")
+        else:
+            if num in range(0, limit + 1):
+                return num
 
 def printError(*args):
     stringArgs = tuple(map(str, args))
@@ -377,9 +390,16 @@ class Disc(object):
                     date = (event.getDate() or "").ljust(10)
                     barcode = (event.getBarcode() or "").rjust(13)
                     print "\t", country, "\t", date, "\t", barcode
-            num =  raw_input("Which one do you want? [0-%d] " % i)
-            print
-            self._release = results[int(num)].getRelease()
+            try:
+                num =  raw_input("Which one do you want? [0-%d] " % i)
+                self._release = results[int(num)].getRelease()
+            except (ValueError, IndexError):
+                printError("Invalid Choice")
+                sys.exit(1)
+            except KeyboardInterrupt:
+                print
+                print "exiting.."
+                sys.exit(1)
         else:
             self._release = results[0].getRelease()
 
