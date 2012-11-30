@@ -469,6 +469,7 @@ def gatherIsrcs(backend, device):
                     backend_output.append((trackNumber, isrc))
 
     elif backend == "cdrdao":
+        pattern = '[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
         tmpname = "cdrdao-%s.toc" % datetime.now()
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
         if debug: print "Saving toc in %s.." % tmpfile
@@ -490,11 +491,15 @@ def gatherIsrcs(backend, device):
                         if words[0] == "//":
                             trackNumber = int(words[2])
                         elif words[0] == "ISRC" and trackNumber is not None:
-                            isrc = words[1].strip('" ').replace("-", "")
-                            backend_output.append((trackNumber, isrc))
-                            # safeguard against missing trackNumber lines
-                            # or duplicated ISRC tags (like in CD-Text)
-                            trackNumber = None
+                            isrc = "".join(words[1:]).strip('"- ')
+                            m = re.match(pattern, isrc)
+                            if m is None:
+                                print "no valid ISRC:", isrc
+                            elif isrc:
+                                backend_output.append((trackNumber, isrc))
+                                # safeguard against missing trackNumber lines
+                                # or duplicated ISRC tags (like in CD-Text)
+                                trackNumber = None
         finally:
             try:
                 os.unlink(tmpfile)
