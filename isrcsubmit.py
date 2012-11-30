@@ -709,17 +709,22 @@ if releaseTrackCount != disc.trackCount:
         trackOffset = 0
         print "This release probably has a bonus DVD without a discID."
         print "Guessing track offset as", trackOffset
-    elif discIdCount > 1 and discIdNumber == discIdCount:
-        # It is easy to guess the offset when this is the last disc,
-        # because we have no unknown track counts after this.
-        trackOffset = releaseTrackCount - disc.trackCount
-        print "Guessing track offset as", trackOffset
     else:
-        # For "middle" discs we have unknown track numbers
-        # before and after the current disc.
-        # The same when we have only one disc ID but a track mismatch
-        # -> the user has to tell us an offset to use
-        print "Cannot guess the track offset."
+        # cannot guess fully automatically
+        if discIdCount > 1 and discIdNumber == discIdCount:
+            # It is easy to guess the offset when this is the last disc,
+            # because we have no unknown track counts after this.
+            trackOffset = releaseTrackCount - disc.trackCount
+            print "It looks like the last disc of the release."
+            print "This might be wrong when a bonus DVD is part of the release."
+            print "Our offset guess would be:", trackOffset
+            print
+        else:
+            # For "middle" discs we have unknown track numbers
+            # before and after the current disc.
+            # The same when we have only one disc ID but a track mismatch
+            # -> the user has to tell us an offset to use
+            print "Cannot guess the track offset."
 
         # There can also be multiple discIds for one disc of the release
         # so we give a MB-link to help which IDs
