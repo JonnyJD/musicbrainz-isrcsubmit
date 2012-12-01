@@ -160,6 +160,8 @@ class OwnTrack(NumberedTrack):
 def gatherOptions(argv):
     if os.name == "nt":
         defaultDevice = "D:"
+        # cdrdao is not given a device and will try 0,1,0
+        # this default is only for libdiscid and mediatools
     else:
         defaultDevice = "/dev/cdrom"
     prog = scriptname
@@ -200,7 +202,8 @@ def gatherOptions(argv):
             options.device = args[0]
             args = args[1:]
         else:
-            # device is changed again for Mac, when we know the final backend
+            # Mac: device is changed again, when we know the final backend
+            # Win: cdrdao is not given a device and will try 0,1,0
             options.device = defaultDevice
     if len(args) > 0:
         print "WARNING: Superfluous arguments:", ", ".join(args)
@@ -484,11 +487,17 @@ def gatherIsrcs(backend, device):
     elif backend == "cdrdao":
         pattern = '[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
         tmpname = "cdrdao-%s.toc" % datetime.now()
+        tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
         if debug: print "Saving toc in %s.." % tmpfile
+        if os.name == "nt":
+            printError("cdrdao can only use the default device!")
+            args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
+        else:
+            args = [backend, "read-toc", "--fast-toc", "--device", device,
+                "-v", "0", tmpfile]
         try:
-            p = Popen([backend, "read-toc", "--fast-toc", "--device", device,
-                "-v", "0", tmpfile],stdout=devnull, stderr=devnull)
+            p = Popen(args ,stdout=devnull, stderr=devnull)
             if p.wait() != 0:
                 printError("%s returned with %i" % (backend, p.returncode))
                 sys.exit(1)
