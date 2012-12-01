@@ -243,7 +243,7 @@ def hasBackend(backend, strict=False):
         # windows normally has no "which"
         # we just try to start these non-interactive console apps
         try:
-            call([backend], stderr=devnull)
+            call([backend], stdout=devnull, stderr=devnull)
         except WindowsError:
             return False
         else:
