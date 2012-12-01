@@ -636,7 +636,7 @@ def cleanupIsrcs(isrcs):
 
             url = "http://musicbrainz.org/isrc/" + isrc
             if raw_input("Open ISRC in firefox? [Y/n] ") != "n":
-                os.spawnlp(os.P_NOWAIT, "firefox", "firefox", url)
+                Popen(["firefox", url])
                 raw_input("(press <return> when done with this ISRC) ")
 
 
@@ -807,7 +807,7 @@ if releaseTrackCount != disc.trackCount:
         print "Would you like to open it in Firefox?",
         if raw_input("[y/N] ") == "y":
             try:
-                os.spawnlp(os.P_NOWAIT, 'firefox', 'firefox', url)
+                Popen(['firefox', url])
             except OSError, e:
                 printError("Couldn't open the url in firefox:", str(e))
 
