@@ -264,7 +264,12 @@ def hasBackend(backend, strict=False):
 
 def getRealMacDevice(optionDevice):
     p = Popen(["drutil", "status", "-drive", optionDevice], stdout=PIPE)
-    given = p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
+    try:
+	given = p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
+    except IndexError:
+        printError("could not find real device")
+        printError2("maybe no disc in the drive?")
+	sys.exit(-1)
     # libdiscid needs the "raw" version
     return given.replace("/disk", "/rdisk")
 
