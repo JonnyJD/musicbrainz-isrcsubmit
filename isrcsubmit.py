@@ -22,11 +22,11 @@ and the script is als available on
 http://kraehen.org/isrcsubmit.py
 """
 
-isrcsubmitVersion = "0.4.4"
+isrcsubmitVersion = "0.5"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
 # starting with highest priority
-backends = ["cdrdao", "cdda2wav", "icedax", "drutil"]
-packages = {"cdda2wav": "cdrtools", "icedax": "cdrkit"}
+backends = ["cdrdao", "cd-info", "cdda2wav", "icedax", "drutil"]
+packages = {"cd-info": "libcdio", "cdda2wav": "cdrtools", "icedax": "cdrkit"}
 
 import os
 import re
@@ -217,6 +217,9 @@ def getProgVersion(prog):
         return " ".join(outdata.splitlines()[0].split()[0:2])
     elif prog == "cdrdao":
         outdata = Popen([prog], stderr=PIPE).communicate()[1]
+        return " ".join(outdata.splitlines()[0].split()[::2][0:2])
+    elif prog == "cd-info":
+        outdata = Popen([prog, "--version"], stdout=PIPE).communicate()[0]
         return " ".join(outdata.splitlines()[0].split()[::2][0:2])
     elif prog == "drutil":
         outdata = Popen([prog, "version"], stdout=PIPE).communicate()[0]
@@ -467,6 +470,26 @@ def gatherIsrcs(backend, device):
                     trackNumber = int(m.group(1))
                     isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
                     backend_output.append((trackNumber, isrc))
+
+    elif backend == "cd-info":
+        pattern = \
+            'TRACK\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+        try:
+            p = Popen([backend, '-T', '-A', '--no-device-info', '--no-cddb',
+                '-C', device], stdout=PIPE)
+            isrcout = p.stdout
+        except OSError, e:
+            backendError(backend, e)
+        for line in isrcout:
+            if debug: print line,
+            if line.startswith("TRACK"):
+                m = re.search(pattern, line)
+                if m == None:
+                    print "can't find ISRC in:", line
+                    continue
+                trackNumber = int(m.group(1))
+                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                backend_output.append((trackNumber, isrc))
 
     elif backend == "cdrdao":
         pattern = '[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
