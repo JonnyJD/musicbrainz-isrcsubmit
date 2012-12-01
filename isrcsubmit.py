@@ -167,7 +167,7 @@ def gatherOptions(argv):
         defaultDevice = "/dev/cdrom"
     prog = scriptname
     parser = OptionParser(version=scriptVersion(), add_help_option=False)
-    parser.set_usage("%s [options] user [device]\n       %s -h" % (prog, prog))
+    parser.set_usage("%s [options] [user] [device]\n       %s -h" % (prog, prog))
     parser.add_option("-h", action="help",
             help="Short usage help")
     parser.add_option("--help", action="callback", callback=printHelp,
@@ -195,9 +195,7 @@ def gatherOptions(argv):
             options.user = args[0]
             args = args[1:]
         else:
-            printError("No username given")
-            parser.print_usage()
-            sys.exit(-1)
+            options.user = None
     if options.device is None:
         if len(args) > 0:
             options.device = args[0]
@@ -317,8 +315,11 @@ class DemandQuery():
     def create(self, auth=False):
         if auth:
             print
-            print "Please input your Musicbrainz password"
-            password = getpass.getpass('Password: ')
+            if self.username is None:
+                print "Please input your Musicbrainz username:", 
+                self.username = raw_input()
+            print "Please input your Musicbrainz password: ",
+            password = getpass.getpass("")
             print
             if StrictVersion(musicbrainz2_version) >= "0.7.4":
                 # There is a warning printed above, when < 0.7.4
