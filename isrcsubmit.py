@@ -35,7 +35,7 @@ import getpass
 import tempfile
 from datetime import datetime
 from optparse import OptionParser
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call
 from distutils.version import StrictVersion
 from musicbrainz2 import __version__ as musicbrainz2_version
 from musicbrainz2.disc import readDisc, DiscError, getSubmissionUrl
@@ -229,7 +229,17 @@ def getProgVersion(prog):
 
 def hasBackend(backend, strict=False):
     devnull = open(os.devnull, "w")
-    p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
+    try:
+        p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
+    except WindowsError:
+        # windows normally has no "which"
+        # we just try to start these non-interactive console apps
+        try:
+            call([backend], stderr=devnull)
+        except WindowsError:
+            return False
+        else:
+            return True
     backend_path = p_which.communicate()[0].strip()
     if p_which.returncode == 0:
         # check if it is only a symlink to another backend
