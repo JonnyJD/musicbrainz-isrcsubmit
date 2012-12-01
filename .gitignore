@@ -1,3 +1,6 @@
 _layouts
 drutil
 pkg
+*.exe
+*.dll
+musicbrainz2

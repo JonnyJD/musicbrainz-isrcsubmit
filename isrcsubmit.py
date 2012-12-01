@@ -35,7 +35,7 @@ import getpass
 import tempfile
 from datetime import datetime
 from optparse import OptionParser
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, call
 from distutils.version import StrictVersion
 from musicbrainz2 import __version__ as musicbrainz2_version
 from musicbrainz2.disc import readDisc, DiscError, getSubmissionUrl
@@ -158,7 +158,12 @@ class OwnTrack(NumberedTrack):
     pass
 
 def gatherOptions(argv):
-    defaultDevice = "/dev/cdrom"
+    if os.name == "nt":
+        defaultDevice = "D:"
+        # cdrdao is not given a device and will try 0,1,0
+        # this default is only for libdiscid and mediatools
+    else:
+        defaultDevice = "/dev/cdrom"
     prog = scriptname
     parser = OptionParser(version=scriptVersion(), add_help_option=False)
     parser.set_usage("%s [options] user [device]\n       %s -h" % (prog, prog))
@@ -171,7 +176,7 @@ def gatherOptions(argv):
     # note that -d previously stand for debug
     parser.add_option("-d", "--device", metavar="DEVICE",
             help="CD device with a loaded audio cd, if not given as argument."
-            + " The default is " + defaultDevice + " for linux and '1' for mac")
+            + " The default is " + defaultDevice + " (and '1' for mac)")
     parser.add_option("-b", "--backend", choices=backends, metavar="PROGRAM",
             help="Force using a specifig backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(backends)
@@ -197,7 +202,8 @@ def gatherOptions(argv):
             options.device = args[0]
             args = args[1:]
         else:
-            # device is changed again for Mac, when we know the final backend
+            # Mac: device is changed again, when we know the final backend
+            # Win: cdrdao is not given a device and will try 0,1,0
             options.device = defaultDevice
     if len(args) > 0:
         print "WARNING: Superfluous arguments:", ", ".join(args)
@@ -232,7 +238,17 @@ def getProgVersion(prog):
 
 def hasBackend(backend, strict=False):
     devnull = open(os.devnull, "w")
-    p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
+    try:
+        p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
+    except WindowsError:
+        # windows normally has no "which"
+        # we just try to start these non-interactive console apps
+        try:
+            call([backend], stderr=devnull)
+        except WindowsError:
+            return False
+        else:
+            return True
     backend_path = p_which.communicate()[0].strip()
     if p_which.returncode == 0:
         # check if it is only a symlink to another backend
@@ -494,11 +510,17 @@ def gatherIsrcs(backend, device):
     elif backend == "cdrdao":
         pattern = '[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
         tmpname = "cdrdao-%s.toc" % datetime.now()
+        tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
         if debug: print "Saving toc in %s.." % tmpfile
+        if os.name == "nt":
+            printError("cdrdao can only use the default device!")
+            args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
+        else:
+            args = [backend, "read-toc", "--fast-toc", "--device", device,
+                "-v", "0", tmpfile]
         try:
-            p = Popen([backend, "read-toc", "--fast-toc", "--device", device,
-                "-v", "0", tmpfile],stdout=devnull, stderr=devnull)
+            p = Popen(args ,stdout=devnull, stderr=devnull)
             if p.wait() != 0:
                 printError("%s returned with %i" % (backend, p.returncode))
                 sys.exit(1)
