@@ -25,7 +25,8 @@ http://kraehen.org/isrcsubmit.py
 isrcsubmitVersion = "0.5"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
 # starting with highest priority
-backends = ["cdrdao", "cd-info", "cdda2wav", "icedax", "drutil"]
+backends = ["mediatools", "media_info", "cdrdao", "cd-info",
+            "cdda2wav", "icedax", "drutil"]
 packages = {"cd-info": "libcdio", "cdda2wav": "cdrtools", "icedax": "cdrkit"}
 
 import os
@@ -499,6 +500,29 @@ def gatherIsrcs(backend, device):
         for line in isrcout:
             if debug: print line,
             if line.startswith("TRACK"):
+                m = re.search(pattern, line)
+                if m == None:
+                    print "can't find ISRC in:", line
+                    continue
+                trackNumber = int(m.group(1))
+                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                backend_output.append((trackNumber, isrc))
+
+    elif backend in ["mediatools", "media_info"]:
+        pattern = \
+            'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+        if backend == "mediatools":
+            args = [backend, "drive", device, "isrc"]
+        else:
+            args = [backend, device]
+        try:
+            p = Popen(args, stdout=PIPE)
+            isrcout = p.stdout
+        except OSError, e:
+            backendError(backend, e)
+        for line in isrcout:
+            if debug: print line,
+            if line.startswith("ISRC") and not line.startswith("ISRCS"):
                 m = re.search(pattern, line)
                 if m == None:
                     print "can't find ISRC in:", line
