@@ -158,7 +158,10 @@ class OwnTrack(NumberedTrack):
     pass
 
 def gatherOptions(argv):
-    defaultDevice = "/dev/cdrom"
+    if os.name == "nt":
+        defaultDevice = "D:"
+    else:
+        defaultDevice = "/dev/cdrom"
     prog = scriptname
     parser = OptionParser(version=scriptVersion(), add_help_option=False)
     parser.set_usage("%s [options] user [device]\n       %s -h" % (prog, prog))
@@ -171,7 +174,7 @@ def gatherOptions(argv):
     # note that -d previously stand for debug
     parser.add_option("-d", "--device", metavar="DEVICE",
             help="CD device with a loaded audio cd, if not given as argument."
-            + " The default is " + defaultDevice + " for linux and '1' for mac")
+            + " The default is " + defaultDevice + " (and '1' for mac)")
     parser.add_option("-b", "--backend", choices=backends, metavar="PROGRAM",
             help="Force using a specifig backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(backends)
