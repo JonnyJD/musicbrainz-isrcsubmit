@@ -165,6 +165,7 @@ def gatherOptions(argv):
         # this default is only for libdiscid and mediatools
     else:
         defaultDevice = "/dev/cdrom"
+    defaultBrowser = "firefox"
     prog = scriptname
     parser = OptionParser(version=scriptVersion(), add_help_option=False)
     parser.set_usage("%s [options] [user] [device]\n       %s -h" % (prog, prog))
@@ -182,6 +183,8 @@ def gatherOptions(argv):
             help="Force using a specifig backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(backends)
             + " They are tried in this order otherwise." )
+    parser.add_option("--browser", metavar="BROWSER",
+            help="Program to open urls. The default is " + defaultBrowser)
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -204,6 +207,8 @@ def gatherOptions(argv):
             # Mac: device is changed again, when we know the final backend
             # Win: cdrdao is not given a device and will try 0,1,0
             options.device = defaultDevice
+    if options.browser is None:
+        options.browser = defaultBrowser
     if len(args) > 0:
         print "WARNING: Superfluous arguments:", ", ".join(args)
     if options.backend and not hasBackend(options.backend, strict=True):
@@ -442,12 +447,13 @@ class Disc(object):
         if self._release is None:
             if submit:
                 url = self.submissionUrl
-                print "Would you like to open Firefox to submit the disc?",
+                print "Would you like to open the browser to submit the disc?",
                 if raw_input("[y/N] ") == "y":
                     try:
-                        os.execlp('firefox', 'firefox', url)
+                        os.execlp(options.browser, options.browser, url)
                     except OSError, e:
-                        printError("Couldn't open the url in firefox:", str(e))
+                        printError("Couldn't open the url in %s:"
+                                    % (options.browser, str(e)))
                         printError2("Please submit it via:", url)
                         sys.exit(1)
                 else:
@@ -640,8 +646,8 @@ def cleanupIsrcs(isrcs):
                     print
 
             url = "http://musicbrainz.org/isrc/" + isrc
-            if raw_input("Open ISRC in firefox? [Y/n] ") != "n":
-                Popen(["firefox", url])
+            if raw_input("Open ISRC in the browser? [Y/n] ") != "n":
+                Popen([options.browser, url])
                 raw_input("(press <return> when done with this ISRC) ")
 
 
@@ -809,12 +815,13 @@ if releaseTrackCount != disc.trackCount:
         url = releaseId + "/discids" # The "releaseId" is an url itself
         print "This url would provide some info about the disc IDs:"
         print url
-        print "Would you like to open it in Firefox?",
+        print "Would you like to open it the browser?",
         if raw_input("[y/N] ") == "y":
             try:
-                Popen(['firefox', url])
+                Popen([options.browser, url])
             except OSError, e:
-                printError("Couldn't open the url in firefox:", str(e))
+                printError("Couldn't open the url with %s: %s"
+                            % (options.browser, str(e)))
 
         trackOffset = askForOffset(disc.trackCount, releaseTrackCount)
 else:
