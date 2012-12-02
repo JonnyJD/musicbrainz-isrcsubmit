@@ -18,7 +18,7 @@
 Icedax is used to gather the ISRCs and python-musicbrainz2 to submit them.
 The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
-and the script is als available on
+and the script is also available on
 http://kraehen.org/isrcsubmit.py
 """
 
@@ -659,10 +659,10 @@ print
 # - - - - "global" variables - - - -
 # gather chosen options
 options = gatherOptions(sys.argv)
-# we set the device after we know which backen we will use
+# we set the device after we know which backend we will use
 backend = options.backend
 debug = options.debug
-# the actuall query will be created when it is used the first time
+# the actual query will be created when it is used the first time
 query = DemandQuery(options.user, agentName)
 disc = None
 
@@ -815,7 +815,7 @@ if releaseTrackCount != disc.trackCount:
         url = releaseId + "/discids" # The "releaseId" is an url itself
         print "This url would provide some info about the disc IDs:"
         print url
-        print "Would you like to open it the browser?",
+        print "Would you like to open it in the browser?",
         if raw_input("[y/N] ") == "y":
             try:
                 Popen([options.browser, url])
