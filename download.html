@@ -15,22 +15,35 @@ title: download
 <h4>(core script)</h4>
 
 This is the core script and mainly intended for Linux users.
-The additional libraries can be installed with the package manager of your distribution or manually.
+The additional libraries can be installed with the package manager
+of your distribution or manually.
+
+<h3>isrcsubmit-\*-win32:</h3>
+<h4>(script + libdiscid + python-musicbrainz2 + mediatools + .bat)</h4>
+
+This is the package for Windows users.
+There is a precompiled discid.dll, python-musicbrainz2
+and mediatools.exe included.
+It also includes a batchfile to start iscrsubmit in a terminal.
+Mediatools is the preferred backend on windows since it has a nice algorithm to make sure the ISRCs are attached to the correct tracks.
 
 
 <h3>isrcsubmit-\*-MacIntel/PPC:</h3>
-<h4>(script + libdiscid + python-musicbrainz2)</h4>
+<h4>(script + libdiscid + python-musicbrainz2 + .sh)</h4>
 
 These are packages for Mac OS X users.
-It is more difficult to get libdiscid precompiled for Mac and less Mac users have Xcode installed to compile it themselves (or don't have root privileges)
-Therefore the Mac Packages include a precompiled libdiscid.0.dylib for the appropriate architecture.
-The Intel32 and PPC libraries are taken from MusicBrainz Picard.
-I compiled the 64-bit version.
+It is more difficult to get libdiscid precompiled for Mac and less
+Mac users have Xcode installed to compile it themselves.
+Therefore the Mac Packages include a precompiled universal (intel32/64/ppc)
+libdiscid.0.dylib.
+An isrcsubmit.sh is included to start with the correct python binary.
 
 
 <h3>isrcsubmit-\*.tar.gz:</h3>
 <h4>(official tarball; complete source download as on github)</h4>
 
 This is the official release version.
-This is basically the same as downloading the tag in github. There might be minor packaging differences and the folder name is different.
+This is basically the same as downloading the tag in github.
+There might be minor packaging differences and the folder name is different.
+A setup.py and all script from the other packages are included.
 </div>

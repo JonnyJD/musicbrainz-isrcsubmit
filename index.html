@@ -10,7 +10,10 @@ and submits them to <a href="http://musicbrainz.org">MusicBrainz</a>.
 </p>
 
 <p>
-The script works for Linux and Mac OS X. However, drutils, the backend for Mac WILL take a long time (several minutes) per disc and might give duplicates more often. Isrcsubmit will tell you about it though.
+The script works for Linux, Windows and Mac OS X.
+However, drutils, the backend for Mac WILL take a VERY long time
+(several minutes) per disc and might give duplicates and missing ISRCs often.
+Isrcsubmit will tell you about it though.
 </p>
 
 
@@ -46,10 +49,13 @@ to calculate an ID for a disc
 
 <h3>Usable Backends</h3>
 <ul>
+  <li><a href="http://www.flanagan-family.com/mediatools.zip">mediatools</a>
+    </li>
   <li><a href="http://en.wikipedia.org/wiki/Cdrdao">Cdrdao</a></li>
+  <li>cd-info (<a href="http://www.gnu.org/software/libcdio/">libcdio</a>)</li>
   <li>Cdda2wav (in <a href="http://en.wikipedia.org/wiki/Cdrtools">cdrtools</a>)</li>
   <li>Icedax (in <a href="http://en.wikipedia.org/wiki/Cdrkit">cdrkit</a>)</li>
-  <li>drutil (in Mac OS X)</li>
+  <li>drutil (in Mac OS X; very slow!)</li>
 </ul>
 
 
@@ -60,7 +66,7 @@ to calculate an ID for a disc
 
 
 <h2>Usage</h2>
-<pre>Usage: isrcsubmit.py [options] user [device]
+<pre>Usage: isrcsubmit.py [options] [user] [device]
  isrcsubmit.py -h</pre>
 
 
@@ -71,7 +77,11 @@ to calculate an ID for a disc
 
 
 <h2>Authors</h2>
-<p>Johannes Dewender (github@JonnyJD.net)<br/>      </p>
+<p>Johannes Dewender
+<br/>Frederik "Freso" S. Olesen
+<br/>Ulrich Klauer
+<br/>Jim Patterson
+<br/>      </p>
 
 
 
