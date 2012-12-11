@@ -366,7 +366,17 @@ class Disc(object):
     def __init__(self, device, submit=False):
         try:
             # calculate disc ID from disc
-            self._disc = readDisc(deviceName=device)
+            if os.name == "nt" and not debug:
+                # libdiscid will print debug device names on stdout
+                # we want to suppress this
+                devnull = open(os.devnull, 'w')
+                oldStdoutFd = os.dup(sys.stdout.fileno())
+                os.dup2(devnull.fileno(), 1) # > /dev/null
+                self._disc = readDisc(deviceName=device)
+                os.dup2(oldStdoutFd, 1)      # restore stdout
+            else:
+                # no such debug output on other platforms
+                self._disc = readDisc(deviceName=device)
             self._release = None
             self._submit = submit
         except DiscError, e:
