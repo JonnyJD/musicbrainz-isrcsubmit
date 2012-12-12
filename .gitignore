@@ -1,6 +1,5 @@
-_layouts
-drutil
-pkg
+_site
+musicbrainz2
 *.exe
 *.dll
-musicbrainz2
+*.dylib
