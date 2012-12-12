@@ -1,5 +1,14 @@
 github:
   url: JonnyJD/musicbrainz-isrcsubmit
+
+downloads:
+  url: http://isrcsubmit.jonnyjd.net/downloads/
+
+script:
+  name: isrcsubmit
+  version: 0.5
+  current: isrcsubmit-0.5
+
 nav:
 - title: home
   url: ./

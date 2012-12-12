@@ -13,17 +13,18 @@ It often is.
 
 ### Mac OS X
 There are
-[Mac builds](https://github.com/downloads/JonnyJD/musicbrainz-isrcsubmit/libdiscid-0.2.2-mac.zip)
+[Mac builds]({{ site.downloads.url }}libdiscid-0.2.2-mac.zip)
 of this library available for Intel Macs (32 and 64 bit), PPC
 and an universal library which works for all of these.
 
 ### Windows
 There is a
-[Windows build](https://github.com/downloads/JonnyJD/musicbrainz-isrcsubmit/libdiscid-0.2.2-win32.zip)
+[Windows build]({{ site.downloads.url }}libdiscid-0.2.2-win32.zip)
 (32 bit) available.
 
 ### Compile it yourself
-You can download the source at [libdiscid](http://wiki.musicbrainz.org/libdiscid) and compile and install it in a terminal:
+You can download the source at [libdiscid](http://musicbrainz.org/doc/libdiscid)
+, compile it and install it in a terminal:
 
     wget http://users.musicbrainz.org/~matt/libdiscid-0.2.2.tar.gz
     tar -xf libdiscid-0.2.2.tar.gz

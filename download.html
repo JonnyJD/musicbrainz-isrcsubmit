@@ -3,7 +3,7 @@ layout: default
 title: download
 ---
 <div class="download">
-<a href="https://github.com/{{ site.github.url }}/downloads">
+<a href="{{ site.downloads.url }}">
 <img src="img/download_128.png"></a>
 </div>
 
@@ -11,14 +11,17 @@ title: download
 
 <div class="twolineheadings">
 
-<h3>isrcsubmit.py:</h3>
+<h3><a href="{{ site.downloads.url }}isrcsubmit.py">isrcsubmit.py</a>:</h3>
 <h4>(core script)</h4>
 
 This is the core script and mainly intended for Linux users.
 The additional libraries can be installed with the package manager
 of your distribution or manually.
 
-<h3>isrcsubmit-\*-win32:</h3>
+<h3>
+<a href="{{ site.downloads.url }}{{ site.script.current }}-win32.zip">
+{{ site.script.current }}-win32.zip</a>:
+</h3>
 <h4>(script + libdiscid + python-musicbrainz2 + mediatools + .bat)</h4>
 
 This is the package for Windows users.
@@ -28,7 +31,11 @@ It also includes a batchfile to start iscrsubmit in a terminal.
 Mediatools is the preferred backend on windows since it has a nice algorithm to make sure the ISRCs are attached to the correct tracks.
 
 
-<h3>isrcsubmit-\*-Mac:</h3>
+<h3>
+<a href="{{ site.downloads.url }}{{ site.script.current }}-mac.zip">
+{{ site.script.current }}-mac.zip
+</a>:
+</h3>
 <h4>(script + libdiscid + python-musicbrainz2 + .sh)</h4>
 
 These are packages for Mac OS X users.
@@ -39,7 +46,11 @@ libdiscid.0.dylib.
 An isrcsubmit.sh is included to start with the correct python binary.
 
 
-<h3>isrcsubmit-\*.tar.gz:</h3>
+<h3>
+<a href="{{ site.downloads.url }}{{ site.script.current }}.tar.gz">
+{{ site.script.current }}.tar.gz
+</a>:
+</h3>
 <h4>(official tarball; complete source download as on github)</h4>
 
 This is the official release version.
