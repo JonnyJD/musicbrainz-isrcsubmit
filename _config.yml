@@ -16,6 +16,8 @@ nav:
   url: download
 - title: install
   url: install
+- title: bugs
+  url: bugs
 - title: libdiscid
   url: libdiscid
 - title: links
