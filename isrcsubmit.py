@@ -561,8 +561,8 @@ def gatherIsrcs(backend, device):
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
         if debug: print "Saving toc in %s.." % tmpfile
-        if os.name == "nt":
-            printError("cdrdao can only use the default device!")
+        if os.name == "nt" and device != "D:":
+            print "warning: cdrdao uses the default device"
             args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
         else:
             args = [backend, "read-toc", "--fast-toc", "--device", device,
