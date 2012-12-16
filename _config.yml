@@ -20,5 +20,7 @@ nav:
   url: bugs
 - title: libdiscid
   url: libdiscid
+- title: backends
+  url: backends
 - title: links
   url: links
