@@ -430,7 +430,9 @@ class Disc(object):
                     country = (event.getCountry() or "").ljust(2)
                     date = (event.getDate() or "").ljust(10)
                     barcode = (event.getBarcode() or "").rjust(13)
-                    print "\t", country, "\t", date, "\t", barcode
+                    catnum = event.getCatalogNumber() or ""
+                    print "\t", country, "\t", date, "\t", barcode,
+                    print "\t", catnum
             try:
                 num =  raw_input("Which one do you want? [0-%d] " % i)
                 self._release = results[int(num)].getRelease()
