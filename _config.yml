@@ -6,8 +6,8 @@ downloads:
 
 script:
   name: isrcsubmit
-  version: 0.5
-  current: isrcsubmit-0.5
+  version: 0.5.1
+  current: isrcsubmit-0.5.1
 
 nav:
 - title: home
