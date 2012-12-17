@@ -180,7 +180,7 @@ def gatherOptions(argv):
             help="CD device with a loaded audio cd, if not given as argument."
             + " The default is " + defaultDevice + " (and '1' for mac)")
     parser.add_option("-b", "--backend", choices=backends, metavar="PROGRAM",
-            help="Force using a specifig backend to extract ISRCs from the"
+            help="Force using a specific backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(backends)
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
@@ -190,15 +190,10 @@ def gatherOptions(argv):
             + " Currently shows some backend messages.")
     (options, args) = parser.parse_args(argv[1:])
 
-    # "optional" positional arguments
-    # only optional when the data is already added as option..
-    # not sure if that is convenience or makes it impossible to understand..
-    if options.user is None:
-        if len(args) > 0:
-            options.user = args[0]
-            args = args[1:]
-        else:
-            options.user = None
+    # assign positional arguments to options
+    if options.user is None and len(args) > 0:
+        options.user = args[0]
+        args = args[1:]
     if options.device is None:
         if len(args) > 0:
             options.device = args[0]
@@ -241,6 +236,9 @@ def getProgVersion(prog):
         return prog
 
 def hasBackend(backend, strict=False):
+    """When the backend is only a symlink to another backend,
+       we will return False, unless we strictly want to use this backend.
+    """
     devnull = open(os.devnull, "w")
     if saneWhich:
         p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
@@ -268,12 +266,17 @@ def hasBackend(backend, strict=False):
             return True
 
 def getRealMacDevice(optionDevice):
+    """drutil takes numbers as drives.
+
+    We ask drutil what device name corresponds to that drive
+    in order so we can use it as a drive for libdiscid
+    """
     p = Popen(["drutil", "status", "-drive", optionDevice], stdout=PIPE)
     try:
 	given = p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
     except IndexError:
         printError("could not find real device")
-        printError2("maybe no disc in the drive?")
+        printError2("maybe there is no disc in the drive?")
 	sys.exit(-1)
     # libdiscid needs the "raw" version
     return given.replace("/disk", "/rdisk")
@@ -314,6 +317,9 @@ def backendError(backend, e):
 
 class DemandQuery():
     """A Query object that opens an actual query on first use
+
+    We can setup the query beforehand and only ask for the password
+    and username when we actually need them.
     """
 
     def __init__(self, username, agent):
@@ -323,12 +329,14 @@ class DemandQuery():
         self.agent = agent
 
     def create(self, auth=False):
+        """Creates the query object and possibly asks for username/password
+        """
         if auth:
             print
             if self.username is None:
-                print "Please input your Musicbrainz username:", 
+                print "Please input your MusicBrainz username:",
                 self.username = raw_input()
-            print "Please input your Musicbrainz password: ",
+            print "Please input your MusicBrainz password: ",
             password = getpass.getpass("")
             print
             if StrictVersion(musicbrainz2_version) >= "0.7.4":
@@ -358,6 +366,8 @@ class DemandQuery():
         return self._query.getReleaseById(releaseId, include=include)
 
     def submitISRCs(self, tracks2isrcs):
+        """This will create a new authenticated query if none exists already.
+        """
         if not self.auth: self.create(auth=True)
         self._query.submitISRCs(tracks2isrcs)
 
@@ -397,7 +407,10 @@ class Disc(object):
 
     @property
     def release(self):
-        """The corresponding MusicBrainz release, chosen by the user"""
+        """The corresponding MusicBrainz release
+
+        This will ask the user to choose if the discID is ambiguous.
+        """
         if self._release is None:
             self._release = self.getRelease(self._submit)
             # can still be None
@@ -405,18 +418,20 @@ class Disc(object):
 
     def getRelease(self, submit=False):
         """Find the corresponding MusicBrainz release
+
+        This will ask the user to choose if the discID is ambiguous.
         """
         discId_filter = ReleaseFilter(discId=self.id)
         try:
             results = query.getReleases(filter=discId_filter)
         except ConnectionError, e:
-            printError("Couldn't connect to the Server:", str(e))
+            printError("Couldn't connect to the server:", str(e))
             sys.exit(1)
         except WebServiceError, e:
             printError("Couldn't fetch release:", str(e))
             sys.exit(1)
         if len(results) == 0:
-            print "This Disc ID is not in the Database."
+            print "This Disc ID is not in the database."
             self._release = None
         elif len(results) > 1:
             print "This Disc ID is ambiguous:"
@@ -479,17 +494,22 @@ class Disc(object):
         return self._release
 
 def getDisc(device, submit=False):
+    """This creates a Disc object, which also calculates the id of the disc
+    """
     disc = Disc(device, submit)
     print
     print 'DiscID:\t\t', disc.id
-    print 'Tracks on Disc:\t', disc.trackCount
+    print 'Tracks on disc:\t', disc.trackCount
     return disc
 
 
 def gatherIsrcs(backend, device):
+    """read the disc in the device with the backend and extract the ISRCs
+    """
     backend_output = []
     devnull = open(os.devnull, "w")
 
+    # icedax is a fork of the cdda2wav tool
     if backend in ["cdda2wav", "icedax"]:
         pattern = \
             'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
@@ -532,6 +552,7 @@ def gatherIsrcs(backend, device):
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
                 backend_output.append((trackNumber, isrc))
 
+    # media_info is a preview version of mediatools, both are for Windows
     elif backend in ["mediatools", "media_info"]:
         pattern = \
             'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
@@ -555,6 +576,8 @@ def gatherIsrcs(backend, device):
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
                 backend_output.append((trackNumber, isrc))
 
+    # cdrdao will create a temp file and we delete it afterwards
+    # cdrdao is also available for windows
     elif backend == "cdrdao":
         pattern = '[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
         tmpname = "cdrdao-%s.toc" % datetime.now()
@@ -598,6 +621,9 @@ def gatherIsrcs(backend, device):
                 os.unlink(tmpfile)
             except:
                 pass
+
+    # this is the backend included in Mac OS X
+    # it will take a lot of time because it scans the whole disc
     elif backend == "drutil":
         pattern = \
         'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
@@ -622,6 +648,10 @@ def gatherIsrcs(backend, device):
 
 
 def cleanupIsrcs(isrcs):
+    """Show information about duplicate ISRCs
+
+    Our attached ISRCs should be correct -> helps to delete from other tracks
+    """
     for isrc in isrcs:
         tracks = isrcs[isrc].getTracks()
         if len(tracks) > 1:
@@ -710,7 +740,7 @@ else:
         saneWhich = True
     else:
         saneWhich = False
-        print 'warning: you version of the tool "which" is buggy/outdated'
+        print 'warning: your version of the tool "which" is buggy/outdated'
         if os.name == "nt":
             print '         unxutils is old/broken, GnuWin32 is good.'
 
@@ -758,7 +788,7 @@ include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = query.getReleaseById(releaseId, include=include)
 except ConnectionError, e:
-    printError("Couldn't connect to the Server:", str(e))
+    printError("Couldn't connect to the server:", str(e))
     sys.exit(1)
 except WebServiceError, e:
     printError("Couldn't fetch release:", str(e))
@@ -775,7 +805,7 @@ print 'Release:\t', release.getTitle()
 if releaseTrackCount != disc.trackCount:
     # a track count mismatch probably due to
     # multiple discs in the release
-    print "Tracks in Release:", releaseTrackCount
+    print "Tracks in release:", releaseTrackCount
     # Handling of multiple discs in the release:
     # We can only get the overall release from MB
     # and not the Medium itself.
@@ -796,7 +826,7 @@ if releaseTrackCount != disc.trackCount:
         print
         discIdNumber = 1
     else:
-        print "Discs (or disc IDs) in Release: ", discIdCount
+        print "Discs (or disc IDs) in release: ", discIdCount
         for i in range(discIdCount):
             print "\t", discs[i].getId(),
             if discs[i].getId() == disc.id:
@@ -909,9 +939,9 @@ else:
             query.submitISRCs(tracks2isrcs)
             print "Successfully submitted", len(tracks2isrcs), "ISRCs."
         except RequestError, e:
-            printError("Invalid Request:", str(e))
+            printError("Invalid request:", str(e))
         except AuthenticationError, e:
-            printError("Invalid Credentials:", str(e))
+            printError("Invalid credentials:", str(e))
         except WebServiceError, e:
             printError("Couldn't send ISRCs:", str(e))
     else:
