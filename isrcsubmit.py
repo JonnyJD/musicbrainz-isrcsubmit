@@ -242,30 +242,30 @@ def getProgVersion(prog):
 
 def hasBackend(backend, strict=False):
     devnull = open(os.devnull, "w")
-    try:
+    if saneWhich:
         p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
-    except WindowsError:
-        # windows normally has no "which"
-        # we just try to start these non-interactive console apps
+        backend_path = p_which.communicate()[0].strip()
+        if p_which.returncode == 0:
+            # check if it is only a symlink to another backend
+            real_backend = os.path.basename(os.path.realpath(backend_path))
+            if backend != real_backend and real_backend in backends: 
+                if strict:
+                    print "WARNING: %s is a symlink to %s" % (backend,
+                                                              real_backend)
+                    return True
+                else:
+                    return False # use real backend instead, or higher priority
+            return True
+        else:
+            return False
+    else:
         try:
+            # we just try to start these non-interactive console apps
             call([backend], stdout=devnull, stderr=devnull)
-        except WindowsError:
+        except OSError:
             return False
         else:
             return True
-    backend_path = p_which.communicate()[0].strip()
-    if p_which.returncode == 0:
-        # check if it is only a symlink to another backend
-        real_backend = os.path.basename(os.path.realpath(backend_path))
-        if backend != real_backend and real_backend in backends: 
-            if strict:
-                print "WARNING: %s is a symlink to %s" % (backend, real_backend)
-                return True
-            else:
-                return False # use real backend instead, or higher priority
-        return True
-    else:
-        return False
 
 def getRealMacDevice(optionDevice):
     p = Popen(["drutil", "status", "-drive", optionDevice], stdout=PIPE)
@@ -696,6 +696,24 @@ if StrictVersion(musicbrainz2_version) < "0.7.4":
     print "         You WILL have random connection problems due to throttling"
     print "         Please use python-musicbrainz2 0.7.4 or higher"
     print
+
+# There are some old/buggy "which" versions on Windows
+# unxutils has a broken 2.4; which >= 2.16 should be fine
+devnull = open(os.devnull, "w")
+try:
+    # "which" should at least find itself (even without searching which.exe)
+    returnCode = call(["which", "which"], stdout=devnull, stderr=devnull)
+except OSError:
+    saneWhich = False        # no which at all
+else:
+    if (returnCode == 0):
+        saneWhich = True
+    else:
+        saneWhich = False
+        print 'warning: you version of the tool "which" is buggy/outdated'
+        if os.name == "nt":
+            print '         unxutils is old/broken, GnuWin32 is good.'
+
 
 # search for backend
 if backend is None:
