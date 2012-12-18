@@ -300,6 +300,18 @@ def askForOffset(discTrackCount, releaseTrackCount):
             if num in range(0, limit + 1):
                 return num
 
+def printEncoded(*args):
+    """This will replace unsuitable characters and doesn't append a newline
+    """
+    stringArgs = ()
+    for arg in args:
+        if isinstance(arg, unicode):
+            stringArgs += arg.encode(sys.stdout.encoding, "replace"),
+        else:
+            stringArgs += str(arg),
+    msg = " ".join(stringArgs)
+    sys.stdout.write(msg + " ")
+
 def printError(*args):
     stringArgs = tuple(map(str, args))
     msg = " ".join(("ERROR:",) + stringArgs)
@@ -437,9 +449,10 @@ class Disc(object):
             print "This Disc ID is ambiguous:"
             for i in range(len(results)):
                 release = results[i].release
-                print str(i)+":", release.getArtist().getName(),
-                print "-", release.getTitle(),
-                print "(" + release.getTypes()[1].rpartition('#')[2] + ")"
+                printEncoded(str(i)+":", release.getArtist().getName())
+                printEncoded("-", release.getTitle())
+                printEncoded("("+ release.getTypes()[1].rpartition('#')[2] +")")
+                print
                 events = release.getReleaseEvents()
                 for event in events:
                     country = (event.getCountry() or "").ljust(2)
@@ -465,8 +478,9 @@ class Disc(object):
             # a "release" that is only a stub has no musicbrainz id
             print
             print "There is only a stub in the database:"
-            print self._release.getArtist().getName(),
-            print "-", self._release.getTitle()
+            printEncoded(self._release.getArtist().getName())
+            printEncoded( "-", self._release.getTitle())
+            print
             print
             self._release = None        # don't use stub
             submit = True               # the id is verified by the stub
@@ -664,7 +678,7 @@ def cleanupIsrcs(isrcs):
                 if artist:
                     string += artist.getName() + " - "
                 string += track.getTitle()
-                print string,
+                printEncoded(string)
                 # tab alignment
                 if len(string) >= 32:
                     print
@@ -800,8 +814,8 @@ discs = release.getDiscs()
 # discCount is actually the count of DiscIDs
 # there can be multiple DiscIDs for a single disc
 discIdCount = len(discs)
-print 'Artist:\t\t', release.getArtist().getName()
-print 'Release:\t', release.getTitle()
+printEncoded('Artist:\t\t', release.getArtist().getName(), "\n")
+printEncoded('Release:\t', release.getTitle(), "\n")
 if releaseTrackCount != disc.trackCount:
     # a track count mismatch probably due to
     # multiple discs in the release
