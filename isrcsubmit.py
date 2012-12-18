@@ -479,7 +479,7 @@ class Disc(object):
                     try:
                         os.execlp(options.browser, options.browser, url)
                     except OSError, e:
-                        printError("Couldn't open the url in %s:"
+                        printError("Couldn't open the url in %s: %s"
                                     % (options.browser, str(e)))
                         printError2("Please submit it via:", url)
                         sys.exit(1)
