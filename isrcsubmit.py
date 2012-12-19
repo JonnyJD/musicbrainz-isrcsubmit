@@ -503,7 +503,13 @@ class Disc(object):
                 print "Would you like to open the browser to submit the disc?",
                 if raw_input("[y/N] ") == "y":
                     try:
-                        os.execlp(options.browser, options.browser, url)
+                        if os.name == "nt":
+                            # silly but necessary for spaces in the path
+                            os.execlp(options.browser,
+                                    '"' + options.browser + '"', url)
+                        else:
+                            # linux/unix works fine with spaces
+                            os.execlp(options.browser, options.browser, url)
                     except OSError, e:
                         printError("Couldn't open the url in %s: %s"
                                     % (options.browser, str(e)))
