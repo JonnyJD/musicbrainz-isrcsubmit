@@ -32,6 +32,7 @@ packages = {"cd-info": "libcdio", "cdda2wav": "cdrtools", "icedax": "cdrkit"}
 import os
 import re
 import sys
+import codecs
 import getpass
 import tempfile
 from datetime import datetime
@@ -300,6 +301,14 @@ def askForOffset(discTrackCount, releaseTrackCount):
             if num in range(0, limit + 1):
                 return num
 
+def cp65001(name):
+    """This might be buggy, but better than just a LookupError
+    """
+    if name.lower() == "cp65001":
+        return codecs.lookup("utf-8")
+
+codecs.register(cp65001)
+
 def printEncoded(*args):
     """This will replace unsuitable characters and doesn't append a newline
     """
@@ -310,7 +319,10 @@ def printEncoded(*args):
         else:
             stringArgs += str(arg),
     msg = " ".join(stringArgs)
-    sys.stdout.write(msg + " ")
+    if os.name == "nt":
+        os.write(sys.stdout.fileno(), msg + " ")
+    else:
+        sys.stdout.write(msg + " ")
 
 def printError(*args):
     stringArgs = tuple(map(str, args))
