@@ -1,72 +1,101 @@
-version := isrcsubmit-0.5.1
-scripts := isrcsubmit.py $(version).py
-tar := $(version).tar.gz
-win32 := $(version)-win32.zip
-mac := $(version)-mac.zip
-all := $(scripts) $(tar) $(win32) $(mac)
-
-meta_files := $(shell echo ../{COPYRIGHT,AUTHORS,README.md,CHANGES.markdown})
-files := $(meta_files) $(shell echo ../{isrcsubmit.{py,bat,sh},setup.py})
+version := 0.5.1
+current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
 libdiscid := libdiscid-0.2.2
 musicbrainz2 := python-musicbrainz2-0.7.4
 
-define base_copy :=
-	mkdir $(version)
-	cp -d --preserve=all $(files) $(version)/
+scripts := isrcsubmit.py $(current).py
+tar := $(current)
+win32 := $(current)-win32
+mac := $(current)-mac
+all := $(scripts) tar win32 mac
+
+source_repo := ..
+source_branch := master
+source_dir := isrcsubmit
+
+
+tag_ref := $(source_repo)/.git/refs/tags/v$(version)
+branch_ref := $(source_repo)/.git/refs/heads/$(source_branch)
+ifeq ($(wildcard $(tag_ref)),)
+	source_ref := $(branch_ref)
+else
+	source_ref := $(tag_ref)
+endif
+
+ifeq ($(shell cd $(source_repo) && git tag -l v$(version)),)
+	source_checkout := cd $(source_repo) git checkout $(source_branch)
+else
+	source_checkout := cd $(source_repo) git checkout v$(version)
+endif
+
+define cp_source =
+	cp -a $(source_dir)/ $(1)
+	rm -rf $(1)/.git
 endef
 
 base_libs := $(musicbrainz2) $(libdiscid)
-define cp_base_libs :=
-	mv $(version)/COPYRIGHT $(version)/COPYRIGHT.isrcsubmit
-	mv $(version)/AUTHORS $(version)/AUTHORS.isrcsubmit
-	cp -ar $(musicbrainz2)/src/musicbrainz2 $(version)/
-	cp -ar $(musicbrainz2) $(version)/
-	cp -ar $(libdiscid) $(version)/libdiscid
+define cp_base_libs =
+	mv $(1)/COPYRIGHT $(1)/COPYRIGHT.isrcsubmit
+	mv $(1)/AUTHORS $(1)/AUTHORS.isrcsubmit
+	cp -ar $(musicbrainz2)/src/musicbrainz2 $(1)/
+	cp -ar $(musicbrainz2) $(1)/
+	cp -ar $(libdiscid) $(1)/libdiscid
 endef
 
 
 all: $(all)
+
 
 upload: $(all)
 	cp -a $^ $(downloads)
 	cd $(downloads) && ftpsync -cn . ftp://isrcsubmit.jonnyjd.net/downloads/
 
 
-isrcsubmit.py:
-	cp -a ../isrcsubmit.py .
+isrcsubmit.py: $(source_ref)
+	cp -a $(source_dir)/isrcsubmit.py .
 
-$(version).py:
-	cp -a ../isrcsubmit.py $(version).py
+$(current).py: $(source_ref)
+	cp -a $(source_dir)/isrcsubmit.py $(current).py
 
-tar: $(tar)
-$(tar): $(files)
-	$(base_copy)
-	tar --owner=root --group=root -czf $@ $(version)/
-	rm -rf $(version)
+tar: $(tar).tar.gz
+$(tar).tar.gz: $(source_ref)
+	$(call cp_source, $(tar))
+	tar --owner=root --group=root -czf $@ $(tar)
+	rm -rf $(tar)
 
-win32: $(win32)
-$(win32): $(files) $(base_libs) mediatools
-	$(base_copy)
-	$(cp_base_libs)
-	cp -a $(libdiscid)-win32/discid.dll $(version)/
-	cp -ar mediatools $(version)/
-	cp -a mediatools.exe $(version)/
-	zip -qr $@ $(version)
-	rm -rf $(version)
+win32: $(win32).zip
+$(win32).zip: $(source_ref) $(base_libs) mediatools
+	$(call cp_source, $(win32))
+	$(call cp_base_libs, $(win32))
+	cp -a $(libdiscid)-win32/discid.dll $(win32)/
+	cp -ar mediatools $(win32)/
+	cp -a mediatools.exe $(win32)/
+	zip -qr $@ $(win32)
+	rm -rf $(win32)
 
 # universal library created with:
 #     lipo -create */libdiscid.0.dylib -output libdiscid.0.dylib
 
-mac: $(mac)
-$(mac): $(files) $(base_libs)
-	$(base_copy)
-	$(cp_base_libs)
-	cp -a $(libdiscid)-mac/universal/libdiscid.0.dylib $(version)/
-	cp -a discisrc-mac/discisrc $(version)/
-	zip -qr $@ $(version)
-	rm -rf $(version)
+mac: $(mac).zip
+$(mac).zip: $(source_ref) $(base_libs)
+	$(call cp_source, $(mac))
+	$(call cp_base_libs, $(mac))
+	cp -a $(libdiscid)-mac/universal/libdiscid.0.dylib $(mac)/
+	cp -a discisrc-mac/discisrc $(mac)/
+	zip -qr $@ $(mac)
+	rm -rf $(mac)
+
+# sources:
+#
+$(source_dir):
+	git clone -b $(source_branch) $(source_repo) $@
+
+$(source_ref): $(source_dir)
+	cd $^ && git pull
+	$(source_checkout)
+
 
 # libraries:
 #
@@ -89,7 +118,9 @@ mediatools.zip:
 
 
 clean:
-	rm -rf $(version)
+	rm -rf $(source_dir)
 	rm -f $(all)
 	rm -rf $(base_libs)
 	rm -rf mediatools mediatools.exe
+
+.PHONY: source_update
