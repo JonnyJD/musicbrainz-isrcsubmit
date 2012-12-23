@@ -1,5 +1,8 @@
 github:
-  url: JonnyJD/musicbrainz-isrcsubmit
+  repo: JonnyJD/musicbrainz-isrcsubmit
+
+issues:
+  url: http://github.com/JonnyJD/musicbrainz-isrcsubmit/issues
 
 downloads:
   url: http://isrcsubmit.jonnyjd.net/downloads/
@@ -16,6 +19,8 @@ nav:
   url: download
 - title: install
   url: install
+- title: changes
+  url: changes
 - title: bugs
   url: bugs
 - title: libdiscid

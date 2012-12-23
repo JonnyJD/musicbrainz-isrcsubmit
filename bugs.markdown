@@ -6,9 +6,7 @@ title: bugs
 ## Submitting Bugs/Issues
 
 ### Where?
-Bugs/issues should be reported on
-[Github](https://github.com/JonnyJD/musicbrainz-isrcsubmit/issues)
-if possible.
+Bugs/issues should be reported on [Github]({{ site.issues.url }}) if possible.
 
 There is also a [Google Code Mirror](http://code.google.com/p/musicbrainz-isrcsubmit/) available
 and I also accept bugs per mail: github@JonnyJD.net

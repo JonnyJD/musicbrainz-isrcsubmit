@@ -38,7 +38,7 @@ give less duplicates than CD reader drives.
    is a tool that uses a different algorithm to gather ISRCs from the disc.
    This should give less duplicates on the same drive than other tools.
    However, there might be other problems.
-   (see [Issue #34]({{ github.issues.url}}34)
+   (see [Issue #34]({{ site.issues.url}}/34))
  * For [Cdrdao]((http://en.wikipedia.org/wiki/Cdrdao) there is a
    [Windows Build](http://www.student.tugraz.at/thomas.plank/) available.
    You need ```cdrdao.exe```, ```cyggcc\_s-sjlj-1.dll``` and ```cygwin1.dll```.
