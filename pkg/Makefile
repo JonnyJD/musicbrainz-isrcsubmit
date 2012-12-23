@@ -9,7 +9,7 @@ scripts := isrcsubmit.py $(current).py
 tar := $(current)
 win32 := $(current)-win32
 mac := $(current)-mac
-all := $(scripts) tar win32 mac
+all := $(scripts) $(tar).tar.gz $(win32).zip $(mac).zip
 
 source_repo := ..
 source_branch := master
