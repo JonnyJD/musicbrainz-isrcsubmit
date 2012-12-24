@@ -8,8 +8,9 @@ title: bugs
 ### Where?
 Bugs/issues should be reported on [Github]({{ site.issues.url }}) if possible.
 
-There is also a [Google Code Mirror](http://code.google.com/p/musicbrainz-isrcsubmit/) available
-and I also accept bugs per mail: github@JonnyJD.net
+There is also a
+[Google Code Mirror](http://code.google.com/p/musicbrainz-isrcsubmit/)
+available and I also accept bugs per mail: github@JonnyJD.net
 
 In the end I will always create an issue at github,
 so it would be of help if you could open a github account and/or follow

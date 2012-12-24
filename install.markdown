@@ -13,7 +13,8 @@ other than making it executable on Linux:
 However, the backends and libraries should get installed so that the
 script has access to them.
 
-On Linux you just install [python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
+On Linux you just install
+[python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
 and one of the backends with the package manager of your distribution.
 
 On Windows and Mac you have to put the musicbrainz2 folder of python-musicbrainz2 in the same directory as this script or adjust the python path.

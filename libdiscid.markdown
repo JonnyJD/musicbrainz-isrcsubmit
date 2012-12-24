@@ -23,8 +23,9 @@ There is a
 (32 bit) available.
 
 ### Compile it yourself
-You can download the source at [libdiscid](http://musicbrainz.org/doc/libdiscid)
-, compile it and install it in a terminal:
+You can download the source at
+[libdiscid](http://musicbrainz.org/doc/libdiscid),
+compile it and install it in a terminal:
 
     wget http://users.musicbrainz.org/~matt/libdiscid-0.2.2.tar.gz
     tar -xf libdiscid-0.2.2.tar.gz
