@@ -54,10 +54,10 @@ if os.path.isfile(shellname):
 else:
     scriptname = os.path.basename(sys.argv[0])
 
-def scriptVersion(option=None, opt=None, value=None, parser=None):
+def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmitVersion
 
-def printHelp(option=None, opt=None, value=None, parser=None):
+def print_help(option=None, opt=None, value=None, parser=None):
     print \
 """
 This python script extracts ISRCs from audio cds and submits them to MusicBrainz (musicbrainz.org).
@@ -146,7 +146,7 @@ class NumberedTrack(EqTrack):
 
     """
     def __init__(self, track, number):
-        self._track = track
+        EqTrack.__init__(self, track)
         self._number = number
 
     def getNumber(self):
@@ -170,11 +170,12 @@ def gatherOptions(argv):
         defaultDevice = "/dev/cdrom"
     defaultBrowser = "firefox"
     prog = scriptname
-    parser = OptionParser(version=scriptVersion(), add_help_option=False)
-    parser.set_usage("%s [options] [user] [device]\n       %s -h" % (prog, prog))
+    parser = OptionParser(version=script_version(), add_help_option=False)
+    parser.set_usage("%s [options] [user] [device]\n       %s -h" % (prog,
+                                                                     prog))
     parser.add_option("-h", action="help",
             help="Short usage help")
-    parser.add_option("--help", action="callback", callback=printHelp,
+    parser.add_option("--help", action="callback", callback=print_help,
             help="Complete help for the script")
     parser.add_option("-u", "--user", metavar="USERNAME",
             help="MusicBrainz username, if not given as argument.")
@@ -254,7 +255,8 @@ def getProgVersion(prog):
         outdata = Popen([prog, "version"], stdout=PIPE).communicate()[0]
         version = prog
         for line in outdata.splitlines():
-            if len(line) > 0: version += " " + line.split(":")[1].strip()
+            if len(line) > 0:
+                version += " " + line.split(":")[1].strip()
         return version
     else:
         return prog
@@ -297,11 +299,11 @@ def getRealMacDevice(optionDevice):
     """
     p = Popen(["drutil", "status", "-drive", optionDevice], stdout=PIPE)
     try:
-	given = p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
+        given = p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
     except IndexError:
         printError("could not find real device")
         printError2("maybe there is no disc in the drive?")
-	sys.exit(-1)
+        sys.exit(-1)
     # libdiscid needs the "raw" version
     return given.replace("/disk", "/rdisk")
 
@@ -342,10 +344,12 @@ def printEncoded(*args):
         else:
             stringArgs += str(arg),
     msg = " ".join(stringArgs)
+    if not msg.endswith("\n"):
+        msg += " "
     if os.name == "nt":
-        os.write(sys.stdout.fileno(), msg + " ")
+        os.write(sys.stdout.fileno(), msg)
     else:
-        sys.stdout.write(msg + " ")
+        sys.stdout.write(msg)
 
 def printError(*args):
     stringArgs = tuple(map(str, args))
@@ -357,9 +361,9 @@ def printError2(*args):
     msg = " ".join(("      ",) + stringArgs)
     sys.stderr.write(msg + "\n")
 
-def backendError(backend, e):
+def backendError(backend, err):
     printError("Couldn't gather ISRCs with %s: %i - %s"
-            % (backend, e.errno, e.strerror))
+            % (backend, err.errno, err.strerror))
     sys.exit(1)
 
 class DemandQuery():
@@ -405,17 +409,20 @@ class DemandQuery():
         self._query = Query(service, clientId=self.agent)
 
     def getReleases(self, filter):
-        if self._query is None: self.create()
+        if self._query is None:
+            self.create()
         return self._query.getReleases(filter=filter)
 
     def getReleaseById(self, releaseId, include):
-        if self._query is None: self.create()
+        if self._query is None:
+            self.create()
         return self._query.getReleaseById(releaseId, include=include)
 
     def submitISRCs(self, tracks2isrcs):
         """This will create a new authenticated query if none exists already.
         """
-        if not self.auth: self.create(auth=True)
+        if not self.auth:
+            self.create(auth=True)
         self._query.submitISRCs(tracks2isrcs)
 
 
@@ -436,8 +443,8 @@ class Disc(object):
                 self._disc = readDisc(deviceName=device)
             self._release = None
             self._submit = submit
-        except DiscError, e:
-            printError("DiscID calculation failed:", str(e))
+        except DiscError as err:
+            printError("DiscID calculation failed:", str(err))
             sys.exit(1)
 
     @property
@@ -471,18 +478,19 @@ class Disc(object):
         discId_filter = ReleaseFilter(discId=self.id)
         try:
             results = query.getReleases(filter=discId_filter)
-        except ConnectionError, e:
-            printError("Couldn't connect to the server:", str(e))
+        except ConnectionError as err:
+            printError("Couldn't connect to the server:", str(err))
             sys.exit(1)
-        except WebServiceError, e:
-            printError("Couldn't fetch release:", str(e))
+        except WebServiceError as err:
+            printError("Couldn't fetch release:", str(err))
             sys.exit(1)
-        if len(results) == 0:
+        num_results = len(results)
+        if num_results == 0:
             print "This Disc ID is not in the database."
             self._release = None
-        elif len(results) > 1:
+        elif num_results > 1:
             print "This Disc ID is ambiguous:"
-            for i in range(len(results)):
+            for i in range(num_results):
                 release = results[i].release
                 printEncoded(str(i)+":", release.getArtist().getName())
                 printEncoded("-", release.getTitle())
@@ -497,7 +505,7 @@ class Disc(object):
                     print "\t", country, "\t", date, "\t", barcode,
                     print "\t", catnum
             try:
-                num =  raw_input("Which one do you want? [0-%d] " % i)
+                num =  raw_input("Which one do you want? [0-%d] " % num_results)
                 self._release = results[int(num)].getRelease()
             except (ValueError, IndexError):
                 printError("Invalid Choice")
@@ -533,9 +541,9 @@ class Disc(object):
                         else:
                             # linux/unix works fine with spaces
                             os.execlp(options.browser, options.browser, url)
-                    except OSError, e:
+                    except OSError as err:
                         printError("Couldn't open the url in %s: %s"
-                                    % (options.browser, str(e)))
+                                    % (options.browser, str(err)))
                         printError2("Please submit it via:", url)
                         sys.exit(1)
                 else:
@@ -567,16 +575,17 @@ def gatherIsrcs(backend, device):
     # icedax is a fork of the cdda2wav tool
     if backend in ["cdda2wav", "icedax"]:
         pattern = \
-            'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            r'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p1 = Popen([backend, '-J', '-H', '-D', device], stderr=PIPE)
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
             isrcout = p2.stdout
-        except OSError, e:
-            backendError(backend, e)
+        except OSError as err:
+            backendError(backend, err)
         for line in isrcout:
             # there are \n and \r in different places
-            if debug: print line,
+            if debug:
+                print line,
             for text in line.splitlines():
                 if text.startswith("T:"):
                     m = re.search(pattern, text)
@@ -589,15 +598,16 @@ def gatherIsrcs(backend, device):
 
     elif backend == "cd-info":
         pattern = \
-            'TRACK\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            r'TRACK\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p = Popen([backend, '-T', '-A', '--no-device-info', '--no-cddb',
                 '-C', device], stdout=PIPE)
             isrcout = p.stdout
-        except OSError, e:
-            backendError(backend, e)
+        except OSError as err:
+            backendError(backend, err)
         for line in isrcout:
-            if debug: print line,
+            if debug:
+                print line,
             if line.startswith("TRACK"):
                 m = re.search(pattern, line)
                 if m == None:
@@ -610,7 +620,7 @@ def gatherIsrcs(backend, device):
     # media_info is a preview version of mediatools, both are for Windows
     elif backend in ["mediatools", "media_info"]:
         pattern = \
-            'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            r'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         if backend == "mediatools":
             args = [backend, "drive", device, "isrc"]
         else:
@@ -618,10 +628,11 @@ def gatherIsrcs(backend, device):
         try:
             p = Popen(args, stdout=PIPE)
             isrcout = p.stdout
-        except OSError, e:
-            backendError(backend, e)
+        except OSError as err:
+            backendError(backend, err)
         for line in isrcout:
-            if debug: print line,
+            if debug:
+                print line,
             if line.startswith("ISRC") and not line.startswith("ISRCS"):
                 m = re.search(pattern, line)
                 if m == None:
@@ -634,11 +645,12 @@ def gatherIsrcs(backend, device):
     # cdrdao will create a temp file and we delete it afterwards
     # cdrdao is also available for windows
     elif backend == "cdrdao":
-        pattern = '[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
+        pattern = r'[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
         tmpname = "cdrdao-%s.toc" % datetime.now()
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
-        if debug: print "Saving toc in %s.." % tmpfile
+        if debug:
+            print "Saving toc in %s.." % tmpfile
         if os.name == "nt" and device != "D:":
             print "warning: cdrdao uses the default device"
             args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
@@ -646,17 +658,18 @@ def gatherIsrcs(backend, device):
             args = [backend, "read-toc", "--fast-toc", "--device", device,
                 "-v", "0", tmpfile]
         try:
-            p = Popen(args ,stdout=devnull, stderr=devnull)
+            p = Popen(args, stdout=devnull, stderr=devnull)
             if p.wait() != 0:
                 printError("%s returned with %i" % (backend, p.returncode))
                 sys.exit(1)
-        except OSError, e:
-            backendError(backend, e)
+        except OSError as err:
+            backendError(backend, err)
         else:
             with open(tmpfile, "r") as toc:
                 trackNumber = None
                 for line in toc:
-                    if debug: print line,
+                    if debug:
+                        print line,
                     words = line.split()
                     if len(words) > 0:
                         if words[0] == "//":
@@ -674,22 +687,23 @@ def gatherIsrcs(backend, device):
         finally:
             try:
                 os.unlink(tmpfile)
-            except:
+            except OSError:
                 pass
 
     # this is the backend included in Mac OS X
     # it will take a lot of time because it scans the whole disc
     elif backend == "drutil":
         pattern = \
-        'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+        r'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p1 = Popen([backend, 'subchannel', '-drive', device], stdout=PIPE)
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stdout, stdout=PIPE)
             isrcout = p2.stdout
-        except OSError, e:
-            backendError(backend, e)
+        except OSError as err:
+            backendError(backend, err)
         for line in isrcout:
-            if debug: print line,
+            if debug:
+                print line,
             if line.startswith("Track") and line.find("block") > 0:
                 m = re.search(pattern, line)
                 if m == None:
@@ -750,9 +764,6 @@ def cleanupIsrcs(isrcs):
 
 # "main" + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
 
-print scriptVersion()
-print
-
 # - - - - "global" variables - - - -
 # gather chosen options
 options = gatherOptions(sys.argv)
@@ -762,6 +773,9 @@ debug = options.debug
 # the actual query will be created when it is used the first time
 query = DemandQuery(options.user, agentName)
 disc = None
+
+print script_version()
+print
 
 print "using python-musicbrainz2", musicbrainz2_version
 if StrictVersion(musicbrainz2_version) < "0.7.0":
@@ -825,11 +839,11 @@ releaseId = disc.release.getId()        # implicitly fetches release
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = query.getReleaseById(releaseId, include=include)
-except ConnectionError, e:
-    printError("Couldn't connect to the server:", str(e))
+except ConnectionError as err:
+    printError("Couldn't connect to the server:", str(err))
     sys.exit(1)
-except WebServiceError, e:
-    printError("Couldn't fetch release:", str(e))
+except WebServiceError as err:
+    printError("Couldn't fetch release:", str(err))
     sys.exit(1)
 
 tracks = release.getTracks()
@@ -917,9 +931,9 @@ if releaseTrackCount != disc.trackCount:
         if raw_input("[y/N] ") == "y":
             try:
                 Popen([options.browser, url])
-            except OSError, e:
+            except OSError as err:
                 printError("Couldn't open the url with %s: %s"
-                            % (options.browser, str(e)))
+                            % (options.browser, str(err)))
 
         trackOffset = askForOffset(disc.trackCount, releaseTrackCount)
 else:
@@ -957,7 +971,7 @@ for (trackNumber, isrc) in backend_output:
             print str(trackNumber) + ":", isrc
         else:
             print isrc, "is already attached to track", trackNumber
-    except IndexError, e:
+    except IndexError:
         printError("ISRC", isrc, "found for unknown track", trackNumber)
         errors += 1
 for isrc in isrcs:
@@ -976,12 +990,12 @@ else:
         try:
             query.submitISRCs(tracks2isrcs)
             print "Successfully submitted", len(tracks2isrcs), "ISRCs."
-        except RequestError, e:
-            printError("Invalid request:", str(e))
-        except AuthenticationError, e:
-            printError("Invalid credentials:", str(e))
-        except WebServiceError, e:
-            printError("Couldn't send ISRCs:", str(e))
+        except RequestError as err:
+            printError("Invalid request:", str(err))
+        except AuthenticationError as err:
+            printError("Invalid credentials:", str(err))
+        except WebServiceError as err:
+            printError("Couldn't send ISRCs:", str(err))
     else:
         update_intention = False
         print "Nothing was submitted to the server."
