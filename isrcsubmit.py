@@ -113,7 +113,7 @@ class Isrc(object):
         numbers = []
         for track in self._tracks:
             numbers.append(track.getNumber())
-        return ", ".join(map(str, numbers))
+        return ", ".join([str(number) for number in numbers])
 
 
 class EqTrack(Track):
@@ -352,12 +352,12 @@ def printEncoded(*args):
         sys.stdout.write(msg)
 
 def printError(*args):
-    stringArgs = tuple(map(str, args))
+    stringArgs = tuple([str(arg) for arg in args])
     msg = " ".join(("ERROR:",) + stringArgs)
     sys.stderr.write(msg + "\n")
 
 def printError2(*args):
-    stringArgs = tuple(map(str, args))
+    stringArgs = tuple([str(arg) for arg in args])
     msg = " ".join(("      ",) + stringArgs)
     sys.stderr.write(msg + "\n")
 
@@ -954,9 +954,9 @@ for (trackNumber, isrc) in backend_output:
     if isrc not in isrcs:
         isrcs[isrc] = Isrc(isrc)
         # check if we found this ISRC for multiple tracks
-        with_isrc = filter(lambda item: item[1] == isrc, backend_output)
+        with_isrc = [item for item in backend_output if item[1] == isrc]
         if len(with_isrc) > 1:
-            listOfTracks = map(str, map(lambda l: l[0], with_isrc))
+            listOfTracks = [str(item[0]) for item in with_isrc]
             printError(backend + " gave the same ISRC for multiple tracks!")
             printError2("ISRC:", isrc, "\ttracks:", ", ".join(listOfTracks))
             errors += 1
