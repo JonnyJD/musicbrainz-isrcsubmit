@@ -310,6 +310,7 @@ def getRealMacDevice(optionDevice):
 def askForOffset(discTrackCount, releaseTrackCount):
     limit = releaseTrackCount - discTrackCount
     while True:
+        # ask until a correct offset is given (or a KeyboardInterrupt)
         print
         print "How many tracks are on the previous (actual) discs altogether?"
         try:
@@ -492,21 +493,24 @@ class Disc(object):
             print "This Disc ID is ambiguous:"
             for i in range(num_results):
                 release = results[i].release
-                printEncoded(str(i)+":", release.getArtist().getName())
-                printEncoded("-", release.getTitle())
-                printEncoded("("+ release.getTypes()[1].rpartition('#')[2] +")")
-                print
+                release_type = release.getTypes()[1].rpartition('#')[2]
+                # printed list is 1..n, not 0..n-1 !
+                printEncoded("%d: %s - %s (%s)\n"
+                             % (i + 1, release.getArtist().getName(),
+                                release.getTitle(), release_type))
                 events = release.getReleaseEvents()
                 for event in events:
                     country = (event.getCountry() or "").ljust(2)
                     date = (event.getDate() or "").ljust(10)
                     barcode = (event.getBarcode() or "").rjust(13)
                     catnum = event.getCatalogNumber() or ""
-                    print "\t", country, "\t", date, "\t", barcode,
-                    print "\t", catnum
+                    printEncoded("\t%s\t%s\t%s\t%s\n"
+                                 % (country, date, barcode, catnum))
             try:
-                num =  raw_input("Which one do you want? [0-%d] " % num_results)
-                self._release = results[int(num)].getRelease()
+                num =  raw_input("Which one do you want? [1-%d] " % num_results)
+                if int(num) not in range(1, num_results + 1):
+                    raise IndexError
+                self._release = results[int(num) - 1].getRelease()
             except (ValueError, IndexError):
                 printError("Invalid Choice")
                 sys.exit(1)
