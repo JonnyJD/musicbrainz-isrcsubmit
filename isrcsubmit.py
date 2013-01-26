@@ -341,6 +341,15 @@ def cp65001(name):
 
 codecs.register(cp65001)
 
+def printf(format_string, *args):
+    """Print with the % and without additional spaces or newlines
+    """
+    if len(args) == 0:
+        # make it convenient to use without args -> different to C
+        args = (format_string, )
+        format_string = "%s"
+    sys.stdout.write(format_string % args)
+
 def printEncoded(*args):
     """This will replace unsuitable characters and doesn't append a newline
     """
@@ -392,9 +401,9 @@ class DemandQuery():
         if auth:
             print("")
             if self.username is None:
-                print "Please input your MusicBrainz username:",
+                printf("Please input your MusicBrainz username: ")
                 self.username = user_input()
-            print "Please input your MusicBrainz password: ",
+            printf("Please input your MusicBrainz password: ")
             password = getpass.getpass("")
             print("")
             if StrictVersion(musicbrainz2_version) >= "0.7.4":
@@ -538,8 +547,8 @@ class Disc(object):
         if self._release is None:
             if submit:
                 url = self.submissionUrl
-                print "Would you like to open the browser to submit the disc?",
-                if user_input("[y/N] ") == "y":
+                printf("Would you like to open the browser to submit the disc?")
+                if user_input(" [y/N] ") == "y":
                     try:
                         if os.name == "nt":
                             # silly but necessary for spaces in the path
@@ -591,7 +600,7 @@ def gatherIsrcs(backend, device):
         for line in isrcout:
             # there are \n and \r in different places
             if debug:
-                print line,
+                printf(line)    # already includes a newline
             for text in line.splitlines():
                 if text.startswith("T:"):
                     m = re.search(pattern, text)
@@ -613,7 +622,7 @@ def gatherIsrcs(backend, device):
             backendError(backend, err)
         for line in isrcout:
             if debug:
-                print line,
+                printf(line)    # already includes a newline
             if line.startswith("TRACK"):
                 m = re.search(pattern, line)
                 if m == None:
@@ -638,7 +647,7 @@ def gatherIsrcs(backend, device):
             backendError(backend, err)
         for line in isrcout:
             if debug:
-                print line,
+                printf(line)    # already includes a newline
             if line.startswith("ISRC") and not line.startswith("ISRCS"):
                 m = re.search(pattern, line)
                 if m == None:
@@ -675,7 +684,7 @@ def gatherIsrcs(backend, device):
                 trackNumber = None
                 for line in toc:
                     if debug:
-                        print line,
+                        printf(line)    # already includes a newline
                     words = line.split()
                     if len(words) > 0:
                         if words[0] == "//":
@@ -709,7 +718,7 @@ def gatherIsrcs(backend, device):
             backendError(backend, err)
         for line in isrcout:
             if debug:
-                print line,
+                printf(line)    # already includes a newline
             if line.startswith("Track") and line.find("block") > 0:
                 m = re.search(pattern, line)
                 if m == None:
@@ -732,34 +741,33 @@ def cleanupIsrcs(isrcs):
         if len(tracks) > 1:
             print("\nISRC %s attached to:" % isrc)
             for track in tracks:
-                print "\t",
+                printf("\t")
                 artist = track.getArtist()
-                string = ""
                 if artist:
-                    string += artist.getName() + " - "
-                string += track.getTitle()
+                    string = "%s - %s" % (artist.getName(), track.getTitle())
+                else:
+                    string = "%s" % track.getTitle()
                 printEncoded(string)
                 # tab alignment
                 if len(string) >= 32:
-                    print
-                    print " " * 40,
+                    printf("\n%s",  " " * 40)
                 else:
                     if len(string) < 7:
-                        print "\t",
+                        printf("\t")
                     if len(string) < 15:
-                        print "\t",
+                        printf("\t")
                     if len(string) < 23:
-                        print "\t",
+                        printf("\t")
                     if len(string) < 31:
-                        print "\t",
+                        printf("\t")
 
                 # append track# and evaluation, if available
                 if isinstance(track, NumberedTrack):
-                    print "\t track", track.getNumber(),
+                    printf("\t track %d", track.getNumber())
                 if isinstance(track, OwnTrack):
-                    print "   [OUR EVALUATION]"
+                    print("   [OUR EVALUATION]")
                 else:
-                    print
+                    print("")
 
             url = "http://musicbrainz.org/isrc/" + isrc
             if user_input("Open ISRC in the browser? [Y/n] ") != "n":
@@ -881,7 +889,7 @@ if releaseTrackCount != disc.trackCount:
     else:
         print("Discs (or disc IDs) in release: %d" % discIdCount)
         for i in range(discIdCount):
-            print "\t", discs[i].getId(),
+            printf("\t %s", discs[i].getId())
             if discs[i].getId() == disc.id:
                 discIdNumber = i + 1
                 print("[THIS DISC]")
@@ -926,8 +934,8 @@ if releaseTrackCount != disc.trackCount:
         url = releaseId + "/discids" # The "releaseId" is an url itself
         print("This url would provide some info about the disc IDs:")
         print(url)
-        print "Would you like to open it in the browser?",
-        if user_input("[y/N] ") == "y":
+        printf("Would you like to open it in the browser?")
+        if user_input(" [y/N] ") == "y":
             try:
                 Popen([options.browser, url])
             except OSError as err:
@@ -1017,8 +1025,8 @@ if update_intention:
             duplicates += 1
 
     if duplicates > 0:
-        print "\nThere were", duplicates, "ISRCs",
-        print "that are attached to multiple tracks on this release."
+        printf("\nThere were %d ISRCs", duplicates)
+        print("that are attached to multiple tracks on this release.")
         if user_input("Do you want to help clean those up? [y/N] ") == "y":
             cleanupIsrcs(isrcs)
 
