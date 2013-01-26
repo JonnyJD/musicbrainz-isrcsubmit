@@ -1,3 +1,6 @@
+### Changes in 0.5.2 (2013-01-26)
+ * [#43] fix: global name 'saneWhich' is not defined
+
 ### Changes in 0.5.1 (2012-12-23)
  * [#40] support and use unicode codepage on Windows (cp65001)
 

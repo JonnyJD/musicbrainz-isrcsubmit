@@ -22,7 +22,7 @@ and the script is also available on
 http://kraehen.org/isrcsubmit.py
 """
 
-isrcsubmitVersion = "0.5.1"
+isrcsubmitVersion = "0.5.2"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
 # starting with highest priority
 backends = ["mediatools", "media_info", "cdrdao", "cd-info",
