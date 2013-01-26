@@ -160,6 +160,8 @@ class OwnTrack(NumberedTrack):
     pass
 
 def gatherOptions(argv):
+    global options
+
     if os.name == "nt":
         defaultDevice = "D:"
         # cdrdao is not given a device and will try 0,1,0
@@ -207,6 +209,7 @@ def gatherOptions(argv):
         options.browser = defaultBrowser
     if len(args) > 0:
         print "WARNING: Superfluous arguments:", ", ".join(args)
+    options.sane_which = test_which()
     if options.backend and not hasBackend(options.backend, strict=True):
         printError("Chosen backend not found. No ISRC extraction possible!")
         printError2("Make sure that %s is installed." % options.backend)
@@ -214,6 +217,26 @@ def gatherOptions(argv):
 
     return options
 
+
+def test_which():
+    """There are some old/buggy "which" versions on Windows.
+    We want to know if the user has a "sane" which we can trust.
+    Unxutils has a broken 2.4 version. Which >= 2.16 should be fine.
+    """
+    devnull = open(os.devnull, "w")
+    try:
+        # "which" should at least find itself (even without searching which.exe)
+        return_code = call(["which", "which"], stdout=devnull, stderr=devnull)
+    except OSError:
+        return False        # no which at all
+    else:
+        if (return_code == 0):
+            return True
+        else:
+            print 'warning: your version of the tool "which" is buggy/outdated'
+            if os.name == "nt":
+                print '         unxutils is old/broken, GnuWin32 is good.'
+            return False
 
 def getProgVersion(prog):
     if prog == "icedax":
@@ -241,7 +264,7 @@ def hasBackend(backend, strict=False):
        we will return False, unless we strictly want to use this backend.
     """
     devnull = open(os.devnull, "w")
-    if saneWhich:
+    if options.sane_which:
         p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
         backend_path = p_which.communicate()[0].strip()
         if p_which.returncode == 0:
@@ -758,23 +781,6 @@ if StrictVersion(musicbrainz2_version) < "0.7.4":
     print "         You WILL have random connection problems due to throttling"
     print "         Please use python-musicbrainz2 0.7.4 or higher"
     print
-
-# There are some old/buggy "which" versions on Windows
-# unxutils has a broken 2.4; which >= 2.16 should be fine
-devnull = open(os.devnull, "w")
-try:
-    # "which" should at least find itself (even without searching which.exe)
-    returnCode = call(["which", "which"], stdout=devnull, stderr=devnull)
-except OSError:
-    saneWhich = False        # no which at all
-else:
-    if (returnCode == 0):
-        saneWhich = True
-    else:
-        saneWhich = False
-        print 'warning: your version of the tool "which" is buggy/outdated'
-        if os.name == "nt":
-            print '         unxutils is old/broken, GnuWin32 is good.'
 
 
 # search for backend
