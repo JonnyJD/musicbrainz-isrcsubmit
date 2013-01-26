@@ -9,8 +9,12 @@ downloads:
 
 script:
   name: isrcsubmit
-  version: 0.5.1
-  current: isrcsubmit-0.5.1
+  version: 0.5.2
+  current: isrcsubmit-0.5.2
+
+libdiscid:
+  lversion: 0.3.0
+  current: libdiscid-0.3.0
 
 nav:
 - title: home

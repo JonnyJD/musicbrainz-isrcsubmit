@@ -11,7 +11,7 @@ jekyll: changes version
 	jekyll
 
 version:
-	sed -i -e 's/version:\s[0-9.]\+/version: $(version)/g' _config.yml
+	sed -i -e 's/ version:\s[0-9.]\+/ version: $(version)/' _config.yml
 	sed -i -e 's/current:\sisrcsubmit-[0-9.]\+/current: $(current)/g' \
 		_config.yml
 

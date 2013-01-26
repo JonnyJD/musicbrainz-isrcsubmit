@@ -19,7 +19,7 @@ and an universal library which works for all of these.
 
 ### Windows
 There is a
-[Windows build]({{ site.downloads.url }}libdiscid-0.2.2-win32.zip)
+[Windows build]({{ site.downloads.url }}libdiscid-0.3.0-win32.zip)
 (32 bit) available.
 
 ### Compile it yourself
@@ -27,9 +27,9 @@ You can download the source at
 [libdiscid](http://musicbrainz.org/doc/libdiscid),
 compile it and install it in a terminal:
 
-    wget http://users.musicbrainz.org/~matt/libdiscid-0.2.2.tar.gz
-    tar -xf libdiscid-0.2.2.tar.gz
-    cd libdiscid-0.2.2
+    wget https://github.com/metabrainz/libdiscid/archive/v{{ site.libdiscid.lversion}}.tar.gz
+    tar -xf {{ site.libdiscid.current }}.tar.gz
+    cd {{ site.libdiscid.current }}
     ./configure
     make
     sudo make install
