@@ -58,7 +58,7 @@ def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmitVersion
 
 def print_help(option=None, opt=None, value=None, parser=None):
-    print \
+    print(\
 """
 This python script extracts ISRCs from audio cds and submits them to MusicBrainz (musicbrainz.org).
 You need to have a MusicBrainz account, specify the username and will be asked for your password every time you execute the script.
@@ -88,10 +88,10 @@ Isrcsubmit only knows how many tracks the current disc has and the total number 
 
 The number of discs in the release and the position of this disc give by isrcsubmit is not necessarily correct. There can be multiple disc IDs per actual disc. You should only count tracks on your actual discs.
 Isrcsubmit can give you a link for an overview of the disc IDs for your release.
-"""
+""")
     parser.print_usage()
-    print """\
-Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit"""
+    print("""\
+Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit""")
     sys.exit(0)
 
 
@@ -209,7 +209,7 @@ def gatherOptions(argv):
     if options.browser is None:
         options.browser = defaultBrowser
     if len(args) > 0:
-        print "WARNING: Superfluous arguments:", ", ".join(args)
+        print("WARNING: Superfluous arguments: %s" % ", ".join(args))
     options.sane_which = test_which()
     if options.backend and not hasBackend(options.backend, strict=True):
         printError("Chosen backend not found. No ISRC extraction possible!")
@@ -234,9 +234,9 @@ def test_which():
         if (return_code == 0):
             return True
         else:
-            print 'warning: your version of the tool "which" is buggy/outdated'
+            print('warning: your version of the tool "which" is buggy/outdated')
             if os.name == "nt":
-                print '         unxutils is old/broken, GnuWin32 is good.'
+                print('         unxutils is old/broken, GnuWin32 is good.')
             return False
 
 def getProgVersion(prog):
@@ -274,8 +274,8 @@ def hasBackend(backend, strict=False):
             real_backend = os.path.basename(os.path.realpath(backend_path))
             if backend != real_backend and real_backend in backends: 
                 if strict:
-                    print "WARNING: %s is a symlink to %s" % (backend,
-                                                              real_backend)
+                    print("WARNING: %s is a symlink to %s" % (backend,
+                                                              real_backend))
                     return True
                 else:
                     return False # use real backend instead, or higher priority
@@ -311,13 +311,12 @@ def askForOffset(discTrackCount, releaseTrackCount):
     limit = releaseTrackCount - discTrackCount
     while True:
         # ask until a correct offset is given (or a KeyboardInterrupt)
-        print
-        print "How many tracks are on the previous (actual) discs altogether?"
+        print("")
+        print("How many tracks are on the previous (actual) discs altogether?")
         try:
             choice = raw_input("[0-%d] " % limit)
         except KeyboardInterrupt:
-            print
-            print "exiting.."
+            print("\nexiting..")
             sys.exit(1)
         try:
             num = int(choice)
@@ -384,13 +383,13 @@ class DemandQuery():
         """Creates the query object and possibly asks for username/password
         """
         if auth:
-            print
+            print("")
             if self.username is None:
                 print "Please input your MusicBrainz username:",
                 self.username = raw_input()
             print "Please input your MusicBrainz password: ",
             password = getpass.getpass("")
-            print
+            print("")
             if StrictVersion(musicbrainz2_version) >= "0.7.4":
                 # There is a warning printed above, when < 0.7.4
                 service = WebService(username=self.username, password=password,
@@ -445,7 +444,7 @@ class Disc(object):
             self._release = None
             self._submit = submit
         except DiscError as err:
-            printError("DiscID calculation failed:", str(err))
+            printError("DiscID calculation failed: %s" % err)
             sys.exit(1)
 
     @property
@@ -480,17 +479,17 @@ class Disc(object):
         try:
             results = query.getReleases(filter=discId_filter)
         except ConnectionError as err:
-            printError("Couldn't connect to the server:", str(err))
+            printError("Couldn't connect to the server: %s" % err)
             sys.exit(1)
         except WebServiceError as err:
-            printError("Couldn't fetch release:", str(err))
+            printError("Couldn't fetch release: %s" % err)
             sys.exit(1)
         num_results = len(results)
         if num_results == 0:
-            print "This Disc ID is not in the database."
+            print("This Disc ID is not in the database.")
             self._release = None
         elif num_results > 1:
-            print "This Disc ID is ambiguous:"
+            print("This Disc ID is ambiguous:")
             for i in range(num_results):
                 release = results[i].release
                 release_type = release.getTypes()[1].rpartition('#')[2]
@@ -515,20 +514,16 @@ class Disc(object):
                 printError("Invalid Choice")
                 sys.exit(1)
             except KeyboardInterrupt:
-                print
-                print "exiting.."
+                print("\nexiting..")
                 sys.exit(1)
         else:
             self._release = results[0].getRelease()
 
         if self._release and self._release.getId() is None:
             # a "release" that is only a stub has no musicbrainz id
-            print
-            print "There is only a stub in the database:"
-            printEncoded(self._release.getArtist().getName())
-            printEncoded( "-", self._release.getTitle())
-            print
-            print
+            print("\nThere is only a stub in the database:")
+            printEncoded("%s - %s\n\n" % (self._release.getArtist().getName(),
+                                      self._release.getTitle()))
             self._release = None        # don't use stub
             submit = True               # the id is verified by the stub
 
@@ -551,11 +546,11 @@ class Disc(object):
                         printError2("Please submit it via:", url)
                         sys.exit(1)
                 else:
-                    print "Please submit the Disc ID with this url:"
-                    print url
+                    print("Please submit the Disc ID with this url:")
+                    print(url)
                     sys.exit(1)
             else:
-                print "recalculating to re-check.."
+                print("recalculating to re-check..")
                 self.getRelease(submit=True)
 
         return self._release
@@ -564,9 +559,8 @@ def getDisc(device, submit=False):
     """This creates a Disc object, which also calculates the id of the disc
     """
     disc = Disc(device, submit)
-    print
-    print 'DiscID:\t\t', disc.id
-    print 'Tracks on disc:\t', disc.trackCount
+    print('\nDiscID:\t\t%s' % disc.id)
+    print('Tracks on disc:\t%d' % disc.trackCount)
     return disc
 
 
@@ -594,7 +588,7 @@ def gatherIsrcs(backend, device):
                 if text.startswith("T:"):
                     m = re.search(pattern, text)
                     if m == None:
-                        print "can't find ISRC in:", text
+                        print("can't find ISRC in: %s" % text)
                         continue
                     trackNumber = int(m.group(1))
                     isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
@@ -615,7 +609,7 @@ def gatherIsrcs(backend, device):
             if line.startswith("TRACK"):
                 m = re.search(pattern, line)
                 if m == None:
-                    print "can't find ISRC in:", line
+                    print("can't find ISRC in: %s" % line)
                     continue
                 trackNumber = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
@@ -640,7 +634,7 @@ def gatherIsrcs(backend, device):
             if line.startswith("ISRC") and not line.startswith("ISRCS"):
                 m = re.search(pattern, line)
                 if m == None:
-                    print "can't find ISRC in:", line
+                    print("can't find ISRC in: %s" % line)
                     continue
                 trackNumber = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
@@ -654,9 +648,9 @@ def gatherIsrcs(backend, device):
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
         if debug:
-            print "Saving toc in %s.." % tmpfile
+            print("Saving toc in %s.." % tmpfile)
         if os.name == "nt" and device != "D:":
-            print "warning: cdrdao uses the default device"
+            print("warning: cdrdao uses the default device")
             args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
         else:
             args = [backend, "read-toc", "--fast-toc", "--device", device,
@@ -682,7 +676,7 @@ def gatherIsrcs(backend, device):
                             isrc = "".join(words[1:]).strip('"- ')
                             m = re.match(pattern, isrc)
                             if m is None:
-                                print "no valid ISRC:", isrc
+                                print("no valid ISRC: %s" % isrc)
                             elif isrc:
                                 backend_output.append((trackNumber, isrc))
                                 # safeguard against missing trackNumber lines
@@ -711,7 +705,7 @@ def gatherIsrcs(backend, device):
             if line.startswith("Track") and line.find("block") > 0:
                 m = re.search(pattern, line)
                 if m == None:
-                    print "can't find ISRC in:", line
+                    print("can't find ISRC in: %s" % line)
                     continue
                 trackNumber = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
@@ -728,8 +722,7 @@ def cleanupIsrcs(isrcs):
     for isrc in isrcs:
         tracks = isrcs[isrc].getTracks()
         if len(tracks) > 1:
-            print
-            print "ISRC", isrc, "attached to:"
+            print("\nISRC %s attached to:" % isrc)
             for track in tracks:
                 print "\t",
                 artist = track.getArtist()
@@ -778,10 +771,9 @@ debug = options.debug
 query = DemandQuery(options.user, agentName)
 disc = None
 
-print script_version()
-print
+print("%s\n" % script_version())
 
-print "using python-musicbrainz2", musicbrainz2_version
+print("using python-musicbrainz2 %s" % musicbrainz2_version)
 if StrictVersion(musicbrainz2_version) < "0.7.0":
     printError("Your version of python-musicbrainz2 is outdated")
     printError2("You WILL NOT be able to even check ISRCs")
@@ -795,10 +787,9 @@ if StrictVersion(musicbrainz2_version) < "0.7.3":
 # We print two warnings for clients between 0.7.0 and 0.7.3,
 # because 0.7.4 is important. (-> no elif)
 if StrictVersion(musicbrainz2_version) < "0.7.4":
-    print "WARNING: Cannot set userAgent"
-    print "         You WILL have random connection problems due to throttling"
-    print "         Please use python-musicbrainz2 0.7.4 or higher"
-    print
+    print("WARNING: Cannot set userAgent")
+    print("         You WILL have random connection problems due to throttling")
+    print("         Please use python-musicbrainz2 0.7.4 or higher\n")
 
 
 # search for backend
@@ -821,7 +812,7 @@ if backend is None:
     printError2("  " + ", ".join(verbose_backends))
     sys.exit(-1)
 else:
-    print "using", getProgVersion(backend)
+    print("using %s" % getProgVersion(backend))
 
 if backend == "drutil":
     # drutil (Mac OS X) expects 1,2,..
@@ -832,8 +823,8 @@ if backend == "drutil":
     # drutil will tell us
     device = getRealMacDevice(options.device)
     if debug:
-        print "CD drive #%s corresponds to %s internally" % (
-                                                options.device, device)
+        print("CD drive #%s corresponds to %s internally" % (options.device,
+                                                             device))
 else:
     # for linux the real device is the same as given in the options
     device = options.device
@@ -844,10 +835,10 @@ include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = query.getReleaseById(releaseId, include=include)
 except ConnectionError as err:
-    printError("Couldn't connect to the server:", str(err))
+    printError("Couldn't connect to the server: %s" % err)
     sys.exit(1)
 except WebServiceError as err:
-    printError("Couldn't fetch release:", str(err))
+    printError("Couldn't fetch release: %s" % err)
     sys.exit(1)
 
 tracks = release.getTracks()
@@ -856,72 +847,68 @@ discs = release.getDiscs()
 # discCount is actually the count of DiscIDs
 # there can be multiple DiscIDs for a single disc
 discIdCount = len(discs)
-printEncoded('Artist:\t\t', release.getArtist().getName(), "\n")
-printEncoded('Release:\t', release.getTitle(), "\n")
+printEncoded('Artist:\t\t%s\n' % release.getArtist().getName())
+printEncoded('Release:\t%s\n' % release.getTitle())
 if releaseTrackCount != disc.trackCount:
     # a track count mismatch probably due to
     # multiple discs in the release
-    print "Tracks in release:", releaseTrackCount
+    print("Tracks in release: %d" % releaseTrackCount)
     # Handling of multiple discs in the release:
     # We can only get the overall release from MB
     # and not the Medium itself.
     # This changed with NGS. Before there was one MB release per disc.
-    print
-    print "WARNING: Multi-disc-release given by web service."
-    print "See '" + scriptname, "-h' for help"
+    print("\nWARNING: Multi-disc-release given by web service.")
+    print("See '%s -h' for help" % scriptname)
 
     if discIdCount == 1:
         # This is actually a weird case
         # Having only 1 disc, but not matching trackCounts
         # Possibly some data/video track.
         # but also possible that there is a bonus DVD (no disc ID possible)
-        print "Track count mismatch!"
-        print "There are", disc.trackCount, "tracks on the disc,"
-        print "but", releaseTrackCount,"tracks"
-        print "given for just one DiscID."
-        print
+        print("Track count mismatch!")
+        print("There are %d tracks on the disc," % disc.trackCount)
+        print("but %d tracks" % releaseTrackCount)
+        print("given for just one DiscID.\n")
         discIdNumber = 1
     else:
-        print "Discs (or disc IDs) in release: ", discIdCount
+        print("Discs (or disc IDs) in release: %d" % discIdCount)
         for i in range(discIdCount):
             print "\t", discs[i].getId(),
             if discs[i].getId() == disc.id:
                 discIdNumber = i + 1
-                print "[THIS DISC]"
+                print("[THIS DISC]")
             else:
-                print
-    print "There might be multiple disc IDs per disc or none,"
-    print "so the number of actual discs could be lower or even higher."
-    print
-    print "This is disc (ID)", discIdNumber, "of", discIdCount
+                print("")
+    print("There might be multiple disc IDs per disc or none,")
+    print("so the number of actual discs could be lower or even higher.\n")
+    print("This is disc (ID) %d of %d" % (discIdNumber, discIdCount))
 
     if discIdNumber == 1 and discIdCount > 1:
         # the first disc never needs an offset
         # unless we have a track count mismatch and only one disc id given
         trackOffset = 0
-        print "Guessing track offset as", trackOffset
+        print("Guessing track offset as %d" % trackOffset)
     elif discIdCount == 1 and disc.trackCount < releaseTrackCount:
         # bonus DVD (without disc ID) given in MB?
         # better handling in version 2 api
         trackOffset = 0
-        print "This release probably has a bonus DVD without a discID."
-        print "Guessing track offset as", trackOffset
+        print("This release probably has a bonus DVD without a discID.")
+        print("Guessing track offset as %d" % trackOffset)
     else:
         # cannot guess fully automatically
         if discIdCount > 1 and discIdNumber == discIdCount:
             # It is easy to guess the offset when this is the last disc,
             # because we have no unknown track counts after this.
             trackOffset = releaseTrackCount - disc.trackCount
-            print "It looks like the last disc of the release."
-            print "This might be wrong when a bonus DVD is part of the release."
-            print "Our offset guess would be:", trackOffset
-            print
+            print("It looks like the last disc of the release.")
+            print("This might be wrong when a bonus DVD is part of the release.")
+            print("Our offset guess would be: %d\n" % trackOffset)
         else:
             # For "middle" discs we have unknown track numbers
             # before and after the current disc.
             # The same when we have only one disc ID but a track mismatch
             # -> the user has to tell us an offset to use
-            print "Cannot guess the track offset."
+            print("Cannot guess the track offset.")
 
         # There can also be multiple discIds for one disc of the release
         # so we give a MB-link to help which IDs
@@ -929,8 +916,8 @@ if releaseTrackCount != disc.trackCount:
         # We can't provide that ourselves without making
         # many requests to MB or using the new web-api 2.
         url = releaseId + "/discids" # The "releaseId" is an url itself
-        print "This url would provide some info about the disc IDs:"
-        print url
+        print("This url would provide some info about the disc IDs:")
+        print(url)
         print "Would you like to open it in the browser?",
         if raw_input("[y/N] ") == "y":
             try:
@@ -945,7 +932,7 @@ else:
     trackOffset = 0
 
 
-print
+print("")
 # Extract ISRCs
 backend_output = gatherIsrcs(backend, options.device) # (track, isrc)
 
@@ -961,8 +948,8 @@ for (trackNumber, isrc) in backend_output:
         with_isrc = [item for item in backend_output if item[1] == isrc]
         if len(with_isrc) > 1:
             listOfTracks = [str(item[0]) for item in with_isrc]
-            printError(backend + " gave the same ISRC for multiple tracks!")
-            printError2("ISRC:", isrc, "\ttracks:", ", ".join(listOfTracks))
+            printError("%s gave the same ISRC for multiple tracks!" % backend)
+            printError2("ISRC: %s\ttracks: %s"% (isrc, ", ".join(listOfTracks)))
             errors += 1
     try:
         track = tracks[trackNumber + trackOffset - 1]
@@ -971,38 +958,37 @@ for (trackNumber, isrc) in backend_output:
         # check if the ISRC was already added to the track
         if isrc not in track.getISRCs():
             tracks2isrcs[track.getId()] = isrc
-            print "found new ISRC for track",
-            print str(trackNumber) + ":", isrc
+            print("found new ISRC for track %d: %s" % (trackNumber, isrc))
         else:
-            print isrc, "is already attached to track", trackNumber
+            print("%s is already attached to track %d" % (isrc, trackNumber))
     except IndexError:
-        printError("ISRC", isrc, "found for unknown track", trackNumber)
+        printError("ISRC %s found for unknown track %d" % (isrc, trackNumber))
         errors += 1
 for isrc in isrcs:
     for track in isrcs[isrc].getTracks():
         trackNumber = track.getNumber()
 
-print
+print("")
 # try to submit the ISRCs
 update_intention = True
 if len(tracks2isrcs) == 0:
-    print "No new ISRCs could be found."
+    print("No new ISRCs could be found.")
 else:
     if errors > 0:
         printError(errors, "problems detected")
     if raw_input("Do you want to submit? [y/N] ") == "y":
         try:
             query.submitISRCs(tracks2isrcs)
-            print "Successfully submitted", len(tracks2isrcs), "ISRCs."
+            print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
         except RequestError as err:
-            printError("Invalid request:", str(err))
+            printError("Invalid request: %s" % err)
         except AuthenticationError as err:
-            printError("Invalid credentials:", str(err))
+            printError("Invalid credentials: %s" % err)
         except WebServiceError as err:
-            printError("Couldn't send ISRCs:", str(err))
+            printError("Couldn't send ISRCs: %s" % err)
     else:
         update_intention = False
-        print "Nothing was submitted to the server."
+        print("Nothing was submitted to the server.")
 
 # check for overall duplicate ISRCs, including server provided
 if update_intention:
@@ -1023,8 +1009,7 @@ if update_intention:
             duplicates += 1
 
     if duplicates > 0:
-        print
-        print "There were", duplicates, "ISRCs",
+        print "\nThere were", duplicates, "ISRCs",
         print "that are attached to multiple tracks on this release."
         if raw_input("Do you want to help clean those up? [y/N] ") == "y":
             cleanupIsrcs(isrcs)
