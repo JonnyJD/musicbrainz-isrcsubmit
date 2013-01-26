@@ -54,6 +54,13 @@ if os.path.isfile(shellname):
 else:
     scriptname = os.path.basename(sys.argv[0])
 
+# make code more Python 3 compliant for easier backporting
+# this still won't run on Python 3
+try:
+    user_input = raw_input
+except NameError:
+    user_input = input
+
 def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmitVersion
 
@@ -314,7 +321,7 @@ def askForOffset(discTrackCount, releaseTrackCount):
         print("")
         print("How many tracks are on the previous (actual) discs altogether?")
         try:
-            choice = raw_input("[0-%d] " % limit)
+            choice = user_input("[0-%d] " % limit)
         except KeyboardInterrupt:
             print("\nexiting..")
             sys.exit(1)
@@ -386,7 +393,7 @@ class DemandQuery():
             print("")
             if self.username is None:
                 print "Please input your MusicBrainz username:",
-                self.username = raw_input()
+                self.username = user_input()
             print "Please input your MusicBrainz password: ",
             password = getpass.getpass("")
             print("")
@@ -506,7 +513,8 @@ class Disc(object):
                     printEncoded("\t%s\t%s\t%s\t%s\n"
                                  % (country, date, barcode, catnum))
             try:
-                num =  raw_input("Which one do you want? [1-%d] " % num_results)
+                num =  user_input("Which one do you want? [1-%d] "
+                                  % num_results)
                 if int(num) not in range(1, num_results + 1):
                     raise IndexError
                 self._release = results[int(num) - 1].getRelease()
@@ -531,7 +539,7 @@ class Disc(object):
             if submit:
                 url = self.submissionUrl
                 print "Would you like to open the browser to submit the disc?",
-                if raw_input("[y/N] ") == "y":
+                if user_input("[y/N] ") == "y":
                     try:
                         if os.name == "nt":
                             # silly but necessary for spaces in the path
@@ -754,9 +762,9 @@ def cleanupIsrcs(isrcs):
                     print
 
             url = "http://musicbrainz.org/isrc/" + isrc
-            if raw_input("Open ISRC in the browser? [Y/n] ") != "n":
+            if user_input("Open ISRC in the browser? [Y/n] ") != "n":
                 Popen([options.browser, url])
-                raw_input("(press <return> when done with this ISRC) ")
+                user_input("(press <return> when done with this ISRC) ")
 
 
 # "main" + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
@@ -919,7 +927,7 @@ if releaseTrackCount != disc.trackCount:
         print("This url would provide some info about the disc IDs:")
         print(url)
         print "Would you like to open it in the browser?",
-        if raw_input("[y/N] ") == "y":
+        if user_input("[y/N] ") == "y":
             try:
                 Popen([options.browser, url])
             except OSError as err:
@@ -976,7 +984,7 @@ if len(tracks2isrcs) == 0:
 else:
     if errors > 0:
         printError(errors, "problems detected")
-    if raw_input("Do you want to submit? [y/N] ") == "y":
+    if user_input("Do you want to submit? [y/N] ") == "y":
         try:
             query.submitISRCs(tracks2isrcs)
             print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
@@ -1011,7 +1019,7 @@ if update_intention:
     if duplicates > 0:
         print "\nThere were", duplicates, "ISRCs",
         print "that are attached to multiple tracks on this release."
-        if raw_input("Do you want to help clean those up? [y/N] ") == "y":
+        if user_input("Do you want to help clean those up? [y/N] ") == "y":
             cleanupIsrcs(isrcs)
 
 
