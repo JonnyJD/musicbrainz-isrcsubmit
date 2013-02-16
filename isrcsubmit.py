@@ -443,7 +443,7 @@ class DemandQuery():
 
 
 class Disc(object):
-    def __init__(self, device, verified=False):
+    def read_disc(self):
         try:
             # calculate disc ID from disc
             if os.name == "nt" and not debug:
@@ -452,16 +452,20 @@ class Disc(object):
                 devnull = open(os.devnull, 'w')
                 oldStdoutFd = os.dup(sys.stdout.fileno())
                 os.dup2(devnull.fileno(), 1) # > /dev/null
-                self._disc = readDisc(deviceName=device)
+                self._disc = readDisc(deviceName=self._device)
                 os.dup2(oldStdoutFd, 1)      # restore stdout
             else:
                 # no such debug output on other platforms
-                self._disc = readDisc(deviceName=device)
-            self._release = None
-            self._verified = verified
+                self._disc = readDisc(deviceName=self._device)
         except DiscError as err:
             printError("DiscID calculation failed: %s" % err)
             sys.exit(1)
+
+    def __init__(self, device, verified=False):
+        self._device = device
+        self._release = None
+        self._verified = verified
+        self.read_disc()        # sets self._disc
 
     @property
     def id(self):
@@ -568,6 +572,7 @@ class Disc(object):
                     sys.exit(1)
             else:
                 print("recalculating to re-check..")
+                self.read_disc()
                 self.getRelease(verified=True)
 
         return self._release
