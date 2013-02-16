@@ -25,7 +25,7 @@ http://kraehen.org/isrcsubmit.py
 isrcsubmitVersion = "0.5.2"
 agentName = "isrcsubmit-jonnyjd-" + isrcsubmitVersion
 # starting with highest priority
-backends = ["mediatools", "media_info", "cdrdao", "cd-info",
+backends = ["mediatools", "media_info", "discisrc", "cdrdao", "cd-info",
             "cdda2wav", "icedax", "drutil"]
 packages = {"cd-info": "libcdio", "cdda2wav": "cdrtools", "icedax": "cdrkit"}
 
@@ -587,8 +587,28 @@ def gatherIsrcs(backend, device):
     backend_output = []
     devnull = open(os.devnull, "w")
 
+    if backend == "discisrc":
+        pattern = \
+            r'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+        try:
+            p = Popen([backend, device], stdout=PIPE)
+            isrcout = p.stdout
+        except OSError as err:
+            backendError(backend, err)
+        for line in isrcout:
+            if debug:
+                printf(line)    # already includes a newline
+            if line.startswith("Track"):
+                m = re.search(pattern, line)
+                if m == None:
+                    print("can't find ISRC in: %s" % line)
+                    continue
+                trackNumber = int(m.group(1))
+                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                backend_output.append((trackNumber, isrc))
+
     # icedax is a fork of the cdda2wav tool
-    if backend in ["cdda2wav", "icedax"]:
+    elif backend in ["cdda2wav", "icedax"]:
         pattern = \
             r'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
