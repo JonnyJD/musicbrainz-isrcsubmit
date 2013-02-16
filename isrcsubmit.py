@@ -443,7 +443,7 @@ class DemandQuery():
 
 
 class Disc(object):
-    def __init__(self, device, submit=False):
+    def __init__(self, device, verified=False):
         try:
             # calculate disc ID from disc
             if os.name == "nt" and not debug:
@@ -458,7 +458,7 @@ class Disc(object):
                 # no such debug output on other platforms
                 self._disc = readDisc(deviceName=device)
             self._release = None
-            self._submit = submit
+            self._verified = verified
         except DiscError as err:
             printError("DiscID calculation failed: %s" % err)
             sys.exit(1)
@@ -482,11 +482,11 @@ class Disc(object):
         This will ask the user to choose if the discID is ambiguous.
         """
         if self._release is None:
-            self._release = self.getRelease(self._submit)
+            self._release = self.getRelease(self._verified)
             # can still be None
         return self._release
 
-    def getRelease(self, submit=False):
+    def getRelease(self, verified=False):
         """Find the corresponding MusicBrainz release
 
         This will ask the user to choose if the discID is ambiguous.
@@ -542,10 +542,10 @@ class Disc(object):
             printEncoded("%s - %s\n\n" % (self._release.getArtist().getName(),
                                       self._release.getTitle()))
             self._release = None        # don't use stub
-            submit = True               # the id is verified by the stub
+            verified = True             # the id is verified by the stub
 
         if self._release is None:
-            if submit:
+            if verified:
                 url = self.submissionUrl
                 printf("Would you like to open the browser to submit the disc?")
                 if user_input(" [y/N] ") == "y":
@@ -568,14 +568,14 @@ class Disc(object):
                     sys.exit(1)
             else:
                 print("recalculating to re-check..")
-                self.getRelease(submit=True)
+                self.getRelease(verified=True)
 
         return self._release
 
-def getDisc(device, submit=False):
+def getDisc(device, verified=False):
     """This creates a Disc object, which also calculates the id of the disc
     """
-    disc = Disc(device, submit)
+    disc = Disc(device, verified)
     print('\nDiscID:\t\t%s' % disc.id)
     print('Tracks on disc:\t%d' % disc.trackCount)
     return disc
@@ -865,7 +865,7 @@ else:
     # for linux the real device is the same as given in the options
     device = options.device
 
-disc = getDisc(device, submit=False)
+disc = getDisc(device)
 releaseId = disc.release.getId()        # implicitly fetches release
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
