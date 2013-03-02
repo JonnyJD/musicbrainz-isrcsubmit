@@ -196,6 +196,10 @@ def gatherOptions(argv):
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
             help="Program to open urls. The default is " + defaultBrowser)
+    parser.add_option("-o", "--offset", metavar="OFFSET",
+            help="The offset of the disc in the release. If no offset is"
+            + " specified, the offset will automatically determined."
+            + " Read help for more information about the offset.")
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -890,7 +894,10 @@ discs = release.getDiscs()
 discIdCount = len(discs)
 printEncoded('Artist:\t\t%s\n' % release.getArtist().getName())
 printEncoded('Release:\t%s\n' % release.getTitle())
-if releaseTrackCount != disc.trackCount:
+if options.offset and int(options.offset):
+    print "Using the given offset: %s." % options.offset
+    trackOffset = int(options.offset)
+elif releaseTrackCount != disc.trackCount:
     # a track count mismatch probably due to
     # multiple discs in the release
     print("Tracks in release: %d" % releaseTrackCount)
