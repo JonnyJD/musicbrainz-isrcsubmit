@@ -929,12 +929,6 @@ if releaseTrackCount != disc.trackCount:
         # unless we have a track count mismatch and only one disc id given
         trackOffset = 0
         print("Guessing track offset as %d" % trackOffset)
-    elif discIdCount == 1 and disc.trackCount < releaseTrackCount:
-        # bonus DVD (without disc ID) given in MB?
-        # better handling in version 2 api
-        trackOffset = 0
-        print("This release probably has a bonus DVD without a discID.")
-        print("Guessing track offset as %d" % trackOffset)
     else:
         # cannot guess fully automatically
         if discIdCount > 1 and discIdNumber == discIdCount:
