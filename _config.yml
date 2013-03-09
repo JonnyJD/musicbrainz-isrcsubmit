@@ -12,10 +12,6 @@ script:
   version: 0.5.2
   current: isrcsubmit-0.5.2
 
-libdiscid:
-  lversion: 0.3.0
-  current: libdiscid-0.3.0
-
 nav:
 - title: home
   url: ./
@@ -27,8 +23,6 @@ nav:
   url: changes
 - title: bugs
   url: bugs
-- title: libdiscid
-  url: libdiscid
 - title: backends
   url: backends
 - title: links
