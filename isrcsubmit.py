@@ -220,8 +220,8 @@ def gather_options(argv):
         print("WARNING: Superfluous arguments: %s" % ", ".join(args))
     options.sane_which = test_which()
     if options.backend and not has_backend(options.backend, strict=True):
-        printError("Chosen backend not found. No ISRC extraction possible!")
-        printError2("Make sure that %s is installed." % options.backend)
+        print_error("Chosen backend not found. No ISRC extraction possible!")
+        print_error2("Make sure that %s is installed." % options.backend)
         sys.exit(-1)
 
     return options
@@ -309,8 +309,8 @@ def get_real_mac_device(option_device):
     try:
         given = p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
     except IndexError:
-        printError("could not find real device")
-        printError2("maybe there is no disc in the drive?")
+        print_error("could not find real device")
+        print_error2("maybe there is no disc in the drive?")
         sys.exit(-1)
     # libdiscid needs the "raw" version
     return given.replace("/disk", "/rdisk")
@@ -329,7 +329,7 @@ def askForOffset(disc_track_count, release_track_count):
         try:
             num = int(choice)
         except ValueError:
-            printError("Not a number")
+            print_error("Not a number")
         else:
             if num in range(0, limit + 1):
                 return num
@@ -351,7 +351,7 @@ def printf(format_string, *args):
         format_string = "%s"
     sys.stdout.write(format_string % args)
 
-def printEncoded(*args):
+def print_encoded(*args):
     """This will replace unsuitable characters and doesn't append a newline
     """
     stringArgs = ()
@@ -368,19 +368,20 @@ def printEncoded(*args):
     else:
         sys.stdout.write(msg)
 
-def printError(*args):
+def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
     msg = " ".join(("ERROR:",) + string_args)
     sys.stderr.write(msg + "\n")
 
-def printError2(*args):
+def print_error2(*args):
+    """following lines for print_error()"""
     string_args = tuple([str(arg) for arg in args])
     msg = " ".join(("      ",) + string_args)
     sys.stderr.write(msg + "\n")
 
 def backend_error(backend, err):
-    printError("Couldn't gather ISRCs with %s: %i - %s"
-            % (backend, err.errno, err.strerror))
+    print_error("Couldn't gather ISRCs with %s: %i - %s"
+                % (backend, err.errno, err.strerror))
     sys.exit(1)
 
 class DemandQuery():
@@ -459,7 +460,7 @@ class Disc(object):
                 # no such debug output on other platforms
                 self._disc = readDisc(deviceName=self._device)
         except DiscError as err:
-            printError("DiscID calculation failed: %s" % err)
+            print_error("DiscID calculation failed: %s" % err)
             sys.exit(1)
 
     def __init__(self, device, verified=False):
@@ -500,10 +501,10 @@ class Disc(object):
         try:
             results = query.getReleases(filter=discId_filter)
         except ConnectionError as err:
-            printError("Couldn't connect to the server: %s" % err)
+            print_error("Couldn't connect to the server: %s" % err)
             sys.exit(1)
         except WebServiceError as err:
-            printError("Couldn't fetch release: %s" % err)
+            print_error("Couldn't fetch release: %s" % err)
             sys.exit(1)
         num_results = len(results)
         if num_results == 0:
@@ -515,17 +516,17 @@ class Disc(object):
                 release = results[i].release
                 release_type = release.getTypes()[1].rpartition('#')[2]
                 # printed list is 1..n, not 0..n-1 !
-                printEncoded("%d: %s - %s (%s)\n"
-                             % (i + 1, release.getArtist().getName(),
-                                release.getTitle(), release_type))
+                print_encoded("%d: %s - %s (%s)\n"
+                              % (i + 1, release.getArtist().getName(),
+                                 release.getTitle(), release_type))
                 events = release.getReleaseEvents()
                 for event in events:
                     country = (event.getCountry() or "").ljust(2)
                     date = (event.getDate() or "").ljust(10)
                     barcode = (event.getBarcode() or "").rjust(13)
                     catnum = event.getCatalogNumber() or ""
-                    printEncoded("\t%s\t%s\t%s\t%s\n"
-                                 % (country, date, barcode, catnum))
+                    print_encoded("\t%s\t%s\t%s\t%s\n"
+                                  % (country, date, barcode, catnum))
             try:
                 num =  user_input("Which one do you want? [1-%d] "
                                   % num_results)
@@ -533,7 +534,7 @@ class Disc(object):
                     raise IndexError
                 self._release = results[int(num) - 1].getRelease()
             except (ValueError, IndexError):
-                printError("Invalid Choice")
+                print_error("Invalid Choice")
                 sys.exit(1)
             except KeyboardInterrupt:
                 print("\nexiting..")
@@ -544,8 +545,8 @@ class Disc(object):
         if self._release and self._release.getId() is None:
             # a "release" that is only a stub has no musicbrainz id
             print("\nThere is only a stub in the database:")
-            printEncoded("%s - %s\n\n" % (self._release.getArtist().getName(),
-                                      self._release.getTitle()))
+            print_encoded("%s - %s\n\n" % (self._release.getArtist().getName(),
+                                           self._release.getTitle()))
             self._release = None        # don't use stub
             verified = True             # the id is verified by the stub
 
@@ -563,9 +564,9 @@ class Disc(object):
                             # linux/unix works fine with spaces
                             os.execlp(options.browser, options.browser, url)
                     except OSError as err:
-                        printError("Couldn't open the url in %s: %s"
+                        print_error("Couldn't open the url in %s: %s"
                                     % (options.browser, str(err)))
-                        printError2("Please submit it via:", url)
+                        print_error2("Please submit it via:", url)
                         sys.exit(1)
                 else:
                     print("Please submit the Disc ID with this url:")
@@ -701,7 +702,7 @@ def gather_isrcs(backend, device):
         try:
             p = Popen(args, stdout=devnull, stderr=devnull)
             if p.wait() != 0:
-                printError("%s returned with %i" % (backend, p.returncode))
+                print_error("%s returned with %i" % (backend, p.returncode))
                 sys.exit(1)
         except OSError as err:
             backend_error(backend, err)
@@ -773,7 +774,7 @@ def cleanup_isrcs(isrcs):
                     string = "%s - %s" % (artist.getName(), track.getTitle())
                 else:
                     string = "%s" % track.getTitle()
-                printEncoded(string)
+                print_encoded(string)
                 # tab alignment
                 if len(string) >= 32:
                     printf("\n%s",  " " * 40)
@@ -817,14 +818,14 @@ print("%s\n" % script_version())
 
 print("using python-musicbrainz2 %s" % musicbrainz2_version)
 if StrictVersion(musicbrainz2_version) < "0.7.0":
-    printError("Your version of python-musicbrainz2 is outdated")
-    printError2("You WILL NOT be able to even check ISRCs")
-    printError2("Please use AT LEAST python-musicbrainz2 0.7.0")
+    print_error("Your version of python-musicbrainz2 is outdated")
+    print_error2("You WILL NOT be able to even check ISRCs")
+    print_error2("Please use AT LEAST python-musicbrainz2 0.7.0")
     sys.exit(-1) # the script can't do anything useful
 if StrictVersion(musicbrainz2_version) < "0.7.3":
-    printError("Cannot use AUTH DIGEST")
-    printError2("You WILL NOT be able to submit ISRCs -> check-only")
-    printError2("Please use python-musicbrainz2 0.7.3 or higher")
+    print_error("Cannot use AUTH DIGEST")
+    print_error2("You WILL NOT be able to submit ISRCs -> check-only")
+    print_error2("Please use python-musicbrainz2 0.7.3 or higher")
     # do not exit, check-only is what happens most of the times anyways
 # We print two warnings for clients between 0.7.0 and 0.7.3,
 # because 0.7.4 is important. (-> no elif)
@@ -849,9 +850,9 @@ if backend is None:
             verbose_backends.append(program + " (" + packages[program] + ")")
         else:
             verbose_backends.append(program)
-    printError("Cannot find a backend to extract the ISRCS!")
-    printError2("Isrcsubmit can work with one of the following:")
-    printError2("  " + ", ".join(verbose_backends))
+    print_error("Cannot find a backend to extract the ISRCS!")
+    print_error2("Isrcsubmit can work with one of the following:")
+    print_error2("  " + ", ".join(verbose_backends))
     sys.exit(-1)
 else:
     print("using %s" % get_prog_version(backend))
@@ -877,10 +878,10 @@ include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = query.getReleaseById(releaseId, include=include)
 except ConnectionError as err:
-    printError("Couldn't connect to the server: %s" % err)
+    print_error("Couldn't connect to the server: %s" % err)
     sys.exit(1)
 except WebServiceError as err:
-    printError("Couldn't fetch release: %s" % err)
+    print_error("Couldn't fetch release: %s" % err)
     sys.exit(1)
 
 tracks = release.getTracks()
@@ -889,8 +890,8 @@ discs = release.getDiscs()
 # discCount is actually the count of DiscIDs
 # there can be multiple DiscIDs for a single disc
 discIdCount = len(discs)
-printEncoded('Artist:\t\t%s\n' % release.getArtist().getName())
-printEncoded('Release:\t%s\n' % release.getTitle())
+print_encoded('Artist:\t\t%s\n' % release.getArtist().getName())
+print_encoded('Release:\t%s\n' % release.getTitle())
 if releaseTrackCount != disc.trackCount:
     # a track count mismatch probably due to
     # multiple discs in the release
@@ -959,7 +960,7 @@ if releaseTrackCount != disc.trackCount:
             try:
                 Popen([options.browser, url])
             except OSError as err:
-                printError("Couldn't open the url with %s: %s"
+                print_error("Couldn't open the url with %s: %s"
                             % (options.browser, str(err)))
 
         trackOffset = askForOffset(disc.trackCount, releaseTrackCount)
@@ -984,13 +985,13 @@ for (track_number, isrc) in backend_output:
         with_isrc = [item for item in backend_output if item[1] == isrc]
         if len(with_isrc) > 1:
             track_list = [str(item[0]) for item in with_isrc]
-            printError("%s gave the same ISRC for multiple tracks!" % backend)
-            printError2("ISRC: %s\ttracks: %s"% (isrc, ", ".join(track_list)))
+            print_error("%s gave the same ISRC for multiple tracks!" % backend)
+            print_error2("ISRC: %s\ttracks: %s"% (isrc, ", ".join(track_list)))
             errors += 1
     try:
         track = tracks[track_number + trackOffset - 1]
     except IndexError:
-        printError("ISRC %s found for unknown track %d" % (isrc, track_number))
+        print_error("ISRC %s found for unknown track %d" % (isrc, track_number))
         errors += 1
     else:
         own_track = OwnTrack(track, track_number)
@@ -1009,17 +1010,17 @@ if not tracks2isrcs:
     print("No new ISRCs could be found.")
 else:
     if errors > 0:
-        printError(errors, "problems detected")
+        print_error(errors, "problems detected")
     if user_input("Do you want to submit? [y/N] ") == "y":
         try:
             query.submitISRCs(tracks2isrcs)
             print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
         except RequestError as err:
-            printError("Invalid request: %s" % err)
+            print_error("Invalid request: %s" % err)
         except AuthenticationError as err:
-            printError("Invalid credentials: %s" % err)
+            print_error("Invalid credentials: %s" % err)
         except WebServiceError as err:
-            printError("Couldn't send ISRCs: %s" % err)
+            print_error("Couldn't send ISRCs: %s" % err)
     else:
         update_intention = False
         print("Nothing was submitted to the server.")
