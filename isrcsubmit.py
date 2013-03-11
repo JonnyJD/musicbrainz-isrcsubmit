@@ -999,9 +999,6 @@ for (trackNumber, isrc) in backend_output:
     except IndexError:
         printError("ISRC %s found for unknown track %d" % (isrc, trackNumber))
         errors += 1
-for isrc in isrcs:
-    for track in isrcs[isrc].getTracks():
-        trackNumber = track.getNumber()
 
 print("")
 # try to submit the ISRCs
