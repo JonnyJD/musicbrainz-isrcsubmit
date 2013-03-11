@@ -110,14 +110,14 @@ class Isrc(object):
         if track is not None:
             self._tracks.append(track)
 
-    def addTrack(self, track):
+    def add_track(self, track):
         if track not in self._tracks:
             self._tracks.append(track)
 
-    def getTracks(self):
+    def get_tracks(self):
         return self._tracks
 
-    def getTrackNumbers(self):
+    def get_track_numbers(self):
         numbers = []
         for track in self._tracks:
             numbers.append(track.getNumber())
@@ -764,7 +764,7 @@ def cleanup_isrcs(isrcs):
     Our attached ISRCs should be correct -> helps to delete from other tracks
     """
     for isrc in isrcs:
-        tracks = isrcs[isrc].getTracks()
+        tracks = isrcs[isrc].get_tracks()
         if len(tracks) > 1:
             print("\nISRC %s attached to:" % isrc)
             for track in tracks:
@@ -995,7 +995,7 @@ for (track_number, isrc) in backend_output:
         errors += 1
     else:
         own_track = OwnTrack(track, track_number)
-        isrcs[isrc].addTrack(own_track)
+        isrcs[isrc].add_track(own_track)
         # check if the ISRC was already added to the track
         if isrc not in track.getISRCs():
             tracks2isrcs[track.getId()] = isrc
@@ -1037,10 +1037,10 @@ if update_intention:
         for isrc in track.getISRCs():
             # only check ISRCS we also found on our disc
             if isrc in isrcs:
-                isrcs[isrc].addTrack(track)
+                isrcs[isrc].add_track(track)
     # check if we have multiple tracks for one ISRC
     for isrc in isrcs:
-        if len(isrcs[isrc].getTracks()) > 1:
+        if len(isrcs[isrc].get_tracks()) > 1:
             duplicates += 1
 
     if duplicates > 0:
