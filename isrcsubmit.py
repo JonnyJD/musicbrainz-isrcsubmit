@@ -167,7 +167,7 @@ class OwnTrack(NumberedTrack):
     """
     pass
 
-def gatherOptions(argv):
+def gather_options(argv):
     global options
 
     if os.name == "nt":
@@ -219,7 +219,7 @@ def gatherOptions(argv):
     if args:
         print("WARNING: Superfluous arguments: %s" % ", ".join(args))
     options.sane_which = test_which()
-    if options.backend and not hasBackend(options.backend, strict=True):
+    if options.backend and not has_backend(options.backend, strict=True):
         printError("Chosen backend not found. No ISRC extraction possible!")
         printError2("Make sure that %s is installed." % options.backend)
         sys.exit(-1)
@@ -247,7 +247,7 @@ def test_which():
                 print('         unxutils is old/broken, GnuWin32 is good.')
             return False
 
-def getProgVersion(prog):
+def get_prog_version(prog):
     if prog == "icedax":
         return Popen([prog, "--version"], stderr=PIPE).communicate()[1].strip()
     elif prog == "cdda2wav":
@@ -269,7 +269,7 @@ def getProgVersion(prog):
     else:
         return prog
 
-def hasBackend(backend, strict=False):
+def has_backend(backend, strict=False):
     """When the backend is only a symlink to another backend,
        we will return False, unless we strictly want to use this backend.
     """
@@ -299,7 +299,7 @@ def hasBackend(backend, strict=False):
         else:
             return True
 
-def getRealMacDevice(option_device):
+def get_real_mac_device(option_device):
     """drutil takes numbers as drives.
 
     We ask drutil what device name corresponds to that drive
@@ -378,7 +378,7 @@ def printError2(*args):
     msg = " ".join(("      ",) + string_args)
     sys.stderr.write(msg + "\n")
 
-def backendError(backend, err):
+def backend_error(backend, err):
     printError("Couldn't gather ISRCs with %s: %i - %s"
             % (backend, err.errno, err.strerror))
     sys.exit(1)
@@ -578,7 +578,7 @@ class Disc(object):
 
         return self._release
 
-def getDisc(device, verified=False):
+def get_disc(device, verified=False):
     """This creates a Disc object, which also calculates the id of the disc
     """
     disc = Disc(device, verified)
@@ -587,7 +587,7 @@ def getDisc(device, verified=False):
     return disc
 
 
-def gatherIsrcs(backend, device):
+def gather_isrcs(backend, device):
     """read the disc in the device with the backend and extract the ISRCs
     """
     backend_output = []
@@ -600,7 +600,7 @@ def gatherIsrcs(backend, device):
             p = Popen([backend, device], stdout=PIPE)
             isrcout = p.stdout
         except OSError as err:
-            backendError(backend, err)
+            backend_error(backend, err)
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
@@ -622,7 +622,7 @@ def gatherIsrcs(backend, device):
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
             isrcout = p2.stdout
         except OSError as err:
-            backendError(backend, err)
+            backend_error(backend, err)
         for line in isrcout:
             # there are \n and \r in different places
             if debug:
@@ -645,7 +645,7 @@ def gatherIsrcs(backend, device):
                 '-C', device], stdout=PIPE)
             isrcout = p.stdout
         except OSError as err:
-            backendError(backend, err)
+            backend_error(backend, err)
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
@@ -670,7 +670,7 @@ def gatherIsrcs(backend, device):
             p = Popen(args, stdout=PIPE)
             isrcout = p.stdout
         except OSError as err:
-            backendError(backend, err)
+            backend_error(backend, err)
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
@@ -704,7 +704,7 @@ def gatherIsrcs(backend, device):
                 printError("%s returned with %i" % (backend, p.returncode))
                 sys.exit(1)
         except OSError as err:
-            backendError(backend, err)
+            backend_error(backend, err)
         else:
             with open(tmpfile, "r") as toc:
                 track_number = None
@@ -741,7 +741,7 @@ def gatherIsrcs(backend, device):
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stdout, stdout=PIPE)
             isrcout = p2.stdout
         except OSError as err:
-            backendError(backend, err)
+            backend_error(backend, err)
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
@@ -757,7 +757,7 @@ def gatherIsrcs(backend, device):
     return backend_output
 
 
-def cleanupIsrcs(isrcs):
+def cleanup_isrcs(isrcs):
     """Show information about duplicate ISRCs
 
     Our attached ISRCs should be correct -> helps to delete from other tracks
@@ -805,7 +805,7 @@ def cleanupIsrcs(isrcs):
 
 # - - - - "global" variables - - - -
 # gather chosen options
-options = gatherOptions(sys.argv)
+options = gather_options(sys.argv)
 # we set the device after we know which backend we will use
 backend = options.backend
 debug = options.debug
@@ -837,7 +837,7 @@ if StrictVersion(musicbrainz2_version) < "0.7.4":
 # search for backend
 if backend is None:
     for prog in backends:
-        if hasBackend(prog):
+        if has_backend(prog):
             backend = prog
             break
 
@@ -854,7 +854,7 @@ if backend is None:
     printError2("  " + ", ".join(verbose_backends))
     sys.exit(-1)
 else:
-    print("using %s" % getProgVersion(backend))
+    print("using %s" % get_prog_version(backend))
 
 if backend == "drutil":
     # drutil (Mac OS X) expects 1,2,..
@@ -863,7 +863,7 @@ if backend == "drutil":
         options.device = "1"
     # libdiscid needs to know what disk that corresponds to
     # drutil will tell us
-    device = getRealMacDevice(options.device)
+    device = get_real_mac_device(options.device)
     if debug:
         print("CD drive #%s corresponds to %s internally" % (options.device,
                                                              device))
@@ -871,7 +871,7 @@ else:
     # for linux the real device is the same as given in the options
     device = options.device
 
-disc = getDisc(device)
+disc = get_disc(device)
 releaseId = disc.release.getId()        # implicitly fetches release
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
@@ -970,7 +970,7 @@ else:
 
 print("")
 # Extract ISRCs
-backend_output = gatherIsrcs(backend, options.device) # (track, isrc)
+backend_output = gather_isrcs(backend, options.device) # (track, isrc)
 
 # prepare to add the ISRC we found to the corresponding track
 # and check for local duplicates now and server duplicates later
@@ -1046,7 +1046,7 @@ if update_intention:
         printf("\nThere were %d ISRCs", duplicates)
         print("that are attached to multiple tracks on this release.")
         if user_input("Do you want to help clean those up? [y/N] ") == "y":
-            cleanupIsrcs(isrcs)
+            cleanup_isrcs(isrcs)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
