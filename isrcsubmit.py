@@ -175,7 +175,7 @@ def gather_options(argv):
         # this default is only for libdiscid and mediatools
     else:
         default_device = "/dev/cdrom"
-    defaultBrowser = "firefox"
+    default_browser = "firefox"
     prog = scriptname
     parser = OptionParser(version=script_version(), add_help_option=False)
     parser.set_usage("%s [options] [user] [device]\n       %s -h" % (prog,
@@ -195,7 +195,7 @@ def gather_options(argv):
             + " disc. Possible backends are: %s." % ", ".join(backends)
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
-            help="Program to open urls. The default is " + defaultBrowser)
+            help="Program to open urls. The default is " + default_browser)
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -214,7 +214,7 @@ def gather_options(argv):
             # Win: cdrdao is not given a device and will try 0,1,0
             options.device = default_device
     if options.browser is None:
-        options.browser = defaultBrowser
+        options.browser = default_browser
     if args:
         print("WARNING: Superfluous arguments: %s" % ", ".join(args))
     options.sane_which = test_which()
