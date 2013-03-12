@@ -471,8 +471,10 @@ class WebService2():
             musicbrainzngs.auth(self.username, password)
             self.auth = True
 
-    def get_releases_by_discid(self, disc_id):
-        return musicbrainzngs.get_releases_by_discid(disc_id)
+    def get_releases_by_discid(self, disc_id, includes=[]):
+        response = musicbrainzngs.get_releases_by_discid(disc_id,
+                            includes=includes)
+        return response["disc"]["release-list"]
 
     def get_release_by_id(self, release_id, include):
         return musicbrainzngs.get_release_by_id(release_id, includes=include)
@@ -499,6 +501,7 @@ class Disc(object):
     def __init__(self, device, verified=False):
         self._device = device
         self._release = None
+        self._release2 = None
         self._verified = verified
         self.read_disc()        # sets self._id etc.
 
@@ -533,41 +536,45 @@ class Disc(object):
         discId_filter = ReleaseFilter(discId=self.id)
         try:
             results = query.getReleases(filter=discId_filter)
-            results2 = ws2.get_releases_by_discid(self.id)
-            print("ws2: %s" % results2)
+            results2 = ws2.get_releases_by_discid(self.id,
+                            includes=["artists", "labels"])
+            print("ws2: length of %s" % len(results2))
+            print("ws2: %s" % results2[0])
         except ConnectionError as err:
             print_error("Couldn't connect to the server: %s" % err)
             sys.exit(1)
         except WebServiceError as err:
             print_error("Couldn't fetch release: %s" % err)
             sys.exit(1)
-        num_results = len(results)
+        num_results = len(results2)
         if num_results == 0:
             print("This Disc ID is not in the database.")
             self._release = None
         elif num_results > 1:
             print("This Disc ID is ambiguous:")
             for i in range(num_results):
-                release = results[i].release
-                release_type = release.getTypes()[1].rpartition('#')[2]
+                release2 = results2[i]
                 # printed list is 1..n, not 0..n-1 !
                 print_encoded("%d: %s - %s (%s)\n"
-                              % (i + 1, release.getArtist().getName(),
-                                 release.getTitle(), release_type))
-                events = release.getReleaseEvents()
-                for event in events:
-                    country = (event.getCountry() or "").ljust(2)
-                    date = (event.getDate() or "").ljust(10)
-                    barcode = (event.getBarcode() or "").rjust(13)
-                    catnum = event.getCatalogNumber() or ""
-                    print_encoded("\t%s\t%s\t%s\t%s\n"
-                                  % (country, date, barcode, catnum))
+                              % (i + 1, release2["artist-credit-phrase"],
+                                 release2["title"], release2["status"]))
+                country = release2["country"].ljust(2)
+                date = release2["date"].ljust(10)
+                barcode = release2["barcode"].rjust(13)
+                label_list = release2["label-info-list"]
+                catnumber_list = []
+                for label in label_list:
+                    catnumber_list.append(label["catalog-number"])
+                catnumbers = ",".join(catnumber_list)
+                print_encoded("\t%s\t%s\t%s\t%s\n"
+                              % (country, date, barcode, catnumbers))
             try:
                 num =  user_input("Which one do you want? [1-%d] "
                                   % num_results)
                 if int(num) not in range(1, num_results + 1):
                     raise IndexError
                 self._release = results[int(num) - 1].getRelease()
+                self._release2 = results2[int(num) - 1]
             except (ValueError, IndexError):
                 print_error("Invalid Choice")
                 sys.exit(1)
@@ -576,6 +583,7 @@ class Disc(object):
                 sys.exit(1)
         else:
             self._release = results[0].getRelease()
+            self._release2 = results2[0]
 
         if self._release and self._release.getId() is None:
             # a "release" that is only a stub has no musicbrainz id
@@ -583,6 +591,7 @@ class Disc(object):
             print_encoded("%s - %s\n\n" % (self._release.getArtist().getName(),
                                            self._release.getTitle()))
             self._release = None        # don't use stub
+            self._release2 = None        # don't use stub
             verified = True             # the id is verified by the stub
 
         if self._release is None:
