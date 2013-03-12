@@ -49,8 +49,8 @@ for detailed usage see:
 
     isrcsubmit.py -h
 
-Mac users should rather use "isrcsubmit.sh", which also works on Linux.
-Windows users should use "isrcsubmit.bat".
+Mac users should rather use **isrcsubmit.sh**, which also works on Linux.
+Windows users should use **isrcsubmit.bat**.
 
 That is the username at musicbrainz and the device should be something like
 `/dev/cdrom` (default), `/dev/dvdrw`, a drive letter (on Windows)
