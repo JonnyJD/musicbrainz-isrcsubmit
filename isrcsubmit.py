@@ -39,6 +39,7 @@ from optparse import OptionParser
 from subprocess import Popen, PIPE, call
 from distutils.version import StrictVersion
 
+import discid
 from musicbrainz2 import __version__ as musicbrainz2_version
 from musicbrainz2.disc import readDisc, DiscError, getSubmissionUrl
 from musicbrainz2.model import Track
@@ -171,10 +172,11 @@ def gather_options(argv):
 
     if os.name == "nt":
         default_device = "D:"
+        # this is "cdaudio" in libdiscid, but no user understands that..
         # cdrdao is not given a device and will try 0,1,0
         # this default is only for libdiscid and mediatools
     else:
-        default_device = "/dev/cdrom"
+        default_device = discid.DEFAULT_DEVICE
     default_browser = "firefox"
     prog = scriptname
     parser = OptionParser(version=script_version(), add_help_option=False)
@@ -447,17 +449,11 @@ class Disc(object):
     def read_disc(self):
         try:
             # calculate disc ID from disc
-            if os.name == "nt" and not debug:
-                # libdiscid will print debug device names on stdout
-                # we want to suppress this
-                devnull = open(os.devnull, 'w')
-                oldStdoutFd = os.dup(sys.stdout.fileno())
-                os.dup2(devnull.fileno(), 1) # > /dev/null
-                self._disc = readDisc(deviceName=self._device)
-                os.dup2(oldStdoutFd, 1)      # restore stdout
-            else:
-                # no such debug output on other platforms
-                self._disc = readDisc(deviceName=self._device)
+            with discid.DiscId() as disc:
+                disc.read(self._device)
+                self._id = disc.id
+                self._submission_url = disc.submission_url
+                self._track_count = len(disc.track_offsets) - 1
         except DiscError as err:
             print_error("DiscID calculation failed: %s" % err)
             sys.exit(1)
@@ -466,19 +462,19 @@ class Disc(object):
         self._device = device
         self._release = None
         self._verified = verified
-        self.read_disc()        # sets self._disc
+        self.read_disc()        # sets self._id etc.
 
     @property
     def id(self):
-        return self._disc.getId()
+        return self._id
 
     @property
     def trackCount(self):
-        return len(self._disc.getTracks())
+        return self._track_count
 
     @property
     def submissionUrl(self):
-        return getSubmissionUrl(self._disc)
+        return self._submission_url
 
     @property
     def release(self):
