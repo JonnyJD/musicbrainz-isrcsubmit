@@ -49,8 +49,12 @@ for detailed usage see:
 
     isrcsubmit.py -h
 
+Mac users should rather use "isrcsubmit.sh", which also works on Linux.
+Windows users should use "isrcsubmit.bat".
+
 That is the username at musicbrainz and the device should be something like
-`/dev/cdrom` (default), `/dev/dvdrw` or a drive letter (on Windows).
+`/dev/cdrom` (default), `/dev/dvdrw`, a drive letter (on Windows)
+or a number (Mac OS X).
 Some cd readers report the same ISRCs for different (adjacent) tracks.
 Others don't, for the same physical disc.
 For me my dvd writer worked better.
@@ -75,7 +79,8 @@ help:
 "installation":
 ---------------
 
-The script itself does not need any installation.
+The script itself does not need any installation,
+but "python2 setup.py install" might work for you.
 However, the backends and libraries should get installed so that the
 script has access to them.
 
