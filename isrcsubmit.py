@@ -558,14 +558,16 @@ class Disc(object):
                 print_encoded("%d: %s - %s (%s)\n"
                               % (i + 1, release2["artist-credit-phrase"],
                                  release2["title"], release2["status"]))
-                country = release2["country"].ljust(2)
-                date = release2["date"].ljust(10)
-                barcode = release2["barcode"].rjust(13)
+                country = (release2.get("country") or "").ljust(2)
+                date = (release2.get("date") or "").ljust(10)
+                barcode = (release2.get("barcode") or "").rjust(13)
                 label_list = release2["label-info-list"]
                 catnumber_list = []
                 for label in label_list:
-                    catnumber_list.append(label["catalog-number"])
-                catnumbers = ",".join(catnumber_list)
+                    cat_number = label.get("catalog-number")
+                    if cat_number:
+                        catnumber_list.append(cat_number)
+                catnumbers = ", ".join(catnumber_list)
                 print_encoded("\t%s\t%s\t%s\t%s\n"
                               % (country, date, barcode, catnumbers))
             try:
