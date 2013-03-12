@@ -122,7 +122,7 @@ class EqTrack(object):
         return self._recording["title"]
 
     def getISRCs(self):
-        return self._recording["isrc-list"]
+        return self._recording.get("isrc-list", [])
 
 class NumberedTrack(EqTrack):
     """A track found on an analyzed (own) disc
