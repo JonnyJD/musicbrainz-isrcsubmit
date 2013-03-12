@@ -606,7 +606,7 @@ def gather_isrcs(backend, device):
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
-            if line.startswith("Track"):
+            if line.startswith("Track") and len(line) > 12:
                 m = re.search(pattern, line)
                 if m == None:
                     print("can't find ISRC in: %s" % line)
