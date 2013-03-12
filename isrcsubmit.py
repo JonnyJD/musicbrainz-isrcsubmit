@@ -22,7 +22,7 @@ https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
 isrcsubmit_version = "1.0.0"
-agent_name = "isrcsubmit-jonnyjd-" + isrcsubmit_version
+agent_name = "isrcsubmit.py"
 # starting with highest priority
 backends = ["mediatools", "media_info", "discisrc", "cdrdao", "cd-info",
             "cdda2wav", "icedax", "drutil"]
@@ -37,17 +37,10 @@ import tempfile
 from datetime import datetime
 from optparse import OptionParser
 from subprocess import Popen, PIPE, call
-from distutils.version import StrictVersion
 
 import discid
 import musicbrainzngs
-from musicbrainz2 import __version__ as musicbrainz2_version
-from musicbrainz2.disc import readDisc, DiscError, getSubmissionUrl
-from musicbrainz2.model import Track
-from musicbrainz2.webservice import WebService, Query
-from musicbrainz2.webservice import ReleaseFilter, ReleaseIncludes
-from musicbrainz2.webservice import RequestError, AuthenticationError
-from musicbrainz2.webservice import ConnectionError, WebServiceError
+from musicbrainzngs import AuthenticationError, WebServiceError
 
 # using a shellscript to get the correct python version (2.5 - 2.7)
 shellname = "isrcsubmit.sh"
@@ -76,27 +69,6 @@ Isrcsubmit will warn you if there are any problems and won't actually submit any
 
 Isrcsubmit will warn you if any duplicate ISRCs are detected and help you fix priviously inserted duplicate ISRCs.
 The ISRC-track relationship we found on our disc is taken as our correct evaluation.
-
-A note on Multi-disc-releases:
-
-Isrcsubmit uses the MusicBrainz web service version 1.
-This api is not tailored for MusicBrainz NGS (Next Generation Schema) and expects to have one release per disc. So it does not know which tracks are on a specific disc and lists all tracks in the overall release.
-In order to attach the ISRCs to the correct tracks an offset is necessary for multi-disc-releases. For the first disc and last disc this can be guessed easily. Starting with 3 discs irscsubmit will ask you for the offset of the "middle discs".
-The offset is the sum of track counts on all previous discs.
-
-Example:
-    disc 1: (13 tracks)
-    disc 2: (17 tracks)
-    disc 3:  19 tracks (current disc)
-    disc 4: (23 tracks)
-    number of tracks altogether: 72
-
-The offset we have to use is 30 (= 13 + 17)
-
-Isrcsubmit only knows how many tracks the current disc has and the total number of tracks on the release given by the web service. So the offset must be between 0 and 53 (= 72 - 19), which is the range isrcsubmit lets you choose from.
-
-The number of discs in the release and the position of this disc give by isrcsubmit is not necessarily correct. There can be multiple disc IDs per actual disc. You should only count tracks on your actual discs.
-Isrcsubmit can give you a link for an overview of the disc IDs for your release.
 """)
     parser.print_usage()
     print("""\
@@ -125,50 +97,7 @@ class Isrc(object):
         return ", ".join([str(number) for number in numbers])
 
 
-class EqTrack(Track):
-    """track with equality checking
-
-    This makes it easy to check if this track is already in a collection.
-    Only the element already in the collection needs to be hashable.
-
-    """
-    def __init__(self, track):
-        self._track = track
-
-    def __eq__(self, other):
-        return self.getId() == other.getId()
-
-    def getId(self):
-        return self._track.getId()
-
-    def getArtist(self):
-        return self._track.getArtist()
-
-    def getTitle(self):
-        return self._track.getTitle()
-
-    def getISRCs(self):
-        return self._track.getISRCs()
-
-class NumberedTrack(EqTrack):
-    """A track found on an analyzed (own) disc
-
-    """
-    def __init__(self, track, number):
-        EqTrack.__init__(self, track)
-        self._number = number
-
-    def getNumber(self):
-        """The track number on the analyzed disc"""
-        return self._number
-
-class OwnTrack(NumberedTrack):
-    """A track found on an analyzed (own) disc
-
-    """
-    pass
-
-class EqTrack2(object):
+class EqTrack(object):
     """track with equality checking
 
     This makes it easy to check if this track is already in a collection.
@@ -195,19 +124,19 @@ class EqTrack2(object):
     def getISRCs(self):
         return self._recording["isrc-list"]
 
-class NumberedTrack2(EqTrack2):
+class NumberedTrack(EqTrack):
     """A track found on an analyzed (own) disc
 
     """
     def __init__(self, track, number):
-        EqTrack2.__init__(self, track)
+        EqTrack.__init__(self, track)
         self._number = number
 
     def getNumber(self):
         """The track number on the analyzed disc"""
         return self._number
 
-class OwnTrack2(NumberedTrack2):
+class OwnTrack(NumberedTrack):
     """A track found on an analyzed (own) disc
 
     """
@@ -431,65 +360,6 @@ def backend_error(backend, err):
                 % (backend, err.errno, err.strerror))
     sys.exit(1)
 
-class DemandQuery():
-    """A Query object that opens an actual query on first use
-
-    We can setup the query beforehand and only ask for the password
-    and username when we actually need them.
-    """
-
-    def __init__(self, username, agent):
-        self._query = None
-        self.auth = False
-        self.username = username
-        self.agent = agent
-
-    def create(self, auth=False):
-        """Creates the query object and possibly asks for username/password
-        """
-        if auth:
-            print("")
-            if self.username is None:
-                printf("Please input your MusicBrainz username: ")
-                self.username = user_input()
-            printf("Please input your MusicBrainz password: ")
-            password = getpass.getpass("")
-            print("")
-            if StrictVersion(musicbrainz2_version) >= "0.7.4":
-                # There is a warning printed above, when < 0.7.4
-                service = WebService(username=self.username, password=password,
-                                     userAgent=self.agent)
-            else:
-                # standard userAgent: python-musicbrainz/__version__
-                service = WebService(username=self.username, password=password)
-            self.auth = True
-        else:
-            if StrictVersion(musicbrainz2_version) >= "0.7.4":
-                service = WebService(userAgent=self.agent)
-            else:
-                service = WebService()
-
-        # This clientId is currently only used for submitPUIDs and submitCDStub
-        # which we both don't do directly.
-        self._query = Query(service, clientId=self.agent)
-
-    def getReleases(self, filter):
-        if self._query is None:
-            self.create()
-        return self._query.getReleases(filter=filter)
-
-    def getReleaseById(self, releaseId, include):
-        if self._query is None:
-            self.create()
-        return self._query.getReleaseById(releaseId, include=include)
-
-    def submitISRCs(self, tracks2isrcs):
-        """This will create a new authenticated query if none exists already.
-        """
-        if not self.auth:
-            self.create(auth=True)
-        self._query.submitISRCs(tracks2isrcs)
-
 class WebService2():
     """A web service wrapper that asks for a password when first needed.
 
@@ -499,7 +369,7 @@ class WebService2():
     def __init__(self, username=None):
         self.auth = False
         self.username = username
-        musicbrainzngs.set_useragent("isrcsubmit.py", isrcsubmit_version,
+        musicbrainzngs.set_useragent(agent_name, isrcsubmit_version,
                 "http://github.com/JonnyJD/musicbrainz-isrcsubmit")
 
     def authenticate(self):
@@ -577,13 +447,9 @@ class Disc(object):
 
         This will ask the user to choose if the discID is ambiguous.
         """
-        discId_filter = ReleaseFilter(discId=self.id)
         try:
             includes=["artists", "labels", "recordings", "isrcs"]
             results = ws2.get_releases_by_discid(self.id, includes=includes)
-        except ConnectionError as err:
-            print_error("Couldn't connect to the server: %s" % err)
-            sys.exit(1)
         except WebServiceError as err:
             print_error("Couldn't fetch release: %s" % err)
             sys.exit(1)
@@ -879,9 +745,9 @@ def cleanup_isrcs(isrcs):
                         printf("\t")
 
                 # append track# and evaluation, if available
-                if isinstance(track, NumberedTrack2):
+                if isinstance(track, NumberedTrack):
                     printf("\t track %d", track.getNumber())
-                if isinstance(track, OwnTrack2):
+                if isinstance(track, OwnTrack):
                     print("   [OUR EVALUATION]")
                 else:
                     print("")
@@ -902,28 +768,9 @@ backend = options.backend
 debug = options.debug
 # the actual query will be created when it is used the first time
 ws2 = WebService2(options.user)
-query = DemandQuery(options.user, agent_name)
 disc = None
 
 print("%s\n" % script_version())
-
-print("using python-musicbrainz2 %s" % musicbrainz2_version)
-if StrictVersion(musicbrainz2_version) < "0.7.0":
-    print_error("Your version of python-musicbrainz2 is outdated")
-    print_error2("You WILL NOT be able to even check ISRCs")
-    print_error2("Please use AT LEAST python-musicbrainz2 0.7.0")
-    sys.exit(-1) # the script can't do anything useful
-if StrictVersion(musicbrainz2_version) < "0.7.3":
-    print_error("Cannot use AUTH DIGEST")
-    print_error2("You WILL NOT be able to submit ISRCs -> check-only")
-    print_error2("Please use python-musicbrainz2 0.7.3 or higher")
-    # do not exit, check-only is what happens most of the times anyways
-# We print two warnings for clients between 0.7.0 and 0.7.3,
-# because 0.7.4 is important. (-> no elif)
-if StrictVersion(musicbrainz2_version) < "0.7.4":
-    print("WARNING: Cannot set userAgent")
-    print("         You WILL have random connection problems due to throttling")
-    print("         Please use python-musicbrainz2 0.7.4 or higher\n")
 
 
 # search for backend
@@ -965,8 +812,8 @@ else:
 
 disc = get_disc(device)
 release_id = disc.release["id"]         # implicitly fetches release
-print(release_id)
 
+print("")
 discs = []
 for medium in disc.release["medium-list"]:
     for disc_entry in medium["disc-list"]:
@@ -977,8 +824,6 @@ if len(discs) > 1:
     raise DiscError("number of discs with id: %d" % len(discs))
 
 tracks = discs[0]["track-list"]
-print(tracks[0])
-print("release_track_count: %s" % len(tracks))
 print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
 print_encoded('Release:\t%s\n' % disc.release["title"])
 
@@ -1008,7 +853,7 @@ for (track_number, isrc) in backend_output:
         print_error("ISRC %s found for unknown track %d" % (isrc, track_number))
         errors += 1
     else:
-        own_track = OwnTrack2(track, track_number)
+        own_track = OwnTrack(track, track_number)
         isrcs[isrc].add_track(own_track)
         # check if the ISRC was already added to the track
         if isrc not in own_track.getISRCs():
@@ -1029,8 +874,6 @@ else:
         try:
             ws2.submit_isrcs(tracks2isrcs)
             print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
-        except RequestError as err:
-            print_error("Invalid request: %s" % err)
         except AuthenticationError as err:
             print_error("Invalid credentials: %s" % err)
         except WebServiceError as err:
@@ -1047,7 +890,7 @@ if update_intention:
         track = tracks[i]
         if i in range(0, disc.track_count):
             track_number = i + 1
-            track = NumberedTrack2(track, track_number)
+            track = NumberedTrack(track, track_number)
         for isrc in track.getISRCs():
             # only check ISRCS we also found on our disc
             if isrc in isrcs:
