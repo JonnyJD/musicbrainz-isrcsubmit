@@ -40,6 +40,7 @@ from subprocess import Popen, PIPE, call
 from distutils.version import StrictVersion
 
 import discid
+import musicbrainzngs
 from musicbrainz2 import __version__ as musicbrainz2_version
 from musicbrainz2.disc import readDisc, DiscError, getSubmissionUrl
 from musicbrainz2.model import Track
@@ -444,6 +445,43 @@ class DemandQuery():
             self.create(auth=True)
         self._query.submitISRCs(tracks2isrcs)
 
+class WebService2():
+    """A web service wrapper that asks for a password when first needed.
+
+    This uses musicbrainzngs as a wrapper itself.
+    """
+
+    def __init__(self, username=None):
+        self.auth = False
+        self.username = username
+        musicbrainzngs.set_useragent("isrcsubmit.py", isrcsubmit_version,
+                "http://github.com/JonnyJD/musicbrainz-isrcsubmit")
+
+    def authenticate(self):
+        """Sets the password if not set already
+        """
+        if not self.auth:
+            print("")
+            if self.username is None:
+                printf("Please input your MusicBrainz username: ")
+                self.username = user_input()
+            printf("Please input your MusicBrainz password: ")
+            password = getpass.getpass("")
+            print("")
+            musicbrainzngs.auth(self.username, password)
+            self.auth = True
+
+    def get_releases_by_discid(self, disc_id):
+        return musicbrainzngs.get_releases_by_discid(disc_id)
+
+    def get_release_by_id(self, release_id, include):
+        return musicbrainzngs.get_release_by_id(release_id, includes=include)
+
+    def submit_isrcs(self, tracks2isrcs):
+        self.authenticate()
+        musicbrainzngs.submit_isrcs(tracks2isrcs)
+
+
 
 class Disc(object):
     def read_disc(self):
@@ -495,6 +533,8 @@ class Disc(object):
         discId_filter = ReleaseFilter(discId=self.id)
         try:
             results = query.getReleases(filter=discId_filter)
+            results2 = ws2.get_releases_by_discid(self.id)
+            print("ws2: %s" % results2)
         except ConnectionError as err:
             print_error("Couldn't connect to the server: %s" % err)
             sys.exit(1)
@@ -808,6 +848,7 @@ options = gather_options(sys.argv)
 backend = options.backend
 debug = options.debug
 # the actual query will be created when it is used the first time
+ws2 = WebService2(options.user)
 query = DemandQuery(options.user, agent_name)
 disc = None
 
