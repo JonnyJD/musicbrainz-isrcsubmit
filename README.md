@@ -1,4 +1,4 @@
-Isrcsubmit 0.5.2 for MusicBrainz
+Isrcsubmit 1.0.0 for MusicBrainz
 ==============================
 (Linux/Mac OS X/Windows)
 ------------------------
@@ -22,6 +22,7 @@ Usable backends:
 
 * [mediatools](http://www.flanagan-family.com/mediatools.zip)
 * [Cdrdao](http://en.wikipedia.org/wiki/Cdrdao)
+* discisrc ([mac build](http://isrcsubmit.jonnyjd.net/downloads/discisrc-mac.zip), others can be built from [libdiscid](https://github.com/metabrainz/libdiscid))
 * cd-info ([libcdio](http://www.gnu.org/software/libcdio/))
 * Cdda2wav (in [cdrtools](http://en.wikipedia.org/wiki/Cdrtools))
 * Icedax (in [cdrkit](http://en.wikipedia.org/wiki/Cdrkit))
