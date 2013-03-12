@@ -966,42 +966,21 @@ else:
 disc = get_disc(device)
 release_id = disc.release["id"]         # implicitly fetches release
 print(release_id)
-include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
-try:
-    release = query.getReleaseById(release_id, include=include)
-except ConnectionError as err:
-    print_error("Couldn't connect to the server: %s" % err)
-    sys.exit(1)
-except WebServiceError as err:
-    print_error("Couldn't fetch release: %s" % err)
-    sys.exit(1)
 
-discs = release.getDiscs()
-discs2 = []
+discs = []
 for medium in disc.release["medium-list"]:
     for disc_entry in medium["disc-list"]:
         if disc_entry["id"] == disc.id:
-            discs2.append(medium)
+            discs.append(medium)
             break
-discIdCount = len(discs)
-print("discIdCount: %d" % discIdCount)
-print("discid_count: %d" % len(discs2))
-if len(discs2) > 1:
-    raise DiscError("number of discs with id: %d" % len(discs2))
+if len(discs) > 1:
+    raise DiscError("number of discs with id: %d" % len(discs))
 
-tracks = release.getTracks()
-tracks2 = discs2[0]["track-list"]
-print(tracks2[0])
-releaseTrackCount = len(tracks)
-print("releaseTrackCount: %s" % releaseTrackCount)
-print("release_track_count: %s" % len(tracks2))
-# discCount is actually the count of DiscIDs
-# there can be multiple DiscIDs for a single disc
+tracks = discs[0]["track-list"]
+print(tracks[0])
+print("release_track_count: %s" % len(tracks))
 print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
 print_encoded('Release:\t%s\n' % disc.release["title"])
-
-# TODO: remove / fix
-trackOffset = 0
 
 
 print("")
@@ -1011,13 +990,11 @@ backend_output = gather_isrcs(backend, options.device) # (track, isrc)
 # prepare to add the ISRC we found to the corresponding track
 # and check for local duplicates now and server duplicates later
 isrcs = dict()          # isrcs found on disc
-isrcs2 = dict()         # isrcs found on disc
 tracks2isrcs = dict()   # isrcs to be submitted
 errors = 0
 for (track_number, isrc) in backend_output:
     if isrc not in isrcs:
         isrcs[isrc] = Isrc(isrc)
-        isrcs2[isrc] = Isrc(isrc)
         # check if we found this ISRC for multiple tracks
         with_isrc = [item for item in backend_output if item[1] == isrc]
         if len(with_isrc) > 1:
@@ -1027,18 +1004,15 @@ for (track_number, isrc) in backend_output:
             errors += 1
     try:
         track = tracks[track_number - 1]
-        track2 = tracks2[track_number - 1]
     except IndexError:
         print_error("ISRC %s found for unknown track %d" % (isrc, track_number))
         errors += 1
     else:
-        own_track = OwnTrack(track, track_number)
+        own_track = OwnTrack2(track, track_number)
         isrcs[isrc].add_track(own_track)
-        own_track2 = OwnTrack2(track2, track_number)
-        isrcs2[isrc].add_track(own_track2)
         # check if the ISRC was already added to the track
-        if isrc not in own_track2.getISRCs():
-            tracks2isrcs[own_track2.getId()] = isrc
+        if isrc not in own_track.getISRCs():
+            tracks2isrcs[own_track.getId()] = isrc
             print("found new ISRC for track %d: %s" % (track_number, isrc))
         else:
             print("%s is already attached to track %d" % (isrc, track_number))
@@ -1069,25 +1043,25 @@ else:
 if update_intention:
     duplicates = 0
     # add already attached ISRCs
-    for i in range(0, len(tracks2)):
-        track = tracks2[i]
+    for i in range(0, len(tracks)):
+        track = tracks[i]
         if i in range(0, disc.track_count):
             track_number = i + 1
             track = NumberedTrack2(track, track_number)
         for isrc in track.getISRCs():
             # only check ISRCS we also found on our disc
-            if isrc in isrcs2:
-                isrcs2[isrc].add_track(track)
+            if isrc in isrcs:
+                isrcs[isrc].add_track(track)
     # check if we have multiple tracks for one ISRC
-    for isrc in isrcs2:
-        if len(isrcs2[isrc].get_tracks()) > 1:
+    for isrc in isrcs:
+        if len(isrcs[isrc].get_tracks()) > 1:
             duplicates += 1
 
     if duplicates > 0:
         printf("\nThere were %d ISRCs", duplicates)
         print("that are attached to multiple tracks on this release.")
         if user_input("Do you want to help clean those up? [y/N] ") == "y":
-            cleanup_isrcs(isrcs2)
+            cleanup_isrcs(isrcs)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
