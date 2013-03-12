@@ -546,7 +546,6 @@ class Disc(object):
     def __init__(self, device, verified=False):
         self._device = device
         self._release = None
-        self._release2 = None
         self._verified = verified
         self.read_disc()        # sets self._id etc.
 
@@ -573,18 +572,6 @@ class Disc(object):
             # can still be None
         return self._release
 
-    @property
-    def release2(self):
-        """The corresponding MusicBrainz release
-
-        This will ask the user to choose if the discID is ambiguous.
-        """
-        if self._release2 is None:
-            # this will also set _release2, for now
-            self._release = self.getRelease(self._verified)
-            # can still be None
-        return self._release2
-
     def getRelease(self, verified=False):
         """Find the corresponding MusicBrainz release
 
@@ -592,31 +579,33 @@ class Disc(object):
         """
         discId_filter = ReleaseFilter(discId=self.id)
         try:
-            results = query.getReleases(filter=discId_filter)
             includes=["artists", "labels", "recordings", "isrcs"]
-            results2 = ws2.get_releases_by_discid(self.id, includes=includes)
+            results = ws2.get_releases_by_discid(self.id, includes=includes)
         except ConnectionError as err:
             print_error("Couldn't connect to the server: %s" % err)
             sys.exit(1)
         except WebServiceError as err:
             print_error("Couldn't fetch release: %s" % err)
             sys.exit(1)
-        num_results = len(results2)
+        num_results = len(results)
         if num_results == 0:
             print("This Disc ID is not in the database.")
             self._release = None
         elif num_results > 1:
             print("This Disc ID is ambiguous:")
             for i in range(num_results):
-                release2 = results2[i]
+                # TODO: list mediums, not releases
+                # possible a discID is in multiple mediums of a release
+                # (that would indicate a problem in the DB)
+                release = results[i]
                 # printed list is 1..n, not 0..n-1 !
                 print_encoded("%d: %s - %s (%s)\n"
-                              % (i + 1, release2["artist-credit-phrase"],
-                                 release2["title"], release2["status"]))
-                country = (release2.get("country") or "").ljust(2)
-                date = (release2.get("date") or "").ljust(10)
-                barcode = (release2.get("barcode") or "").rjust(13)
-                label_list = release2["label-info-list"]
+                              % (i + 1, release["artist-credit-phrase"],
+                                 release["title"], release["status"]))
+                country = (release.get("country") or "").ljust(2)
+                date = (release.get("date") or "").ljust(10)
+                barcode = (release.get("barcode") or "").rjust(13)
+                label_list = release["label-info-list"]
                 catnumber_list = []
                 for label in label_list:
                     cat_number = label.get("catalog-number")
@@ -630,8 +619,7 @@ class Disc(object):
                                   % num_results)
                 if int(num) not in range(1, num_results + 1):
                     raise IndexError
-                self._release = results[int(num) - 1].getRelease()
-                self._release2 = results2[int(num) - 1]
+                self._release = results[int(num) - 1]
             except (ValueError, IndexError):
                 print_error("Invalid Choice")
                 sys.exit(1)
@@ -639,16 +627,15 @@ class Disc(object):
                 print("\nexiting..")
                 sys.exit(1)
         else:
-            self._release = results[0].getRelease()
-            self._release2 = results2[0]
+            self._release = results[0]
 
-        if self._release and self._release.getId() is None:
+        if self._release and self._release["id"] is None:
             # a "release" that is only a stub has no musicbrainz id
             print("\nThere is only a stub in the database:")
-            print_encoded("%s - %s\n\n" % (self._release.getArtist().getName(),
-                                           self._release.getTitle()))
+            print_encoded("%s - %s\n\n"
+                          % (self._release["artist-credit-phrase"],
+                             self._release["title"]))
             self._release = None        # don't use stub
-            self._release2 = None        # don't use stub
             verified = True             # the id is verified by the stub
 
         if self._release is None:
@@ -977,12 +964,11 @@ else:
     device = options.device
 
 disc = get_disc(device)
-release_id = disc.release2["id"]         # implicitly fetches release
+release_id = disc.release["id"]         # implicitly fetches release
 print(release_id)
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
     release = query.getReleaseById(release_id, include=include)
-    #release2 = ws2.get_release_by_id(release_id, includes=["recordings"])
 except ConnectionError as err:
     print_error("Couldn't connect to the server: %s" % err)
     sys.exit(1)
@@ -992,7 +978,7 @@ except WebServiceError as err:
 
 discs = release.getDiscs()
 discs2 = []
-for medium in disc.release2["medium-list"]:
+for medium in disc.release["medium-list"]:
     for disc_entry in medium["disc-list"]:
         if disc_entry["id"] == disc.id:
             discs2.append(medium)
@@ -1011,8 +997,8 @@ print("releaseTrackCount: %s" % releaseTrackCount)
 print("release_track_count: %s" % len(tracks2))
 # discCount is actually the count of DiscIDs
 # there can be multiple DiscIDs for a single disc
-print_encoded('Artist:\t\t%s\n' % disc.release2["artist-credit-phrase"])
-print_encoded('Release:\t%s\n' % disc.release2["title"])
+print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
+print_encoded('Release:\t%s\n' % disc.release["title"])
 
 # TODO: remove / fix
 trackOffset = 0
