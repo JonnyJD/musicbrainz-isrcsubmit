@@ -510,11 +510,11 @@ class Disc(object):
         return self._id
 
     @property
-    def trackCount(self):
+    def track_count(self):
         return self._track_count
 
     @property
-    def submissionUrl(self):
+    def submission_url(self):
         return self._submission_url
 
     @property
@@ -538,8 +538,6 @@ class Disc(object):
             results = query.getReleases(filter=discId_filter)
             results2 = ws2.get_releases_by_discid(self.id,
                             includes=["artists", "labels"])
-            print("ws2: length of %s" % len(results2))
-            print("ws2: %s" % results2[0])
         except ConnectionError as err:
             print_error("Couldn't connect to the server: %s" % err)
             sys.exit(1)
@@ -598,7 +596,7 @@ class Disc(object):
 
         if self._release is None:
             if verified:
-                url = self.submissionUrl
+                url = self.submission_url
                 printf("Would you like to open the browser to submit the disc?")
                 if user_input(" [y/N] ") == "y":
                     try:
@@ -630,7 +628,7 @@ def get_disc(device, verified=False):
     """
     disc = Disc(device, verified)
     print('\nDiscID:\t\t%s' % disc.id)
-    print('Tracks on disc:\t%d' % disc.trackCount)
+    print('Tracks on disc:\t%d' % disc.track_count)
     return disc
 
 
@@ -941,7 +939,7 @@ discs = release.getDiscs()
 discIdCount = len(discs)
 print_encoded('Artist:\t\t%s\n' % release.getArtist().getName())
 print_encoded('Release:\t%s\n' % release.getTitle())
-if releaseTrackCount != disc.trackCount:
+if releaseTrackCount != disc.track_count:
     # a track count mismatch probably due to
     # multiple discs in the release
     print("Tracks in release: %d" % releaseTrackCount)
@@ -954,11 +952,11 @@ if releaseTrackCount != disc.trackCount:
 
     if discIdCount == 1:
         # This is actually a weird case
-        # Having only 1 disc, but not matching trackCounts
+        # Having only 1 disc, but not matching track_counts
         # Possibly some data/video track.
         # but also possible that there is a bonus DVD (no disc ID possible)
         print("Track count mismatch!")
-        print("There are %d tracks on the disc," % disc.trackCount)
+        print("There are %d tracks on the disc," % disc.track_count)
         print("but %d tracks" % releaseTrackCount)
         print("given for just one DiscID.\n")
         discIdNumber = 1
@@ -985,7 +983,7 @@ if releaseTrackCount != disc.trackCount:
         if discIdCount > 1 and discIdNumber == discIdCount:
             # It is easy to guess the offset when this is the last disc,
             # because we have no unknown track counts after this.
-            trackOffset = releaseTrackCount - disc.trackCount
+            trackOffset = releaseTrackCount - disc.track_count
             print("It looks like the last disc of the release.")
             print("This might be wrong when a bonus DVD is part of the release.")
             print("Our offset guess would be: %d\n" % trackOffset)
@@ -1012,7 +1010,7 @@ if releaseTrackCount != disc.trackCount:
                 print_error("Couldn't open the url with %s: %s"
                             % (options.browser, str(err)))
 
-        trackOffset = askForOffset(disc.trackCount, releaseTrackCount)
+        trackOffset = askForOffset(disc.track_count, releaseTrackCount)
 else:
     # the track count matches
     trackOffset = 0
@@ -1080,7 +1078,7 @@ if update_intention:
     # add already attached ISRCs
     for i in range(0, len(tracks)):
         track = tracks[i]
-        if i in range(trackOffset, trackOffset + disc.trackCount):
+        if i in range(trackOffset, trackOffset + disc.track_count):
             track_number = i - trackOffset + 1
             track = NumberedTrack(track, track_number)
         for isrc in track.getISRCs():
