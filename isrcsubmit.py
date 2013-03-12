@@ -168,6 +168,51 @@ class OwnTrack(NumberedTrack):
     """
     pass
 
+class EqTrack2(object):
+    """track with equality checking
+
+    This makes it easy to check if this track is already in a collection.
+    Only the element already in the collection needs to be hashable.
+
+    """
+    def __init__(self, track):
+        self._track = track
+        self._recording = track["recording"]
+
+    def __eq__(self, other):
+        return self.getId() == other.getId()
+
+    def getId(self):
+        return self._recording["id"]
+
+    def getArtist(self):
+        # TODO: check if we can get the artist name somehow
+        return None
+
+    def getTitle(self):
+        return self._recording["title"]
+
+    def getISRCs(self):
+        return self._recording["isrc-list"]
+
+class NumberedTrack2(EqTrack2):
+    """A track found on an analyzed (own) disc
+
+    """
+    def __init__(self, track, number):
+        EqTrack2.__init__(self, track)
+        self._number = number
+
+    def getNumber(self):
+        """The track number on the analyzed disc"""
+        return self._number
+
+class OwnTrack2(NumberedTrack2):
+    """A track found on an analyzed (own) disc
+
+    """
+    pass
+
 def gather_options(argv):
     global options
 
@@ -476,8 +521,8 @@ class WebService2():
                             includes=includes)
         return response["disc"]["release-list"]
 
-    def get_release_by_id(self, release_id, include):
-        return musicbrainzngs.get_release_by_id(release_id, includes=include)
+    def get_release_by_id(self, release_id, includes=[]):
+        return musicbrainzngs.get_release_by_id(release_id, includes=includes)
 
     def submit_isrcs(self, tracks2isrcs):
         self.authenticate()
@@ -528,6 +573,18 @@ class Disc(object):
             # can still be None
         return self._release
 
+    @property
+    def release2(self):
+        """The corresponding MusicBrainz release
+
+        This will ask the user to choose if the discID is ambiguous.
+        """
+        if self._release2 is None:
+            # this will also set _release2, for now
+            self._release = self.getRelease(self._verified)
+            # can still be None
+        return self._release2
+
     def getRelease(self, verified=False):
         """Find the corresponding MusicBrainz release
 
@@ -536,8 +593,8 @@ class Disc(object):
         discId_filter = ReleaseFilter(discId=self.id)
         try:
             results = query.getReleases(filter=discId_filter)
-            results2 = ws2.get_releases_by_discid(self.id,
-                            includes=["artists", "labels"])
+            includes=["artists", "labels", "recordings", "isrcs"]
+            results2 = ws2.get_releases_by_discid(self.id, includes=includes)
         except ConnectionError as err:
             print_error("Couldn't connect to the server: %s" % err)
             sys.exit(1)
@@ -817,7 +874,7 @@ def cleanup_isrcs(isrcs):
                 printf("\t")
                 artist = track.getArtist()
                 if artist:
-                    string = "%s - %s" % (artist.getName(), track.getTitle())
+                    string = "%s - %s" % (artist, track.getTitle())
                 else:
                     string = "%s" % track.getTitle()
                 print_encoded(string)
@@ -835,9 +892,9 @@ def cleanup_isrcs(isrcs):
                         printf("\t")
 
                 # append track# and evaluation, if available
-                if isinstance(track, NumberedTrack):
+                if isinstance(track, NumberedTrack2):
                     printf("\t track %d", track.getNumber())
-                if isinstance(track, OwnTrack):
+                if isinstance(track, OwnTrack2):
                     print("   [OUR EVALUATION]")
                 else:
                     print("")
@@ -920,10 +977,12 @@ else:
     device = options.device
 
 disc = get_disc(device)
-releaseId = disc.release.getId()        # implicitly fetches release
+release_id = disc.release2["id"]         # implicitly fetches release
+print(release_id)
 include = ReleaseIncludes(artist=True, tracks=True, isrcs=True, discs=True)
 try:
-    release = query.getReleaseById(releaseId, include=include)
+    release = query.getReleaseById(release_id, include=include)
+    #release2 = ws2.get_release_by_id(release_id, includes=["recordings"])
 except ConnectionError as err:
     print_error("Couldn't connect to the server: %s" % err)
     sys.exit(1)
@@ -931,89 +990,32 @@ except WebServiceError as err:
     print_error("Couldn't fetch release: %s" % err)
     sys.exit(1)
 
-tracks = release.getTracks()
-releaseTrackCount = len(tracks)
 discs = release.getDiscs()
+discs2 = []
+for medium in disc.release2["medium-list"]:
+    for disc_entry in medium["disc-list"]:
+        if disc_entry["id"] == disc.id:
+            discs2.append(medium)
+            break
+discIdCount = len(discs)
+print("discIdCount: %d" % discIdCount)
+print("discid_count: %d" % len(discs2))
+if len(discs2) > 1:
+    raise DiscError("number of discs with id: %d" % len(discs2))
+
+tracks = release.getTracks()
+tracks2 = discs2[0]["track-list"]
+print(tracks2[0])
+releaseTrackCount = len(tracks)
+print("releaseTrackCount: %s" % releaseTrackCount)
+print("release_track_count: %s" % len(tracks2))
 # discCount is actually the count of DiscIDs
 # there can be multiple DiscIDs for a single disc
-discIdCount = len(discs)
-print_encoded('Artist:\t\t%s\n' % release.getArtist().getName())
-print_encoded('Release:\t%s\n' % release.getTitle())
-if releaseTrackCount != disc.track_count:
-    # a track count mismatch probably due to
-    # multiple discs in the release
-    print("Tracks in release: %d" % releaseTrackCount)
-    # Handling of multiple discs in the release:
-    # We can only get the overall release from MB
-    # and not the Medium itself.
-    # This changed with NGS. Before there was one MB release per disc.
-    print("\nWARNING: Multi-disc-release given by web service.")
-    print("See '%s -h' for help" % scriptname)
+print_encoded('Artist:\t\t%s\n' % disc.release2["artist-credit-phrase"])
+print_encoded('Release:\t%s\n' % disc.release2["title"])
 
-    if discIdCount == 1:
-        # This is actually a weird case
-        # Having only 1 disc, but not matching track_counts
-        # Possibly some data/video track.
-        # but also possible that there is a bonus DVD (no disc ID possible)
-        print("Track count mismatch!")
-        print("There are %d tracks on the disc," % disc.track_count)
-        print("but %d tracks" % releaseTrackCount)
-        print("given for just one DiscID.\n")
-        discIdNumber = 1
-    else:
-        print("Discs (or disc IDs) in release: %d" % discIdCount)
-        for i in range(discIdCount):
-            printf("\t %s", discs[i].getId())
-            if discs[i].getId() == disc.id:
-                discIdNumber = i + 1
-                print("[THIS DISC]")
-            else:
-                print("")
-    print("There might be multiple disc IDs per disc or none,")
-    print("so the number of actual discs could be lower or even higher.\n")
-    print("This is disc (ID) %d of %d" % (discIdNumber, discIdCount))
-
-    if discIdNumber == 1 and discIdCount > 1:
-        # the first disc never needs an offset
-        # unless we have a track count mismatch and only one disc id given
-        trackOffset = 0
-        print("Guessing track offset as %d" % trackOffset)
-    else:
-        # cannot guess fully automatically
-        if discIdCount > 1 and discIdNumber == discIdCount:
-            # It is easy to guess the offset when this is the last disc,
-            # because we have no unknown track counts after this.
-            trackOffset = releaseTrackCount - disc.track_count
-            print("It looks like the last disc of the release.")
-            print("This might be wrong when a bonus DVD is part of the release.")
-            print("Our offset guess would be: %d\n" % trackOffset)
-        else:
-            # For "middle" discs we have unknown track numbers
-            # before and after the current disc.
-            # The same when we have only one disc ID but a track mismatch
-            # -> the user has to tell us an offset to use
-            print("Cannot guess the track offset.")
-
-        # There can also be multiple discIds for one disc of the release
-        # so we give a MB-link to help which IDs
-        # belong to which disc of the release.
-        # We can't provide that ourselves without making
-        # many requests to MB or using the new web-api 2.
-        url = releaseId + "/discids" # The "releaseId" is an url itself
-        print("This url would provide some info about the disc IDs:")
-        print(url)
-        printf("Would you like to open it in the browser?")
-        if user_input(" [y/N] ") == "y":
-            try:
-                Popen([options.browser, url])
-            except OSError as err:
-                print_error("Couldn't open the url with %s: %s"
-                            % (options.browser, str(err)))
-
-        trackOffset = askForOffset(disc.track_count, releaseTrackCount)
-else:
-    # the track count matches
-    trackOffset = 0
+# TODO: remove / fix
+trackOffset = 0
 
 
 print("")
@@ -1023,11 +1025,13 @@ backend_output = gather_isrcs(backend, options.device) # (track, isrc)
 # prepare to add the ISRC we found to the corresponding track
 # and check for local duplicates now and server duplicates later
 isrcs = dict()          # isrcs found on disc
+isrcs2 = dict()         # isrcs found on disc
 tracks2isrcs = dict()   # isrcs to be submitted
 errors = 0
 for (track_number, isrc) in backend_output:
     if isrc not in isrcs:
         isrcs[isrc] = Isrc(isrc)
+        isrcs2[isrc] = Isrc(isrc)
         # check if we found this ISRC for multiple tracks
         with_isrc = [item for item in backend_output if item[1] == isrc]
         if len(with_isrc) > 1:
@@ -1036,16 +1040,19 @@ for (track_number, isrc) in backend_output:
             print_error2("ISRC: %s\ttracks: %s"% (isrc, ", ".join(track_list)))
             errors += 1
     try:
-        track = tracks[track_number + trackOffset - 1]
+        track = tracks[track_number - 1]
+        track2 = tracks2[track_number - 1]
     except IndexError:
         print_error("ISRC %s found for unknown track %d" % (isrc, track_number))
         errors += 1
     else:
         own_track = OwnTrack(track, track_number)
         isrcs[isrc].add_track(own_track)
+        own_track2 = OwnTrack2(track2, track_number)
+        isrcs2[isrc].add_track(own_track2)
         # check if the ISRC was already added to the track
-        if isrc not in track.getISRCs():
-            tracks2isrcs[track.getId()] = isrc
+        if isrc not in own_track2.getISRCs():
+            tracks2isrcs[own_track2.getId()] = isrc
             print("found new ISRC for track %d: %s" % (track_number, isrc))
         else:
             print("%s is already attached to track %d" % (isrc, track_number))
@@ -1060,7 +1067,7 @@ else:
         print_error(errors, "problems detected")
     if user_input("Do you want to submit? [y/N] ") == "y":
         try:
-            query.submitISRCs(tracks2isrcs)
+            ws2.submit_isrcs(tracks2isrcs)
             print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
         except RequestError as err:
             print_error("Invalid request: %s" % err)
@@ -1076,25 +1083,25 @@ else:
 if update_intention:
     duplicates = 0
     # add already attached ISRCs
-    for i in range(0, len(tracks)):
-        track = tracks[i]
-        if i in range(trackOffset, trackOffset + disc.track_count):
-            track_number = i - trackOffset + 1
-            track = NumberedTrack(track, track_number)
+    for i in range(0, len(tracks2)):
+        track = tracks2[i]
+        if i in range(0, disc.track_count):
+            track_number = i + 1
+            track = NumberedTrack2(track, track_number)
         for isrc in track.getISRCs():
             # only check ISRCS we also found on our disc
-            if isrc in isrcs:
-                isrcs[isrc].add_track(track)
+            if isrc in isrcs2:
+                isrcs2[isrc].add_track(track)
     # check if we have multiple tracks for one ISRC
-    for isrc in isrcs:
-        if len(isrcs[isrc].get_tracks()) > 1:
+    for isrc in isrcs2:
+        if len(isrcs2[isrc].get_tracks()) > 1:
             duplicates += 1
 
     if duplicates > 0:
         printf("\nThere were %d ISRCs", duplicates)
         print("that are attached to multiple tracks on this release.")
         if user_input("Do you want to help clean those up? [y/N] ") == "y":
-            cleanup_isrcs(isrcs)
+            cleanup_isrcs(isrcs2)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
