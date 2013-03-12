@@ -27,10 +27,10 @@ give less duplicates than CD reader drives.
 
 
 ### Mac OS X
+ * [discisrc]({{ site.downloads.url }}discisrc-mac.zip) (recommended)
+   is an example of the libdiscid project.
+   There is a build available for mac.
  * drutil (in Mac OS X; very slow!)
- * [discisrc]({{ site.downloads.url }}discisrc-mac.zip) (IN PROGRESS)
-   is included in another branch of the libdiscid project.
-   There is a build available for mac, but the backend is not implemented yet.
 
 
 ### Windows

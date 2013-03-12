@@ -24,4 +24,4 @@ If you start from another script in another directory you might change
 to the isrcsubmit directory before or install the files at that other directory.
 The best backend is mediatools, but you can download a
 [windows build of cdrdao](http://www.student.tugraz.at/thomas.plank/).
-On Mac drutil is part of the Mac OS X.
+On Mac drutil is part of the Mac OS X, but the discisrc backend is recommended.

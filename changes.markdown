@@ -2,6 +2,13 @@
 layout: default
 title: changes
 ---
+### Changes in 1.0.0 (2013-03-12)
+ * [#35]({{site.issues.url}}/35): add discisrc backend (Mac/Win/Linux)
+ * [#32]({{site.issues.url}}/32): Index release choice starting with 1, rather than 0
+ * updated libdiscid to 0.4.1 for packages
+ * [#39]({{site.issues.url}}/39): fix disc id verification (rescan when id not found)
+ * lots of refactoring to prepare for isrcsubmit2
+
 ### Changes in 0.5.2 (2013-01-26)
  * [#43]({{site.issues.url}}/43): fix: global name 'saneWhich' is not defined
 
