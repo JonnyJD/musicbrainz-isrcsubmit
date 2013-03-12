@@ -598,6 +598,8 @@ def gather_isrcs(backend, device):
         pattern = \
             r'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
+            if sys.platform == "darwin":
+                device = get_real_mac_device(device)
             p = Popen([backend, device], stdout=PIPE)
             isrcout = p.stdout
         except OSError as err:
@@ -857,7 +859,7 @@ if backend is None:
 else:
     print("using %s" % get_prog_version(backend))
 
-if backend == "drutil":
+if sys.platform == "darwin":
     # drutil (Mac OS X) expects 1,2,..
     # convert linux default
     if options.device == "/dev/cdrom":
