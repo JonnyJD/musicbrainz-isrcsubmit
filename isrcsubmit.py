@@ -115,8 +115,7 @@ class EqTrack(object):
         return self._recording["id"]
 
     def getArtist(self):
-        # TODO: check if we can get the artist name somehow
-        return None
+        return self._recording.get("artist-credit-phrase")
 
     def getTitle(self):
         return self._recording["title"]
@@ -448,7 +447,8 @@ class Disc(object):
         This will ask the user to choose if the discID is ambiguous.
         """
         try:
-            includes=["artists", "labels", "recordings", "isrcs"]
+            includes=["artists", "labels", "recordings", "isrcs",
+                      "artist-credits"] # the last one only for cleanup
             results = ws2.get_releases_by_discid(self.id, includes=includes)
         except WebServiceError as err:
             print_error("Couldn't fetch release: %s" % err)
@@ -726,7 +726,7 @@ def cleanup_isrcs(isrcs):
             for track in tracks:
                 printf("\t")
                 artist = track.getArtist()
-                if artist:
+                if artist and artist != disc.release["artist-credit-phrase"]:
                     string = "%s - %s" % (artist, track.getTitle())
                 else:
                     string = "%s" % track.getTitle()
