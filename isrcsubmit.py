@@ -93,52 +93,49 @@ class Isrc(object):
     def get_track_numbers(self):
         numbers = []
         for track in self._tracks:
-            numbers.append(track.getNumber())
+            numbers.append(track.number)
         return ", ".join([str(number) for number in numbers])
 
 
-class EqTrack(object):
+class Track(object):
     """track with equality checking
 
     This makes it easy to check if this track is already in a collection.
     Only the element already in the collection needs to be hashable.
-
     """
-    def __init__(self, track):
+    def __init__(self, track, number=None):
         self._track = track
         self._recording = track["recording"]
+        self._number = number
+        # check that we found the track with the correct number
+        assert(int(self._track["number"]) == self._number)
 
     def __eq__(self, other):
-        return self.getId() == other.getId()
+        return self.id == other.id
 
-    def getId(self):
+    @property
+    def number(self):
+        """The track number on the analyzed disc"""
+        return int(self._track["number"])
+
+    @property
+    def id(self):
         return self._recording["id"]
 
-    def getArtist(self):
+    @property
+    def artist(self):
         return self._recording.get("artist-credit-phrase")
 
-    def getTitle(self):
+    @property
+    def title(self):
         return self._recording["title"]
 
-    def getISRCs(self):
+    @property
+    def isrcs(self):
         return self._recording.get("isrc-list", [])
 
-class NumberedTrack(EqTrack):
-    """A track found on an analyzed (own) disc
-
-    """
-    def __init__(self, track, number):
-        EqTrack.__init__(self, track)
-        self._number = number
-
-    def getNumber(self):
-        """The track number on the analyzed disc"""
-        return self._number
-
-class OwnTrack(NumberedTrack):
-    """A track found on an analyzed (own) disc
-
-    """
+class OwnTrack(Track):
+    """A track found on an analyzed (own) disc"""
     pass
 
 def gather_options(argv):
@@ -725,11 +722,11 @@ def cleanup_isrcs(isrcs):
             print("\nISRC %s attached to:" % isrc)
             for track in tracks:
                 printf("\t")
-                artist = track.getArtist()
+                artist = track.artist
                 if artist and artist != disc.release["artist-credit-phrase"]:
-                    string = "%s - %s" % (artist, track.getTitle())
+                    string = "%s - %s" % (artist, track.title)
                 else:
-                    string = "%s" % track.getTitle()
+                    string = "%s" % track.title
                 print_encoded(string)
                 # tab alignment
                 if len(string) >= 32:
@@ -745,8 +742,8 @@ def cleanup_isrcs(isrcs):
                         printf("\t")
 
                 # append track# and evaluation, if available
-                if isinstance(track, NumberedTrack):
-                    printf("\t track %d", track.getNumber())
+                if isinstance(track, Track):
+                    printf("\t track %d", track.number)
                 if isinstance(track, OwnTrack):
                     print("   [OUR EVALUATION]")
                 else:
@@ -856,8 +853,8 @@ for (track_number, isrc) in backend_output:
         own_track = OwnTrack(track, track_number)
         isrcs[isrc].add_track(own_track)
         # check if the ISRC was already added to the track
-        if isrc not in own_track.getISRCs():
-            tracks2isrcs[own_track.getId()] = isrc
+        if isrc not in own_track.isrcs:
+            tracks2isrcs[own_track.id] = isrc
             print("found new ISRC for track %d: %s" % (track_number, isrc))
         else:
             print("%s is already attached to track %d" % (isrc, track_number))
@@ -890,8 +887,8 @@ if update_intention:
         track = tracks[i]
         if i in range(0, disc.track_count):
             track_number = i + 1
-            track = NumberedTrack(track, track_number)
-        for isrc in track.getISRCs():
+            track = Track(track, track_number)
+        for isrc in track.isrcs:
             # only check ISRCS we also found on our disc
             if isrc in isrcs:
                 isrcs[isrc].add_track(track)
