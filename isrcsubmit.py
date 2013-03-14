@@ -21,7 +21,7 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-isrcsubmit_version = "1.0.0"
+isrcsubmit_version = "2.0.0-dev"
 agent_name = "isrcsubmit.py"
 # starting with highest priority
 backends = ["mediatools", "media_info", "discisrc", "cdrdao", "cd-info",
@@ -887,7 +887,7 @@ if update_intention:
             duplicates += 1
 
     if duplicates > 0:
-        printf("\nThere were %d ISRCs", duplicates)
+        printf("\nThere were %d ISRCs ", duplicates)
         print("that are attached to multiple tracks on this release.")
         if user_input("Do you want to help clean those up? [y/N] ") == "y":
             cleanup_isrcs(isrcs)
