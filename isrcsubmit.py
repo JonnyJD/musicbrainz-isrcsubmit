@@ -93,11 +93,11 @@ class Isrc(object):
     def get_track_numbers(self):
         numbers = []
         for track in self._tracks:
-            numbers.append(track.number)
-        return ", ".join([str(number) for number in numbers])
+            numbers.append(track["position"])
+        return ", ".join(numbers)
 
 
-class Track(object):
+class Track(dict):
     """track with equality checking
 
     This makes it easy to check if this track is already in a collection.
@@ -108,31 +108,22 @@ class Track(object):
         self._recording = track["recording"]
         self._number = number
         # check that we found the track with the correct number
-        assert(int(self._track["number"]) == self._number)
+        assert(int(self._track["position"]) == self._number)
 
     def __eq__(self, other):
-        return self.id == other.id
+        return self["id"] == other["id"]
 
-    @property
-    def number(self):
-        """The track number on the analyzed disc"""
-        return int(self._track["number"])
+    def __getitem__(self, item):
+        try:
+            return self._recording[item]
+        except KeyError:
+            return self._track[item]
 
-    @property
-    def id(self):
-        return self._recording["id"]
-
-    @property
-    def artist(self):
-        return self._recording.get("artist-credit-phrase")
-
-    @property
-    def title(self):
-        return self._recording["title"]
-
-    @property
-    def isrcs(self):
-        return self._recording.get("isrc-list", [])
+    def get(self, item, default=None):
+        try:
+            return self._recording.get(item, default)
+        except KeyError:
+            return self._track.get(item, default)
 
 class OwnTrack(Track):
     """A track found on an analyzed (own) disc"""
@@ -722,11 +713,11 @@ def cleanup_isrcs(isrcs):
             print("\nISRC %s attached to:" % isrc)
             for track in tracks:
                 printf("\t")
-                artist = track.artist
+                artist = track.get("artist-credit-phrase")
                 if artist and artist != disc.release["artist-credit-phrase"]:
-                    string = "%s - %s" % (artist, track.title)
+                    string = "%s - %s" % (artist, track["title"])
                 else:
-                    string = "%s" % track.title
+                    string = "%s" % track["title"]
                 print_encoded(string)
                 # tab alignment
                 if len(string) >= 32:
@@ -741,9 +732,7 @@ def cleanup_isrcs(isrcs):
                     if len(string) < 31:
                         printf("\t")
 
-                # append track# and evaluation, if available
-                if isinstance(track, Track):
-                    printf("\t track %d", track.number)
+                printf("\t track %s", track["position"])
                 if isinstance(track, OwnTrack):
                     print("   [OUR EVALUATION]")
                 else:
@@ -853,8 +842,8 @@ for (track_number, isrc) in backend_output:
         own_track = OwnTrack(track, track_number)
         isrcs[isrc].add_track(own_track)
         # check if the ISRC was already added to the track
-        if isrc not in own_track.isrcs:
-            tracks2isrcs[own_track.id] = isrc
+        if isrc not in own_track.get("isrc-list", []):
+            tracks2isrcs[own_track["id"]] = isrc
             print("found new ISRC for track %d: %s" % (track_number, isrc))
         else:
             print("%s is already attached to track %d" % (isrc, track_number))
@@ -888,7 +877,7 @@ if update_intention:
         if i in range(0, disc.track_count):
             track_number = i + 1
             track = Track(track, track_number)
-        for isrc in track.isrcs:
+        for isrc in track.get("isrc-list", []):
             # only check ISRCS we also found on our disc
             if isrc in isrcs:
                 isrcs[isrc].add_track(track)
