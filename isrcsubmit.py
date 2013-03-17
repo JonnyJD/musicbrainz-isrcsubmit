@@ -278,25 +278,6 @@ def get_real_mac_device(option_device):
     # libdiscid needs the "raw" version
     return given.replace("/disk", "/rdisk")
 
-def askForOffset(disc_track_count, release_track_count):
-    limit = release_track_count - disc_track_count
-    while True:
-        # ask until a correct offset is given (or a KeyboardInterrupt)
-        print("")
-        print("How many tracks are on the previous (actual) discs altogether?")
-        try:
-            choice = user_input("[0-%d] " % limit)
-        except KeyboardInterrupt:
-            print("\nexiting..")
-            sys.exit(1)
-        try:
-            num = int(choice)
-        except ValueError:
-            print_error("Not a number")
-        else:
-            if num in range(0, limit + 1):
-                return num
-
 def cp65001(name):
     """This might be buggy, but better than just a LookupError
     """
