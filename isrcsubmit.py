@@ -513,11 +513,15 @@ class Disc(object):
             print("This Disc ID is ambiguous:")
             for i in range(num_results):
                 release = results[i].release
-                release_type = release.getTypes()[1].rpartition('#')[2]
                 # printed list is 1..n, not 0..n-1 !
-                print_encoded("%d: %s - %s (%s)\n"
+                print_encoded("%d: %s - %s"
                               % (i + 1, release.getArtist().getName(),
-                                 release.getTitle(), release_type))
+                                 release.getTitle()))
+                try:
+                    release_status = release.getTypes()[1].rpartition('#')[2]
+                    print("(%s)" % release_status)
+                except IndexError:
+                    print("")
                 events = release.getReleaseEvents()
                 for event in events:
                     country = (event.getCountry() or "").ljust(2)
