@@ -434,9 +434,13 @@ class Disc(object):
                 # (that would indicate a problem in the DB)
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
-                print_encoded("%d: %s - %s (%s)\n"
+                print_encoded("%d: %s - %s"
                               % (i + 1, release["artist-credit-phrase"],
-                                 release["title"], release["status"]))
+                                 release["title"]))
+                if release.get("status"):
+                    print("(%s)" % release["status"])
+                else:
+                    print("")
                 country = (release.get("country") or "").ljust(2)
                 date = (release.get("date") or "").ljust(10)
                 barcode = (release.get("barcode") or "").rjust(13)
