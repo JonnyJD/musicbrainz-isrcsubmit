@@ -40,7 +40,7 @@ from subprocess import Popen, PIPE, call
 
 import discid
 import musicbrainzngs
-from musicbrainzngs import AuthenticationError, WebServiceError
+from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
 # using a shellscript to get the correct python version (2.5 - 2.7)
 shellname = "isrcsubmit.sh"
@@ -358,11 +358,18 @@ class WebService2():
         try:
             response = musicbrainzngs.get_releases_by_discid(disc_id,
                                                              includes=includes)
+        except ResponseError as err:
+            if err.cause.code == 404:
+                return []
+            print_error("Couldn't fetch release: %s" % err)
         except WebServiceError as err:
             print_error("Couldn't fetch release: %s" % err)
             sys.exit(1)
         else:
-            return response["disc"]["release-list"]
+            if response.get("disc"):
+                return response["disc"]["release-list"]
+            else:
+                return []
 
     def get_release_by_id(self, release_id, includes=[]):
         try:
