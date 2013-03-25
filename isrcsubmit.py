@@ -355,16 +355,31 @@ class WebService2():
             self.auth = True
 
     def get_releases_by_discid(self, disc_id, includes=[]):
-        response = musicbrainzngs.get_releases_by_discid(disc_id,
-                            includes=includes)
-        return response["disc"]["release-list"]
+        try:
+            response = musicbrainzngs.get_releases_by_discid(disc_id,
+                                                             includes=includes)
+        except WebServiceError as err:
+            print_error("Couldn't fetch release: %s" % err)
+            sys.exit(1)
+        else:
+            return response["disc"]["release-list"]
 
     def get_release_by_id(self, release_id, includes=[]):
-        return musicbrainzngs.get_release_by_id(release_id, includes=includes)
+        try:
+            return musicbrainzngs.get_release_by_id(release_id,
+                                                    includes=includes)
+        except WebServiceError as err:
+            print_error("Couldn't fetch release: %s" % err)
+            sys.exit(1)
 
     def submit_isrcs(self, tracks2isrcs):
-        self.authenticate()
-        musicbrainzngs.submit_isrcs(tracks2isrcs)
+        try:
+            self.authenticate()
+            musicbrainzngs.submit_isrcs(tracks2isrcs)
+        except AuthenticationError as err:
+            print_error("Invalid credentials: %s" % err)
+        except WebServiceError as err:
+            print_error("Couldn't send ISRCs: %s" % err)
 
 
 
@@ -415,13 +430,9 @@ class Disc(object):
 
         This will ask the user to choose if the discID is ambiguous.
         """
-        try:
-            includes=["artists", "labels", "recordings", "isrcs",
-                      "artist-credits"] # the last one only for cleanup
-            results = ws2.get_releases_by_discid(self.id, includes=includes)
-        except WebServiceError as err:
-            print_error("Couldn't fetch release: %s" % err)
-            sys.exit(1)
+        includes=["artists", "labels", "recordings", "isrcs",
+                  "artist-credits"] # the last one only for cleanup
+        results = ws2.get_releases_by_discid(self.id, includes=includes)
         num_results = len(results)
         if num_results == 0:
             print("This Disc ID is not in the database.")
@@ -842,13 +853,8 @@ else:
     if errors > 0:
         print_error(errors, "problems detected")
     if user_input("Do you want to submit? [y/N] ") == "y":
-        try:
-            ws2.submit_isrcs(tracks2isrcs)
-            print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
-        except AuthenticationError as err:
-            print_error("Invalid credentials: %s" % err)
-        except WebServiceError as err:
-            print_error("Couldn't send ISRCs: %s" % err)
+        ws2.submit_isrcs(tracks2isrcs)
+        print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
     else:
         update_intention = False
         print("Nothing was submitted to the server.")
