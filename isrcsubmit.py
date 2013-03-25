@@ -361,7 +361,8 @@ class WebService2():
         except ResponseError as err:
             if err.cause.code == 404:
                 return []
-            print_error("Couldn't fetch release: %s" % err)
+            else:
+                print_error("Couldn't fetch release: %s" % err)
         except WebServiceError as err:
             print_error("Couldn't fetch release: %s" % err)
             sys.exit(1)
