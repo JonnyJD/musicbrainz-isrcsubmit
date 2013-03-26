@@ -40,6 +40,7 @@ from subprocess import Popen, PIPE, call
 
 import discid
 import musicbrainzngs
+from discid import DiscError
 from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
 # using a shellscript to get the correct python version (2.5 - 2.7)
