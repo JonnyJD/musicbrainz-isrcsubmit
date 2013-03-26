@@ -9,8 +9,8 @@ downloads:
 
 script:
   name: isrcsubmit
-  version: 1.0.0
-  current: isrcsubmit-1.0.0
+  version: 1.0.1
+  current: isrcsubmit-1.0.1
 
 nav:
 - title: home
