@@ -21,7 +21,7 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-isrcsubmit_version = "1.0.0"
+isrcsubmit_version = "1.0.1"
 agent_name = "isrcsubmit-jonnyjd-" + isrcsubmit_version
 # starting with highest priority
 backends = ["mediatools", "media_info", "discisrc", "cdrdao", "cd-info",

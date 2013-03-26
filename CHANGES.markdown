@@ -1,3 +1,7 @@
+### Changes in 1.0.1 (2013-03-26)
+ * [#52] fix IndexError when release status unknown
+ * [#51] fix error message using discisrc with no isrcs
+
 ### Changes in 1.0.0 (2013-03-12)
  * [#35] add discisrc backend (Mac/Win/Linux)
  * [#32] Index release choice starting with 1, rather than 0
