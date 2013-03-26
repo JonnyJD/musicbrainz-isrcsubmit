@@ -1,8 +1,10 @@
-version := $(shell git describe origin/master | sed -e 's/v\([0-9.]\+\).*/\1/')
+#branch := master
+branch := v1
+version := $(shell git describe origin/$(branch) | sed -e 's/v\([0-9.]\+\).*/\1/')
 current := isrcsubmit-$(version)
 changes := changes.markdown
 changes_source := CHANGES.markdown
-git := .git/refs/remote/origin/master
+git := .git/refs/remote/origin/$(branch)
 
 
 all: jekyll
@@ -18,7 +20,7 @@ version:
 changes: $(changes)
 $(changes): $(git)
 	echo -e "---\nlayout: default\ntitle: changes\n---" > $@
-	git show origin/master:$(changes_source) \
+	git show origin/$(branch):$(changes_source) \
 	    | sed -e 's:\[#\([0-9]\+\)\]:\[#\1\]({{site.issues.url}}/\1)\::g' \
 	    >> $@
 
