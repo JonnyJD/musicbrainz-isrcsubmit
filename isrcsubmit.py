@@ -23,6 +23,7 @@ https://github.com/JonnyJD/musicbrainz-isrcsubmit
 
 isrcsubmit_version = "2.0.0-dev"
 agent_name = "isrcsubmit.py"
+musicbrainz_server = "musicbrainz.org"
 # starting with highest priority
 backends = ["mediatools", "media_info", "discisrc", "cdrdao", "cd-info",
             "cdda2wav", "icedax", "drutil"]
@@ -338,6 +339,7 @@ class WebService2():
     def __init__(self, username=None):
         self.auth = False
         self.username = username
+        musicbrainzngs.set_hostname(musicbrainz_server)
         musicbrainzngs.set_useragent(agent_name, isrcsubmit_version,
                 "http://github.com/JonnyJD/musicbrainz-isrcsubmit")
 
@@ -743,7 +745,7 @@ def cleanup_isrcs(isrcs):
                 else:
                     print("")
 
-            url = "http://musicbrainz.org/isrc/" + isrc
+            url = "http://%s/isrc/%s" % (musicbrainz_server, isrc)
             if user_input("Open ISRC in the browser? [Y/n] ") != "n":
                 Popen([options.browser, url])
                 user_input("(press <return> when done with this ISRC) ")
