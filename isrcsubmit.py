@@ -63,11 +63,6 @@ try:
 except NameError:
     unicode_string = str
 
-try:
-    byte_string = bytes
-except NameError:
-    byte_string = str
-
 def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmit_version
 
@@ -313,7 +308,7 @@ def encode(msg):
     if isinstance(msg, unicode_string):
         return msg.encode(sys.stdout.encoding, "replace")
     else:
-        return byte_string(msg)
+        return bytes(msg)
 
 def print_encoded(*args):
     """This will replace unsuitable characters and doesn't append a newline
