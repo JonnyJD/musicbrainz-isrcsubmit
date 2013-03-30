@@ -1,4 +1,4 @@
-Isrcsubmit 1.0.0 for MusicBrainz
+Isrcsubmit 2.0.0 for MusicBrainz
 ==============================
 (Linux/Mac OS X/Windows)
 ------------------------
@@ -8,13 +8,14 @@ This python script extracts
 from audio cds
 and submits them to [MusicBrainz](http://musicbrainz.org).
 
-This script currently uses
-[python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
-to access the MusicBrainz API.
-Python2 >= 2.4 should be fine for both.
-You also need [libdiscid](http://jonnyjd.github.com/musicbrainz-isrcsubmit/libdiscid) and with python < 2.5 you also need [ctypes](http://starship.python.net/crew/theller/ctypes/).
+This script uses
+[python-musicbrainzngs](http://musicbrainz.org/doc/python-musicbrainz-ngs)
+to access the MusicBrainz API
+and [python-discid](https://python-discid.readthedocs.org/)
+to create an identifier for the disc.
+You need Python 2 >= 2.6.
 
-The script works for Linux, Mac OS X and Windows. However, drutils, the backend for Mac WILL take a long time (several minutes) per disc and might give duplicates more often. Isrcsubmit will tell you about it though.
+The script works for Linux, Mac OS X and Windows.
 
 
 Usable backends:
