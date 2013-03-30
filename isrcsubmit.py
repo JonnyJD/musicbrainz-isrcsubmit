@@ -560,7 +560,7 @@ def gather_isrcs(backend, device):
 
     if backend == "discisrc":
         pattern = \
-            rb'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            br'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             if sys.platform == "darwin":
                 device = get_real_mac_device(device)
@@ -583,7 +583,7 @@ def gather_isrcs(backend, device):
     # icedax is a fork of the cdda2wav tool
     elif backend in ["cdda2wav", "icedax"]:
         pattern = \
-            rb'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            br'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p1 = Popen([backend, '-J', '-H', '-D', device], stderr=PIPE)
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
@@ -606,7 +606,7 @@ def gather_isrcs(backend, device):
 
     elif backend == "cd-info":
         pattern = \
-            rb'TRACK\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            br'TRACK\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p = Popen([backend, '-T', '-A', '--no-device-info', '--no-cddb',
                 '-C', device], stdout=PIPE)
@@ -628,7 +628,7 @@ def gather_isrcs(backend, device):
     # media_info is a preview version of mediatools, both are for Windows
     elif backend in ["mediatools", "media_info"]:
         pattern = \
-            rb'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            br'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         if backend == "mediatools":
             args = [backend, "drive", device, "isrc"]
         else:
@@ -704,7 +704,7 @@ def gather_isrcs(backend, device):
     # it will take a lot of time because it scans the whole disc
     elif backend == "drutil":
         pattern = \
-        r'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+        br'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p1 = Popen([backend, 'subchannel', '-drive', device], stdout=PIPE)
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stdout, stdout=PIPE)
