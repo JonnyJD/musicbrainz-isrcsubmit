@@ -327,7 +327,10 @@ def print_encoded(*args):
     if os.name == "nt":
         os.write(sys.stdout.fileno(), msg)
     else:
-        sys.stdout.buffer.write(msg)
+        try:
+            sys.stdout.buffer.write(msg)
+        except AttributeError:
+            sys.stdout.write(msg)
 
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
