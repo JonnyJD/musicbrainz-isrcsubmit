@@ -1,20 +1,21 @@
-version := 1.0.1
+version := 2.0.0-beta.1
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
+musicbrainzngs := musicbrainzngs-0.3
+discid := discid-0.3.0
 #libdiscid := libdiscid-0.4.0
 libdiscid := libdiscid-0.2.2
-musicbrainz2 := python-musicbrainz2-0.7.4
 
-scripts := isrcsubmit.py $(current).py
+#scripts := isrcsubmit.py $(current).py
+scripts := $(current).py
 tar := $(current)
 win32 := $(current)-win32
 mac := $(current)-mac
 all := $(scripts) $(tar).tar.gz $(win32).zip $(mac).zip
 
 source_repo := ..
-#source_branch := master
-source_branch := v1
+source_branch := master
 source_dir := isrcsubmit
 
 
@@ -37,12 +38,14 @@ define cp_source =
 	rm -rf $(1)/.git
 endef
 
-base_libs := $(musicbrainz2) $(libdiscid)
+base_libs := $(musicbrainzngs) $(discid) $(libdiscid)
 define cp_base_libs =
 	mv $(1)/COPYING $(1)/COPYING.isrcsubmit
 	mv $(1)/AUTHORS $(1)/AUTHORS.isrcsubmit
-	cp -ar $(musicbrainz2)/src/musicbrainz2 $(1)/
-	cp -ar $(musicbrainz2) $(1)/
+	cp -ar $(musicbrainzngs)/musicbrainzngs $(1)/
+	cp -ar $(musicbrainzngs) $(1)/
+	cp -ar $(discid)/discid.py $(1)/
+	cp -ar $(discid) $(1)/
 	cp -ar $(libdiscid) $(1)/libdiscid
 endef
 
@@ -105,10 +108,15 @@ $(source_ref): $(source_dir)
 
 # libraries:
 #
-$(musicbrainz2): $(musicbrainz2).tar.gz
+$(musicbrainzngs): $(musicbrainzngs).tar.gz
 	tar -xzf $^
-$(musicbrainz2).tar.gz:
-	wget http://ftp.musicbrainz.org/pub/musicbrainz/python-musicbrainz2/$@
+$(musicbrainzngs).tar.gz:
+	wget http://pypi.python.org/packages/source/m/musicbrainzngs/$@
+
+$(discid): $(discid).tar.gz
+	tar -xzf $^
+$(discid).tar.gz:
+	wget http://pypi.python.org/packages/source/d/discid/$@
 
 libdiscid: $(libdiscid)
 $(libdiscid): $(libdiscid).tar.gz
