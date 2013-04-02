@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # Copyright (C) 2010-2013 Johannes Dewender
 #
 # This program is free software: you can redistribute it and/or modify
@@ -57,6 +57,11 @@ try:
     user_input = raw_input
 except NameError:
     user_input = input
+
+try:
+    unicode_string = unicode
+except NameError:
+    unicode_string = str
 
 def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmit_version
@@ -214,25 +219,27 @@ def test_which():
 
 def get_prog_version(prog):
     if prog == "icedax":
-        return Popen([prog, "--version"], stderr=PIPE).communicate()[1].strip()
+        outdata = Popen([prog, "--version"], stderr=PIPE).communicate()[1]
+        version = outdata.strip()
     elif prog == "cdda2wav":
         outdata = Popen([prog, "-version"], stdout=PIPE).communicate()[0]
-        return " ".join(outdata.splitlines()[0].split()[0:2])
+        version = b" ".join(outdata.splitlines()[0].split()[0:2])
     elif prog == "cdrdao":
         outdata = Popen([prog], stderr=PIPE).communicate()[1]
-        return " ".join(outdata.splitlines()[0].split()[::2][0:2])
+        version = b" ".join(outdata.splitlines()[0].split()[::2][0:2])
     elif prog == "cd-info":
         outdata = Popen([prog, "--version"], stdout=PIPE).communicate()[0]
-        return " ".join(outdata.splitlines()[0].split()[::2][0:2])
+        version = b" ".join(outdata.splitlines()[0].split()[::2][0:2])
     elif prog == "drutil":
         outdata = Popen([prog, "version"], stdout=PIPE).communicate()[0]
         version = prog
         for line in outdata.splitlines():
             if line:
-                version += " " + line.split(":")[1].strip()
-        return version
+                version += b" " + line.split(":")[1].strip()
     else:
-        return prog
+        version = prog
+
+    return decode(version)
 
 def has_backend(backend, strict=False):
     """When the backend is only a symlink to another backend,
@@ -297,22 +304,38 @@ def printf(format_string, *args):
         format_string = "%s"
     sys.stdout.write(format_string % args)
 
+def decode(msg):
+    """This will replace unsuitable characters and use stdin encoding
+    """
+    if isinstance(msg, bytes):
+        return msg.decode(sys.stdin.encoding, "replace")
+    else:
+        return unicode_string(msg)
+
+def encode(msg):
+    """This will replace unsuitable characters and use stdout encoding
+    """
+    if isinstance(msg, unicode_string):
+        return msg.encode(sys.stdout.encoding, "replace")
+    else:
+        return bytes(msg)
+
 def print_encoded(*args):
     """This will replace unsuitable characters and doesn't append a newline
     """
     stringArgs = ()
     for arg in args:
-        if isinstance(arg, unicode):
-            stringArgs += arg.encode(sys.stdout.encoding, "replace"),
-        else:
-            stringArgs += str(arg),
-    msg = " ".join(stringArgs)
-    if not msg.endswith("\n"):
-        msg += " "
+        stringArgs += encode(arg),
+    msg = b" ".join(stringArgs)
+    if not msg.endswith(b"\n"):
+        msg += b" "
     if os.name == "nt":
         os.write(sys.stdout.fileno(), msg)
     else:
-        sys.stdout.write(msg)
+        try:
+            sys.stdout.buffer.write(msg)
+        except AttributeError:
+            sys.stdout.write(msg)
 
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
@@ -545,7 +568,7 @@ def gather_isrcs(backend, device):
 
     if backend == "discisrc":
         pattern = \
-            r'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            br'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             if sys.platform == "darwin":
                 device = get_real_mac_device(device)
@@ -556,19 +579,20 @@ def gather_isrcs(backend, device):
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
-            if line.startswith("Track") and len(line) > 12:
+            if line.startswith(b"Track") and len(line) > 12:
                 m = re.search(pattern, line)
                 if m == None:
                     print("can't find ISRC in: %s" % line)
                     continue
                 track_number = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     # icedax is a fork of the cdda2wav tool
     elif backend in ["cdda2wav", "icedax"]:
         pattern = \
-            r'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            br'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p1 = Popen([backend, '-J', '-H', '-D', device], stderr=PIPE)
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
@@ -580,18 +604,19 @@ def gather_isrcs(backend, device):
             if debug:
                 printf(line)    # already includes a newline
             for text in line.splitlines():
-                if text.startswith("T:"):
+                if text.startswith(b"T:"):
                     m = re.search(pattern, text)
                     if m == None:
                         print("can't find ISRC in: %s" % text)
                         continue
                     track_number = int(m.group(1))
                     isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                    isrc = decode(isrc)
                     backend_output.append((track_number, isrc))
 
     elif backend == "cd-info":
         pattern = \
-            r'TRACK\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            br'TRACK\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p = Popen([backend, '-T', '-A', '--no-device-info', '--no-cddb',
                 '-C', device], stdout=PIPE)
@@ -601,19 +626,20 @@ def gather_isrcs(backend, device):
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
-            if line.startswith("TRACK"):
+            if line.startswith(b"TRACK"):
                 m = re.search(pattern, line)
                 if m == None:
                     print("can't find ISRC in: %s" % line)
                     continue
                 track_number = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     # media_info is a preview version of mediatools, both are for Windows
     elif backend in ["mediatools", "media_info"]:
         pattern = \
-            r'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            br'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         if backend == "mediatools":
             args = [backend, "drive", device, "isrc"]
         else:
@@ -626,18 +652,20 @@ def gather_isrcs(backend, device):
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
-            if line.startswith("ISRC") and not line.startswith("ISRCS"):
+            if line.startswith(b"ISRC") and not line.startswith(b"ISRCS"):
                 m = re.search(pattern, line)
                 if m == None:
                     print("can't find ISRC in: %s" % line)
                     continue
                 track_number = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     # cdrdao will create a temp file and we delete it afterwards
     # cdrdao is also available for windows
     elif backend == "cdrdao":
+        # no byte pattern, file is opened as unicode
         pattern = r'[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
         tmpname = "cdrdao-%s.toc" % datetime.now()
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
@@ -658,6 +686,7 @@ def gather_isrcs(backend, device):
         except OSError as err:
             backend_error(backend, err)
         else:
+            # that file seems to be opened in Unicode mode in Python 3
             with open(tmpfile, "r") as toc:
                 track_number = None
                 for line in toc:
@@ -687,7 +716,7 @@ def gather_isrcs(backend, device):
     # it will take a lot of time because it scans the whole disc
     elif backend == "drutil":
         pattern = \
-        r'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+        br'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             p1 = Popen([backend, 'subchannel', '-drive', device], stdout=PIPE)
             p2 = Popen(['grep', 'ISRC'], stdin=p1.stdout, stdout=PIPE)
@@ -697,13 +726,14 @@ def gather_isrcs(backend, device):
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
-            if line.startswith("Track") and line.find("block") > 0:
+            if line.startswith(b"Track") and line.find(b"block") > 0:
                 m = re.search(pattern, line)
                 if m == None:
                     print("can't find ISRC in: %s" % line)
                     continue
                 track_number = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     return backend_output

@@ -13,7 +13,7 @@ This script uses
 to access the MusicBrainz API
 and [python-discid](https://python-discid.readthedocs.org/)
 to create an identifier for the disc.
-You need Python 2 >= 2.6.
+You need Python 2 >= 2.6 or Python 3 >= 3.1.
 
 The script works for Linux, Mac OS X and Windows.
 
