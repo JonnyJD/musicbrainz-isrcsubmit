@@ -219,25 +219,27 @@ def test_which():
 
 def get_prog_version(prog):
     if prog == "icedax":
-        return Popen([prog, "--version"], stderr=PIPE).communicate()[1].strip()
+        outdata = Popen([prog, "--version"], stderr=PIPE).communicate()[1]
+        version = outdata.strip()
     elif prog == "cdda2wav":
         outdata = Popen([prog, "-version"], stdout=PIPE).communicate()[0]
-        return b" ".join(outdata.splitlines()[0].split()[0:2])
+        version = b" ".join(outdata.splitlines()[0].split()[0:2])
     elif prog == "cdrdao":
         outdata = Popen([prog], stderr=PIPE).communicate()[1]
-        return b" ".join(outdata.splitlines()[0].split()[::2][0:2])
+        version = b" ".join(outdata.splitlines()[0].split()[::2][0:2])
     elif prog == "cd-info":
         outdata = Popen([prog, "--version"], stdout=PIPE).communicate()[0]
-        return b" ".join(outdata.splitlines()[0].split()[::2][0:2])
+        version = b" ".join(outdata.splitlines()[0].split()[::2][0:2])
     elif prog == "drutil":
         outdata = Popen([prog, "version"], stdout=PIPE).communicate()[0]
         version = prog
         for line in outdata.splitlines():
             if line:
                 version += b" " + line.split(":")[1].strip()
-        return version
     else:
-        return prog
+        version = prog
+
+    return decode(version)
 
 def has_backend(backend, strict=False):
     """When the backend is only a symlink to another backend,
@@ -302,8 +304,16 @@ def printf(format_string, *args):
         format_string = "%s"
     sys.stdout.write(format_string % args)
 
+def decode(msg):
+    """This will replace unsuitable characters and use stdin encoding
+    """
+    if isinstance(msg, bytes):
+        return msg.decode(sys.stdin.encoding, "replace")
+    else:
+        return unicode_string(msg)
+
 def encode(msg):
-    """This will replace unsuitable characters
+    """This will replace unsuitable characters and use stdout encoding
     """
     if isinstance(msg, unicode_string):
         return msg.encode(sys.stdout.encoding, "replace")
@@ -576,6 +586,7 @@ def gather_isrcs(backend, device):
                     continue
                 track_number = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     # icedax is a fork of the cdda2wav tool
@@ -600,6 +611,7 @@ def gather_isrcs(backend, device):
                         continue
                     track_number = int(m.group(1))
                     isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                    isrc = decode(isrc)
                     backend_output.append((track_number, isrc))
 
     elif backend == "cd-info":
@@ -621,6 +633,7 @@ def gather_isrcs(backend, device):
                     continue
                 track_number = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     # media_info is a preview version of mediatools, both are for Windows
@@ -646,6 +659,7 @@ def gather_isrcs(backend, device):
                     continue
                 track_number = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     # cdrdao will create a temp file and we delete it afterwards
@@ -719,6 +733,7 @@ def gather_isrcs(backend, device):
                     continue
                 track_number = int(m.group(1))
                 isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     return backend_output
