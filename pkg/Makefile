@@ -1,7 +1,8 @@
-version := 0.5.1
+version := 1.0.1
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
+#libdiscid := libdiscid-0.4.0
 libdiscid := libdiscid-0.2.2
 musicbrainz2 := python-musicbrainz2-0.7.4
 
@@ -12,7 +13,8 @@ mac := $(current)-mac
 all := $(scripts) $(tar).tar.gz $(win32).zip $(mac).zip
 
 source_repo := ..
-source_branch := master
+#source_branch := master
+source_branch := v1
 source_dir := isrcsubmit
 
 
@@ -37,7 +39,7 @@ endef
 
 base_libs := $(musicbrainz2) $(libdiscid)
 define cp_base_libs =
-	mv $(1)/COPYRIGHT $(1)/COPYRIGHT.isrcsubmit
+	mv $(1)/COPYING $(1)/COPYING.isrcsubmit
 	mv $(1)/AUTHORS $(1)/AUTHORS.isrcsubmit
 	cp -ar $(musicbrainz2)/src/musicbrainz2 $(1)/
 	cp -ar $(musicbrainz2) $(1)/
@@ -66,25 +68,29 @@ $(tar).tar.gz: $(source_ref)
 	rm -rf $(tar)
 
 win32: $(win32).zip
-$(win32).zip: $(source_ref) $(base_libs) mediatools
+$(win32).zip: $(source_ref) $(base_libs) $(libdiscid)-win32.zip mediatools
 	$(call cp_source, $(win32))
 	$(call cp_base_libs, $(win32))
+	unzip $(libdiscid)-win32.zip
 	cp -a $(libdiscid)-win32/discid.dll $(win32)/
 	cp -ar mediatools $(win32)/
 	cp -a mediatools.exe $(win32)/
 	zip -qr $@ $(win32)
+	rm -rf $(libdiscid)-win32
 	rm -rf $(win32)
 
 # universal library created with:
 #     lipo -create */libdiscid.0.dylib -output libdiscid.0.dylib
 
 mac: $(mac).zip
-$(mac).zip: $(source_ref) $(base_libs)
+$(mac).zip: $(source_ref) $(base_libs) $(libdiscid)-mac.zip
 	$(call cp_source, $(mac))
 	$(call cp_base_libs, $(mac))
+	unzip $(libdiscid)-mac.zip
 	cp -a $(libdiscid)-mac/universal/libdiscid.0.dylib $(mac)/
 	cp -a discisrc-mac/discisrc $(mac)/
 	zip -qr $@ $(mac)
+	rm -rf $(libdiscid)-mac
 	rm -rf $(mac)
 
 # sources:
@@ -104,11 +110,15 @@ $(musicbrainz2): $(musicbrainz2).tar.gz
 $(musicbrainz2).tar.gz:
 	wget http://ftp.musicbrainz.org/pub/musicbrainz/python-musicbrainz2/$@
 
+libdiscid: $(libdiscid)
 $(libdiscid): $(libdiscid).tar.gz
 	tar -xzf $^
 
 $(libdiscid).tar.gz:
-	wget http://users.musicbrainz.org/~matt/$@
+	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
+
+$(libdiscid)-%.zip:
+	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
 
 mediatools: mediatools.zip
 	unzip -o $^
