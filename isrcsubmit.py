@@ -44,15 +44,13 @@ import musicbrainzngs
 from discid import DiscError
 from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
-# using a shellscript to get the correct python version (2.5 - 2.7)
 shellname = "isrcsubmit.sh"
 if os.path.isfile(shellname):
     scriptname = shellname
 else:
     scriptname = os.path.basename(sys.argv[0])
 
-# make code more Python 3 compliant for easier backporting
-# this still won't run on Python 3
+# make code run on Python 2 and 3
 try:
     user_input = raw_input
 except NameError:
