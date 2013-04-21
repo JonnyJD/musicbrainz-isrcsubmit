@@ -410,6 +410,8 @@ class WebService2():
             sys.exit(1)
 
     def submit_isrcs(self, tracks2isrcs):
+        if debug:
+            print("tracks2isrcs: %s" % tracks2isrcs)
         try:
             self.authenticate()
             musicbrainzngs.submit_isrcs(tracks2isrcs)
