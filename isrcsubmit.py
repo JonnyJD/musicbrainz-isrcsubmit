@@ -389,6 +389,7 @@ class WebService2():
                 return []
             else:
                 print_error("Couldn't fetch release: %s" % err)
+                sys.exit(1)
         except WebServiceError as err:
             print_error("Couldn't fetch release: %s" % err)
             sys.exit(1)
@@ -412,8 +413,10 @@ class WebService2():
             musicbrainzngs.submit_isrcs(tracks2isrcs)
         except AuthenticationError as err:
             print_error("Invalid credentials: %s" % err)
+            sys.exit(1)
         except WebServiceError as err:
             print_error("Couldn't send ISRCs: %s" % err)
+            sys.exit(1)
         else:
             print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
 
