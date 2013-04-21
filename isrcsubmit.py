@@ -144,6 +144,10 @@ def gather_options(argv):
         # this is "cdaudio" in libdiscid, but no user understands that..
         # cdrdao is not given a device and will try 0,1,0
         # this default is only for libdiscid and mediatools
+    elif sys.platform == "darwin":
+        # That is the device drutil expects and stable
+        # /dev/rdisk1 etc. change with multiple hard disks, dmgs mounted etc.
+        default_device = 1
     else:
         default_device = discid.DEFAULT_DEVICE
     default_browser = "firefox"
@@ -160,7 +164,7 @@ def gather_options(argv):
     # note that -d previously stand for debug
     parser.add_option("-d", "--device", metavar="DEVICE",
             help="CD device with a loaded audio cd, if not given as argument."
-            + " The default is " + default_device + " (and '1' for mac)")
+            + " The default is %s." % default_device)
     parser.add_option("-b", "--backend", choices=backends, metavar="PROGRAM",
             help="Force using a specific backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(backends)
@@ -436,7 +440,13 @@ class Disc(object):
             sys.exit(1)
 
     def __init__(self, device, verified=False):
-        self._device = device
+        if sys.platform == "darwin":
+            self._device = get_real_mac_device(device)
+            if debug:
+                print("CD drive #%s corresponds to %s internally"
+                      % (options.device, device))
+        else:
+            self._device = device
         self._release = None
         self._verified = verified
         self.read_disc()        # sets self._id etc.
@@ -823,22 +833,7 @@ if backend is None:
 else:
     print("using %s" % get_prog_version(backend))
 
-if sys.platform == "darwin":
-    # drutil (Mac OS X) expects 1,2,..
-    # convert linux default
-    if options.device == "/dev/cdrom":
-        options.device = "1"
-    # libdiscid needs to know what disk that corresponds to
-    # drutil will tell us
-    device = get_real_mac_device(options.device)
-    if debug:
-        print("CD drive #%s corresponds to %s internally" % (options.device,
-                                                             device))
-else:
-    # for linux the real device is the same as given in the options
-    device = options.device
-
-disc = get_disc(device)
+disc = get_disc(options.device)
 release_id = disc.release["id"]         # implicitly fetches release
 
 print("")
