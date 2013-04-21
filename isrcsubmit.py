@@ -145,7 +145,7 @@ def gather_options(argv):
     elif sys.platform == "darwin":
         # That is the device drutil expects and stable
         # /dev/rdisk1 etc. change with multiple hard disks, dmgs mounted etc.
-        default_device = 1
+        default_device = "1"
     else:
         default_device = discid.DEFAULT_DEVICE
     default_browser = "firefox"
