@@ -414,6 +414,8 @@ class WebService2():
             print_error("Invalid credentials: %s" % err)
         except WebServiceError as err:
             print_error("Couldn't send ISRCs: %s" % err)
+        else:
+            print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
 
 
 
@@ -895,7 +897,6 @@ else:
         print_error(errors, "problems detected")
     if user_input("Do you want to submit? [y/N] ") == "y":
         ws2.submit_isrcs(tracks2isrcs)
-        print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
     else:
         update_intention = False
         print("Nothing was submitted to the server.")
