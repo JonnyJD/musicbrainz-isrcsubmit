@@ -888,7 +888,7 @@ for (track_number, isrc) in backend_output:
         isrcs[isrc].add_track(own_track)
         # check if the ISRC was already added to the track
         if isrc not in own_track.get("isrc-list", []):
-            tracks2isrcs[own_track["id"]] = isrc
+            tracks2isrcs[own_track["id"]] = [isrc]
             print("found new ISRC for track %d: %s" % (track_number, isrc))
         else:
             print("%s is already attached to track %d" % (isrc, track_number))
