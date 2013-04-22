@@ -452,7 +452,7 @@ class Disc(object):
             self._device = get_real_mac_device(device)
             if debug:
                 print("CD drive #%s corresponds to %s internally"
-                      % (options.device, device))
+                      % (device, self._device))
         else:
             self._device = device
         self._release = None
