@@ -378,14 +378,6 @@ class WebService2():
                 self.username = user_input()
             password = getpass.getpass(
                                     "Please input your MusicBrainz password: ")
-            try:
-                # The musicbrainz server seems to accept passwords in latin1"
-                password = password.decode(sys.stdin.encoding).encode("latin1")
-            except AttributeError:
-                # on Python 3 this doesn't work with urllib
-                # strings are unicode strings already and urllib tries ascii
-                # See issue #57
-                pass
             print("")
             musicbrainzngs.auth(self.username, password)
             self.auth = True
