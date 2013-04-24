@@ -406,8 +406,8 @@ class DemandQuery():
                 self.username = user_input()
             password = getpass.getpass(
                                     "Please input your MusicBrainz password: ")
-            # The musicbrainz server seems to accept passwords in latin1"
-            password = password.decode(sys.stdin.encoding).encode("latin1")
+            # The musicbrainz server accepts passwords in UTF-8
+            password = password.decode(sys.stdin.encoding).encode("utf-8")
             print("")
             if StrictVersion(musicbrainz2_version) >= "0.7.4":
                 # There is a warning printed above, when < 0.7.4
