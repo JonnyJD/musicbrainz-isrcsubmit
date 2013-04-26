@@ -460,6 +460,14 @@ class Disc(object):
         return self._disc.id
 
     @property
+    def mcn(self):
+        mcn = self._disc.mcn
+        if mcn and int(mcn) > 0:
+            return mcn
+        else:
+            return None
+
+    @property
     def tracks(self):
         return self._disc.tracks
 
@@ -575,6 +583,8 @@ def get_disc(device, backend, verified=False):
     """
     disc = Disc(device, backend, verified)
     print('\nDiscID:\t\t%s' % disc.id)
+    if disc.mcn:
+        print('MCN/EAN:\t%s' % disc.mcn)
     print('Tracks on disc:\t%d' % len(disc.tracks))
     return disc
 
