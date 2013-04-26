@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name="isrcsubmit",
-        version="2.0.0-beta.1",
+        version="2.0.0-dev",
         description="submit ISRCs from disc to MusicBrainz",
         long_description=open("README.md").read(),
         author="Johannes Dewender",
