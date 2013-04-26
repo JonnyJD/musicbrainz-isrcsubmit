@@ -25,9 +25,7 @@ isrcsubmit_version = "2.0.0-dev"
 agent_name = "isrcsubmit.py"
 musicbrainz_server = "musicbrainz.org"
 # starting with highest priority
-backends = ["mediatools", "media_info", "discisrc", "cdrdao", "cd-info",
-            "cdda2wav", "icedax", "drutil"]
-packages = {"cd-info": "libcdio", "cdda2wav": "cdrtools", "icedax": "cdrkit"}
+backends = ["mediatools", "media_info", "libdiscid", "discisrc", "cdrdao"]
 
 import os
 import re
@@ -238,6 +236,8 @@ def get_prog_version(prog):
         for line in outdata.splitlines():
             if line:
                 version += b" " + line.split(":")[1].strip()
+    elif prog == "libdiscid":
+        version = discid.LIBDISCID_VERSION_STRING
     else:
         version = prog
 
@@ -247,6 +247,9 @@ def has_backend(backend, strict=False):
     """When the backend is only a symlink to another backend,
        we will return False, unless we strictly want to use this backend.
     """
+    if backend == "libdiscid":
+        return "isrc" in discid.FEATURES
+
     devnull = open(os.devnull, "w")
     if options.sane_which:
         p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
@@ -430,16 +433,16 @@ class Disc(object):
     def read_disc(self):
         try:
             # calculate disc ID from disc
-            with discid.DiscId() as disc:
-                disc.read(self._device)
-                self._id = disc.id
-                self._submission_url = disc.submission_url
-                self._track_count = len(disc.track_offsets) - 1
+            if self._backend == "libdiscid":
+                disc = discid.read(self._device, features=["mcn", "isrc"])
+            else:
+                disc = discid.read(self._device)
+            self._disc = disc
         except DiscError as err:
             print_error("DiscID calculation failed: %s" % err)
             sys.exit(1)
 
-    def __init__(self, device, verified=False):
+    def __init__(self, device, backend, verified=False):
         if sys.platform == "darwin":
             self._device = get_real_mac_device(device)
             if debug:
@@ -448,20 +451,29 @@ class Disc(object):
         else:
             self._device = device
         self._release = None
+        self._backend = backend
         self._verified = verified
         self.read_disc()        # sets self._id etc.
 
     @property
     def id(self):
-        return self._id
+        return self._disc.id
 
     @property
-    def track_count(self):
-        return self._track_count
+    def mcn(self):
+        mcn = self._disc.mcn
+        if mcn and int(mcn) > 0:
+            return mcn
+        else:
+            return None
+
+    @property
+    def tracks(self):
+        return self._disc.tracks
 
     @property
     def submission_url(self):
-        return self._submission_url
+        return self._disc.submission_url
 
     @property
     def release(self):
@@ -566,22 +578,35 @@ class Disc(object):
 
         return self._release
 
-def get_disc(device, verified=False):
+def get_disc(device, backend, verified=False):
     """This creates a Disc object, which also calculates the id of the disc
     """
-    disc = Disc(device, verified)
+    disc = Disc(device, backend, verified)
     print('\nDiscID:\t\t%s' % disc.id)
-    print('Tracks on disc:\t%d' % disc.track_count)
+    if disc.mcn:
+        print('MCN/EAN:\t%s' % disc.mcn)
+    print('Tracks on disc:\t%d' % len(disc.tracks))
     return disc
 
 
-def gather_isrcs(backend, device):
+def gather_isrcs(disc, backend, device):
     """read the disc in the device with the backend and extract the ISRCs
     """
     backend_output = []
     devnull = open(os.devnull, "w")
 
-    if backend == "discisrc":
+    if backend == "libdiscid":
+        pattern = r'[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
+        for track in disc.tracks:
+            if track.isrc:
+                m = re.match(pattern, track.isrc)
+                if m is None:
+                    print("no valid ISRC: %s" % track.isrc)
+                else:
+                    backend_output.append((track.number, track.isrc))
+
+    # redundant to "libdiscid", but this might be handy for prerelease testing
+    elif backend == "discisrc":
         pattern = \
             br'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
@@ -596,54 +621,7 @@ def gather_isrcs(backend, device):
                 printf(line)    # already includes a newline
             if line.startswith(b"Track") and len(line) > 12:
                 m = re.search(pattern, line)
-                if m == None:
-                    print("can't find ISRC in: %s" % line)
-                    continue
-                track_number = int(m.group(1))
-                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
-                isrc = decode(isrc)
-                backend_output.append((track_number, isrc))
-
-    # icedax is a fork of the cdda2wav tool
-    elif backend in ["cdda2wav", "icedax"]:
-        pattern = \
-            br'T:\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
-        try:
-            p1 = Popen([backend, '-J', '-H', '-D', device], stderr=PIPE)
-            p2 = Popen(['grep', 'ISRC'], stdin=p1.stderr, stdout=PIPE)
-            isrcout = p2.stdout
-        except OSError as err:
-            backend_error(backend, err)
-        for line in isrcout:
-            # there are \n and \r in different places
-            if debug:
-                printf(line)    # already includes a newline
-            for text in line.splitlines():
-                if text.startswith(b"T:"):
-                    m = re.search(pattern, text)
-                    if m == None:
-                        print("can't find ISRC in: %s" % text)
-                        continue
-                    track_number = int(m.group(1))
-                    isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
-                    isrc = decode(isrc)
-                    backend_output.append((track_number, isrc))
-
-    elif backend == "cd-info":
-        pattern = \
-            br'TRACK\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
-        try:
-            p = Popen([backend, '-T', '-A', '--no-device-info', '--no-cddb',
-                '-C', device], stdout=PIPE)
-            isrcout = p.stdout
-        except OSError as err:
-            backend_error(backend, err)
-        for line in isrcout:
-            if debug:
-                printf(line)    # already includes a newline
-            if line.startswith(b"TRACK"):
-                m = re.search(pattern, line)
-                if m == None:
+                if m is None:
                     print("can't find ISRC in: %s" % line)
                     continue
                 track_number = int(m.group(1))
@@ -652,6 +630,7 @@ def gather_isrcs(backend, device):
                 backend_output.append((track_number, isrc))
 
     # media_info is a preview version of mediatools, both are for Windows
+    # this does some kind of raw read
     elif backend in ["mediatools", "media_info"]:
         pattern = \
             br'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
@@ -669,7 +648,7 @@ def gather_isrcs(backend, device):
                 printf(line)    # already includes a newline
             if line.startswith(b"ISRC") and not line.startswith(b"ISRCS"):
                 m = re.search(pattern, line)
-                if m == None:
+                if m is None:
                     print("can't find ISRC in: %s" % line)
                     continue
                 track_number = int(m.group(1))
@@ -679,6 +658,7 @@ def gather_isrcs(backend, device):
 
     # cdrdao will create a temp file and we delete it afterwards
     # cdrdao is also available for windows
+    # this will also fetch ISRCs from CD-TEXT
     elif backend == "cdrdao":
         # no byte pattern, file is opened as unicode
         pattern = r'[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
@@ -716,7 +696,7 @@ def gather_isrcs(backend, device):
                             m = re.match(pattern, isrc)
                             if m is None:
                                 print("no valid ISRC: %s" % isrc)
-                            elif isrc:
+                            else:
                                 backend_output.append((track_number, isrc))
                                 # safeguard against missing trackNumber lines
                                 # or duplicated ISRC tags (like in CD-Text)
@@ -726,30 +706,6 @@ def gather_isrcs(backend, device):
                 os.unlink(tmpfile)
             except OSError:
                 pass
-
-    # this is the backend included in Mac OS X
-    # it will take a lot of time because it scans the whole disc
-    elif backend == "drutil":
-        pattern = \
-        br'Track\s+([0-9]+)\sISRC:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
-        try:
-            p1 = Popen([backend, 'subchannel', '-drive', device], stdout=PIPE)
-            p2 = Popen(['grep', 'ISRC'], stdin=p1.stdout, stdout=PIPE)
-            isrcout = p2.stdout
-        except OSError as err:
-            backend_error(backend, err)
-        for line in isrcout:
-            if debug:
-                printf(line)    # already includes a newline
-            if line.startswith(b"Track") and line.find(b"block") > 0:
-                m = re.search(pattern, line)
-                if m == None:
-                    print("can't find ISRC in: %s" % line)
-                    continue
-                track_number = int(m.group(1))
-                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
-                isrc = decode(isrc)
-                backend_output.append((track_number, isrc))
 
     return backend_output
 
@@ -822,10 +778,7 @@ if backend is None:
 if backend is None:
     verbose_backends = []
     for program in backends:
-        if program in packages:
-            verbose_backends.append(program + " (" + packages[program] + ")")
-        else:
-            verbose_backends.append(program)
+        verbose_backends.append(program)
     print_error("Cannot find a backend to extract the ISRCS!")
     print_error2("Isrcsubmit can work with one of the following:")
     print_error2("  " + ", ".join(verbose_backends))
@@ -833,7 +786,7 @@ if backend is None:
 else:
     print("using %s" % get_prog_version(backend))
 
-disc = get_disc(options.device)
+disc = get_disc(options.device, backend)
 release_id = disc.release["id"]         # implicitly fetches release
 
 print("")
@@ -853,7 +806,7 @@ print_encoded('Release:\t%s\n' % disc.release["title"])
 
 print("")
 # Extract ISRCs
-backend_output = gather_isrcs(backend, options.device) # (track, isrc)
+backend_output = gather_isrcs(disc, backend, options.device) # (track, isrc)
 
 # prepare to add the ISRC we found to the corresponding track
 # and check for local duplicates now and server duplicates later
@@ -905,7 +858,7 @@ if update_intention:
     # add already attached ISRCs
     for i in range(0, len(tracks)):
         track = tracks[i]
-        if i in range(0, disc.track_count):
+        if i in range(0, len(disc.tracks)):
             track_number = i + 1
             track = Track(track, track_number)
         for isrc in track.get("isrc-list", []):

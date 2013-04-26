@@ -1,4 +1,4 @@
-Isrcsubmit 2.0.0-beta.1 for MusicBrainz
+Isrcsubmit 2.0.0-dev for MusicBrainz
 ==============================
 (Linux/Mac OS X/Windows)
 ------------------------
@@ -11,7 +11,7 @@ and submits them to [MusicBrainz](http://musicbrainz.org).
 This script uses
 [python-musicbrainzngs](http://musicbrainz.org/doc/python-musicbrainz-ngs)
 to access the MusicBrainz API
-and [python-discid](https://python-discid.readthedocs.org/)
+and [python-discid](https://python-discid.readthedocs.org/) >= 0.5.0
 to create an identifier for the disc.
 You need Python 2 >= 2.6 or Python 3 >= 3.1.
 
@@ -61,7 +61,7 @@ Others don't, for the same physical disc.
 For me my dvd writer worked better.
 On Windows the mediatools backend should give correct results either way.
 
-Isrcsubmit checks for problems with duplicate ISRCs and prints a warning.
+Isrcsubmit 2.0.0-dev for problems with duplicate ISRCs and prints a warning.
 You will always have the choice to cancel the submission if something
 seems to be wrong.
 
