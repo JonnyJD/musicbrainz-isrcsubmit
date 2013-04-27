@@ -745,6 +745,31 @@ def check_isrcs_local(backend_output, backend, tracks):
 
     return isrcs, tracks2isrcs
 
+def check_global_duplicates(disc, tracks, isrcs):
+    """Help cleaning up global duplicates with the information we got
+    from our disc.
+    """
+    duplicates = 0
+    # add already attached ISRCs
+    for i in range(0, len(tracks)):
+        track = tracks[i]
+        if i in range(0, len(disc.tracks)):
+            track_number = i + 1
+            track = Track(track, track_number)
+        for isrc in track.get("isrc-list", []):
+            # only check ISRCS we also found on our disc
+            if isrc in isrcs:
+                isrcs[isrc].add_track(track)
+    # check if we have multiple tracks for one ISRC
+    for isrc in isrcs:
+        if len(isrcs[isrc].get_tracks()) > 1:
+            duplicates += 1
+
+    if duplicates > 0:
+        printf("\nThere were %d ISRCs ", duplicates)
+        print("that are attached to multiple tracks on this release.")
+        if user_input("Do you want to help clean those up? [y/N] ") == "y":
+            cleanup_isrcs(isrcs)
 
 def cleanup_isrcs(isrcs):
     """Show information about duplicate ISRCs
@@ -862,27 +887,8 @@ else:
 
 # check for overall duplicate ISRCs, including server provided
 if update_intention:
-    duplicates = 0
-    # add already attached ISRCs
-    for i in range(0, len(tracks)):
-        track = tracks[i]
-        if i in range(0, len(disc.tracks)):
-            track_number = i + 1
-            track = Track(track, track_number)
-        for isrc in track.get("isrc-list", []):
-            # only check ISRCS we also found on our disc
-            if isrc in isrcs:
-                isrcs[isrc].add_track(track)
-    # check if we have multiple tracks for one ISRC
-    for isrc in isrcs:
-        if len(isrcs[isrc].get_tracks()) > 1:
-            duplicates += 1
-
-    if duplicates > 0:
-        printf("\nThere were %d ISRCs ", duplicates)
-        print("that are attached to multiple tracks on this release.")
-        if user_input("Do you want to help clean those up? [y/N] ") == "y":
-            cleanup_isrcs(isrcs)
+    # the ISRCs are deemed correct, so we can use them to check others
+    check_global_duplicates(disc, tracks, isrcs)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
