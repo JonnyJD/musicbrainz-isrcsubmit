@@ -21,11 +21,11 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-isrcsubmit_version = "2.0.0-beta.2"
-agent_name = "isrcsubmit.py"
-musicbrainz_server = "musicbrainz.org"
+__version__ = "2.0.0-beta.2"
+AGENT_NAME = "isrcsubmit.py"
+MUSICBRAINZ_SERVER = "musicbrainz.org"
 # starting with highest priority
-backends = ["mediatools", "media_info", "libdiscid", "discisrc", "cdrdao"]
+BACKENDS = ["mediatools", "media_info", "libdiscid", "discisrc", "cdrdao"]
 
 import os
 import re
@@ -60,7 +60,7 @@ except NameError:
     unicode_string = str
 
 def script_version():
-    return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmit_version
+    return "isrcsubmit %s by JonnyJD for MusicBrainz" % __version__
 
 def print_help(option=None, opt=None, value=None, parser=None):
     print(\
@@ -161,9 +161,9 @@ def gather_options(argv):
     parser.add_option("-d", "--device", metavar="DEVICE",
             help="CD device with a loaded audio cd, if not given as argument."
             + " The default is %s." % default_device)
-    parser.add_option("-b", "--backend", choices=backends, metavar="PROGRAM",
+    parser.add_option("-b", "--backend", choices=BACKENDS, metavar="PROGRAM",
             help="Force using a specific backend to extract ISRCs from the"
-            + " disc. Possible backends are: %s." % ", ".join(backends)
+            + " disc. Possible backends are: %s." % ", ".join(BACKENDS)
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
             help="Program to open urls. The default is " + default_browser)
@@ -257,7 +257,7 @@ def has_backend(backend, strict=False):
         if p_which.returncode == 0:
             # check if it is only a symlink to another backend
             real_backend = os.path.basename(os.path.realpath(backend_path))
-            if backend != real_backend and real_backend in backends: 
+            if backend != real_backend and real_backend in BACKENDS: 
                 if strict:
                     print("WARNING: %s is a symlink to %s" % (backend,
                                                               real_backend))
@@ -279,7 +279,7 @@ def has_backend(backend, strict=False):
 def find_backend():
     """search for an available backend
     """
-    for prog in backends:
+    for prog in BACKENDS:
         if has_backend(prog):
             backend = prog
             break
@@ -383,8 +383,8 @@ class WebService2():
     def __init__(self, username=None):
         self.auth = False
         self.username = username
-        musicbrainzngs.set_hostname(musicbrainz_server)
-        musicbrainzngs.set_useragent(agent_name, isrcsubmit_version,
+        musicbrainzngs.set_hostname(MUSICBRAINZ_SERVER)
+        musicbrainzngs.set_useragent(AGENT_NAME, __version__,
                 "http://github.com/JonnyJD/musicbrainz-isrcsubmit")
 
     def authenticate(self):
