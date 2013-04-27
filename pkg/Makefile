@@ -41,11 +41,12 @@ base_libs := $(musicbrainzngs) $(discid) $(libdiscid)
 define cp_base_libs =
 	mv $(1)/COPYING $(1)/COPYING.isrcsubmit
 	mv $(1)/AUTHORS $(1)/AUTHORS.isrcsubmit
+	mkdir $(1)/src
 	cp -ar $(musicbrainzngs)/musicbrainzngs $(1)/
-	cp -ar $(musicbrainzngs) $(1)/
-	cp -ar $(discid)/discid.py $(1)/
-	cp -ar $(discid) $(1)/
-	cp -ar $(libdiscid) $(1)/libdiscid
+	cp -ar $(musicbrainzngs) $(1)/src/
+	cp -ar $(discid)/discid $(1)/
+	cp -ar $(discid) $(1)/src/
+	cp -ar $(libdiscid) $(1)/src/
 endef
 
 
