@@ -504,10 +504,10 @@ class Disc(object):
         results = ws2.get_releases_by_discid(self.id, includes=includes)
         num_results = len(results)
         if num_results == 0:
-            print("This Disc ID is not in the database.")
+            print("\nThis Disc ID is not in the database.")
             self._release = None
         elif num_results > 1:
-            print("This Disc ID is ambiguous:")
+            print("\nThis Disc ID is ambiguous:")
             for i in range(num_results):
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
@@ -850,7 +850,8 @@ if __name__ == "__main__":
     # list, dict
     isrcs, tracks2isrcs, errors = check_isrcs_local(backend_output, mb_tracks)
 
-    print("")
+    if isrcs:
+        print("")
     # try to submit the ISRCs
     update_intention = True
     if not tracks2isrcs:
