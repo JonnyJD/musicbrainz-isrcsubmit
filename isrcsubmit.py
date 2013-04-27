@@ -706,6 +706,45 @@ def gather_isrcs(disc, backend, device):
 
     return backend_output
 
+def check_isrcs_local(backend_output, backend, tracks):
+    """check backend_output for (local) duplicates and inconsistencies
+    """
+    isrcs = dict()          # isrcs found on disc
+    tracks2isrcs = dict()   # isrcs to be submitted
+    errors = 0
+
+    for (track_number, isrc) in backend_output:
+        if isrc not in isrcs:
+            isrcs[isrc] = Isrc(isrc)
+            # check if we found this ISRC for multiple tracks
+            with_isrc = [item for item in backend_output if item[1] == isrc]
+            if len(with_isrc) > 1:
+                track_list = [str(item[0]) for item in with_isrc]
+                print_error("%s gave the same ISRC for multiple tracks!"
+                            % backend)
+                print_error2("ISRC: %s\ttracks: %s"
+                             % (isrc, ", ".join(track_list)))
+                errors += 1
+        try:
+            track = tracks[track_number - 1]
+        except IndexError:
+            print_error("ISRC %s found for unknown track %d"
+                        % (isrc, track_number))
+            errors += 1
+        else:
+            own_track = OwnTrack(track, track_number)
+            isrcs[isrc].add_track(own_track)
+            # check if the ISRC was already added to the track
+            if isrc not in own_track.get("isrc-list", []):
+                tracks2isrcs[own_track["id"]] = [isrc]
+                print("found new ISRC for track %d: %s"
+                      % (track_number, isrc))
+            else:
+                print("%s is already attached to track %d"
+                      % (isrc, track_number))
+
+    return isrcs, tracks2isrcs
+
 
 def cleanup_isrcs(isrcs):
     """Show information about duplicate ISRCs
@@ -805,35 +844,7 @@ print("")
 # Extract ISRCs
 backend_output = gather_isrcs(disc, backend, options.device) # (track, isrc)
 
-# prepare to add the ISRC we found to the corresponding track
-# and check for local duplicates now and server duplicates later
-isrcs = dict()          # isrcs found on disc
-tracks2isrcs = dict()   # isrcs to be submitted
-errors = 0
-for (track_number, isrc) in backend_output:
-    if isrc not in isrcs:
-        isrcs[isrc] = Isrc(isrc)
-        # check if we found this ISRC for multiple tracks
-        with_isrc = [item for item in backend_output if item[1] == isrc]
-        if len(with_isrc) > 1:
-            track_list = [str(item[0]) for item in with_isrc]
-            print_error("%s gave the same ISRC for multiple tracks!" % backend)
-            print_error2("ISRC: %s\ttracks: %s"% (isrc, ", ".join(track_list)))
-            errors += 1
-    try:
-        track = tracks[track_number - 1]
-    except IndexError:
-        print_error("ISRC %s found for unknown track %d" % (isrc, track_number))
-        errors += 1
-    else:
-        own_track = OwnTrack(track, track_number)
-        isrcs[isrc].add_track(own_track)
-        # check if the ISRC was already added to the track
-        if isrc not in own_track.get("isrc-list", []):
-            tracks2isrcs[own_track["id"]] = [isrc]
-            print("found new ISRC for track %d: %s" % (track_number, isrc))
-        else:
-            print("%s is already attached to track %d" % (isrc, track_number))
+isrcs, tracks2isrcs = check_isrcs_local(backend_output, backend, tracks)
 
 print("")
 # try to submit the ISRCs
