@@ -250,8 +250,8 @@ def has_backend(backend, strict=False):
             real_backend = os.path.basename(os.path.realpath(backend_path))
             if backend != real_backend and real_backend in BACKENDS: 
                 if strict:
-                    print("WARNING: %s is a symlink to %s" % (backend,
-                                                              real_backend))
+                    print("WARNING: %s is a symlink to %s"
+                          % (backend, real_backend))
                     return True
                 else:
                     return False # use real backend instead, or higher priority
@@ -621,7 +621,7 @@ def gather_isrcs(disc, backend, device):
             p = Popen([backend, device], stdout=PIPE)
             isrcout = p.stdout
         except OSError as err:
-            backend_error(backend, err)
+            backend_error(err)
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
@@ -648,7 +648,7 @@ def gather_isrcs(disc, backend, device):
             p = Popen(args, stdout=PIPE)
             isrcout = p.stdout
         except OSError as err:
-            backend_error(backend, err)
+            backend_error(err)
         for line in isrcout:
             if debug:
                 printf(line)    # already includes a newline
@@ -685,7 +685,7 @@ def gather_isrcs(disc, backend, device):
                 print_error("%s returned with %i" % (backend, p.returncode))
                 sys.exit(1)
         except OSError as err:
-            backend_error(backend, err)
+            backend_error(err)
         else:
             # that file seems to be opened in Unicode mode in Python 3
             with open(tmpfile, "r") as toc:
