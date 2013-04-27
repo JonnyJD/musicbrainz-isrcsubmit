@@ -25,7 +25,7 @@ isrcsubmit_version = "2.0.0-beta.2"
 agent_name = "isrcsubmit.py"
 musicbrainz_server = "musicbrainz.org"
 # starting with highest priority
-backends = ["mediatools", "media_info", "libdiscid", "discisrc", "cdrdao"]
+backends = ["mediatools", "media_info", "cdrdao", "libdiscid", "discisrc"]
 
 import os
 import re
