@@ -146,8 +146,10 @@ def gather_options(argv):
         default_device = "1"
     else:
         default_device = discid.DEFAULT_DEVICE
+
     default_browser = "firefox"
     prog = scriptname
+
     parser = OptionParser(version=script_version(), add_help_option=False)
     parser.set_usage("%s [options] [user] [device]\n       %s -h" % (prog,
                                                                      prog))
@@ -184,15 +186,19 @@ def gather_options(argv):
             # Mac: device is changed again, when we know the final backend
             # Win: cdrdao is not given a device and will try 0,1,0
             options.device = default_device
-    if options.browser is None:
-        options.browser = default_browser
     if args:
         print("WARNING: Superfluous arguments: %s" % ", ".join(args))
+
+    # assign remaining options automatically
+    if options.browser is None:
+        options.browser = default_browser
     options.sane_which = test_which()
     if options.backend and not has_backend(options.backend, strict=True):
         print_error("Chosen backend not found. No ISRC extraction possible!")
         print_error2("Make sure that %s is installed." % options.backend)
         sys.exit(-1)
+    elif not options.backend:
+        options.backend = find_backend()
 
     return options
 
@@ -292,6 +298,8 @@ def find_backend():
     else:
         print("using %s" % get_prog_version(backend))
 
+    return backend
+
 def get_real_mac_device(option_device):
     """drutil takes numbers as drives.
 
@@ -369,9 +377,9 @@ def print_error2(*args):
     msg = " ".join(("      ",) + string_args)
     sys.stderr.write(msg + "\n")
 
-def backend_error(backend, err):
+def backend_error(err):
     print_error("Couldn't gather ISRCs with %s: %i - %s"
-                % (backend, err.errno, err.strerror))
+                % (options.backend, err.errno, err.strerror))
     sys.exit(1)
 
 class WebService2():
@@ -722,7 +730,7 @@ def gather_isrcs(disc, backend, device):
 
     return backend_output
 
-def check_isrcs_local(backend_output, backend, tracks):
+def check_isrcs_local(backend_output, tracks):
     """check backend_output for (local) duplicates and inconsistencies
     """
     isrcs = dict()          # isrcs found on disc
@@ -737,7 +745,7 @@ def check_isrcs_local(backend_output, backend, tracks):
             if len(with_isrc) > 1:
                 track_list = [str(item[0]) for item in with_isrc]
                 print_error("%s gave the same ISRC for multiple tracks!"
-                            % backend)
+                            % options.backend)
                 print_error2("ISRC: %s\ttracks: %s"
                              % (isrc, ", ".join(track_list)))
                 errors += 1
@@ -835,15 +843,12 @@ if __name__ == "__main__":
 
     # global variables
     options = gather_options(sys.argv)
-    if options.backend:
-        backend = options.backend
-    else:
-        backend = find_backend()
     debug = options.debug
     ws2 = WebService2(options.user)
 
-    disc = get_disc(options.device, backend)
+    disc = get_disc(options.device, options.backend)
     release_id = disc.release["id"]         # implicitly fetches release
+
 
     print("")
     discs = []
@@ -860,8 +865,10 @@ if __name__ == "__main__":
     print_encoded('Release:\t%s\n' % disc.release["title"])
 
     print("")
-    backend_output = gather_isrcs(disc, backend, options.device) # (track, isrc)
-    isrcs, tracks2isrcs = check_isrcs_local(backend_output, backend, tracks)
+    # (track, isrc)
+    backend_output = gather_isrcs(disc, options.backend, options.device)
+    # list, dict
+    isrcs, tracks2isrcs = check_isrcs_local(backend_output, tracks)
 
     print("")
     # try to submit the ISRCs
