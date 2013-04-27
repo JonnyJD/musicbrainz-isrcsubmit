@@ -461,7 +461,7 @@ class Disc(object):
         self._release = None
         self._backend = backend
         self._verified = verified
-        self.read_disc()        # sets self._id etc.
+        self.read_disc()        # sets self._disc
 
     @property
     def id(self):
@@ -753,7 +753,7 @@ def check_isrcs_local(backend_output, mb_tracks):
 
     return isrcs, tracks2isrcs
 
-def check_global_duplicates(disc, mb_tracks, isrcs):
+def check_global_duplicates(release, mb_tracks, isrcs):
     """Help cleaning up global duplicates with the information we got
     from our disc.
     """
@@ -761,9 +761,8 @@ def check_global_duplicates(disc, mb_tracks, isrcs):
     # add already attached ISRCs
     for i in range(0, len(mb_tracks)):
         track = mb_tracks[i]
-        if i in range(0, len(disc.tracks)):
-            track_number = i + 1
-            track = Track(track, track_number)
+        track_number = i + 1
+        track = Track(track, track_number)
         for isrc in track.get("isrc-list", []):
             # only check ISRCS we also found on our disc
             if isrc in isrcs:
@@ -777,9 +776,9 @@ def check_global_duplicates(disc, mb_tracks, isrcs):
         printf("\nThere were %d ISRCs ", duplicates)
         print("that are attached to multiple tracks on this release.")
         if user_input("Do you want to help clean those up? [y/N] ") == "y":
-            cleanup_isrcs(isrcs)
+            cleanup_isrcs(release, isrcs)
 
-def cleanup_isrcs(isrcs):
+def cleanup_isrcs(release, isrcs):
     """Show information about duplicate ISRCs
 
     Our attached ISRCs should be correct -> helps to delete from other tracks
@@ -791,7 +790,7 @@ def cleanup_isrcs(isrcs):
             for track in tracks:
                 printf("\t")
                 artist = track.get("artist-credit-phrase")
-                if artist and artist != disc.release["artist-credit-phrase"]:
+                if artist and artist != release["artist-credit-phrase"]:
                     string = "%s - %s" % (artist, track["title"])
                 else:
                     string = "%s" % track["title"]
@@ -830,9 +829,7 @@ if __name__ == "__main__":
     debug = options.debug
     ws2 = WebService2(options.user)
 
-    # global disc
     disc = get_disc(options.device, options.backend)
-
     release_id = disc.release["id"]         # implicitly fetches release
     print("")
     print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
@@ -871,7 +868,7 @@ if __name__ == "__main__":
     # check for overall duplicate ISRCs, including server provided
     if update_intention:
         # the ISRCs are deemed correct, so we can use them to check others
-        check_global_duplicates(disc, mb_tracks, isrcs)
+        check_global_duplicates(disc.release, mb_tracks, isrcs)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
