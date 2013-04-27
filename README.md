@@ -1,5 +1,5 @@
-Isrcsubmit 2.0.0-dev for MusicBrainz
-==============================
+Isrcsubmit 2.0.0-beta.2 for MusicBrainz
+================================
 (Linux/Mac OS X/Windows)
 ------------------------
 
@@ -61,7 +61,7 @@ Others don't, for the same physical disc.
 For me my dvd writer worked better.
 On Windows the mediatools backend should give correct results either way.
 
-Isrcsubmit 2.0.0-dev for problems with duplicate ISRCs and prints a warning.
+Isrcsubmit 2.0.0-beta.2 for problems with duplicate ISRCs and prints a warning.
 You will always have the choice to cancel the submission if something
 seems to be wrong.
 
