@@ -501,9 +501,6 @@ class Disc(object):
         elif num_results > 1:
             print("This Disc ID is ambiguous:")
             for i in range(num_results):
-                # TODO: list mediums, not releases
-                # possible a discID is in multiple mediums of a release
-                # (that would indicate a problem in the DB)
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
                 print_encoded("%d: %s - %s"
