@@ -715,7 +715,7 @@ def gather_isrcs(disc, backend, device):
 
     return backend_output
 
-def check_isrcs_local(backend_output, tracks):
+def check_isrcs_local(backend_output, mb_tracks):
     """check backend_output for (local) duplicates and inconsistencies
     """
     isrcs = dict()          # isrcs found on disc
@@ -735,7 +735,7 @@ def check_isrcs_local(backend_output, tracks):
                              % (isrc, ", ".join(track_list)))
                 errors += 1
         try:
-            track = tracks[track_number - 1]
+            track = mb_tracks[track_number - 1]
         except IndexError:
             print_error("ISRC %s found for unknown track %d"
                         % (isrc, track_number))
@@ -754,14 +754,14 @@ def check_isrcs_local(backend_output, tracks):
 
     return isrcs, tracks2isrcs
 
-def check_global_duplicates(disc, tracks, isrcs):
+def check_global_duplicates(disc, mb_tracks, isrcs):
     """Help cleaning up global duplicates with the information we got
     from our disc.
     """
     duplicates = 0
     # add already attached ISRCs
-    for i in range(0, len(tracks)):
-        track = tracks[i]
+    for i in range(0, len(mb_tracks)):
+        track = mb_tracks[i]
         if i in range(0, len(disc.tracks)):
             track_number = i + 1
             track = Track(track, track_number)
@@ -831,29 +831,29 @@ if __name__ == "__main__":
     debug = options.debug
     ws2 = WebService2(options.user)
 
+    # global disc
     disc = get_disc(options.device, options.backend)
+
     release_id = disc.release["id"]         # implicitly fetches release
-
-
     print("")
-    discs = []
+    print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
+    print_encoded('Release:\t%s\n' % disc.release["title"])
+
+    media = []
     for medium in disc.release["medium-list"]:
         for disc_entry in medium["disc-list"]:
             if disc_entry["id"] == disc.id:
-                discs.append(medium)
+                media.append(medium)
                 break
-    if len(discs) > 1:
-        raise DiscError("number of discs with id: %d" % len(discs))
-
-    tracks = discs[0]["track-list"]
-    print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
-    print_encoded('Release:\t%s\n' % disc.release["title"])
+    if len(media) > 1:
+        raise DiscError("number of discs with id: %d" % len(media))
+    mb_tracks = media[0]["track-list"]
 
     print("")
     # (track, isrc)
     backend_output = gather_isrcs(disc, options.backend, options.device)
     # list, dict
-    isrcs, tracks2isrcs = check_isrcs_local(backend_output, tracks)
+    isrcs, tracks2isrcs = check_isrcs_local(backend_output, mb_tracks)
 
     print("")
     # try to submit the ISRCs
@@ -872,7 +872,7 @@ if __name__ == "__main__":
     # check for overall duplicate ISRCs, including server provided
     if update_intention:
         # the ISRCs are deemed correct, so we can use them to check others
-        check_global_duplicates(disc, tracks, isrcs)
+        check_global_duplicates(disc, mb_tracks, isrcs)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
