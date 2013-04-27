@@ -27,6 +27,8 @@ MUSICBRAINZ_SERVER = "musicbrainz.org"
 # starting with highest priority
 BACKENDS = ["mediatools", "media_info", "libdiscid", "discisrc", "cdrdao"]
 
+DEFAULT_BROWSER = "firefox"
+
 import os
 import re
 import sys
@@ -147,12 +149,10 @@ def gather_options(argv):
     else:
         default_device = discid.DEFAULT_DEVICE
 
-    default_browser = "firefox"
-    prog = scriptname
-
     parser = OptionParser(version=script_version(), add_help_option=False)
-    parser.set_usage("%s [options] [user] [device]\n       %s -h" % (prog,
-                                                                     prog))
+    parser.set_usage(
+            "{prog} [options] [user] [device]\n       {prog} -h".format(
+            prog=scriptname))
     parser.add_option("-h", action="help",
             help="Short usage help")
     parser.add_option("--help", action="callback", callback=print_help,
@@ -191,7 +191,7 @@ def gather_options(argv):
 
     # assign remaining options automatically
     if options.browser is None:
-        options.browser = default_browser
+        options.browser = DEFAULT_BROWSER
     options.sane_which = test_which()
     if options.backend and not has_backend(options.backend, strict=True):
         print_error("Chosen backend not found. No ISRC extraction possible!")
