@@ -421,7 +421,7 @@ class WebService2():
             sys.exit(1)
 
     def submit_isrcs(self, tracks2isrcs):
-        if debug:
+        if options.debug:
             print("tracks2isrcs: %s" % tracks2isrcs)
         try:
             self.authenticate()
@@ -453,7 +453,7 @@ class Disc(object):
     def __init__(self, device, backend, verified=False):
         if sys.platform == "darwin":
             self._device = get_real_mac_device(device)
-            if debug:
+            if options.debug:
                 print("CD drive #%s corresponds to %s internally"
                       % (device, self._device))
         else:
@@ -622,7 +622,7 @@ def gather_isrcs(disc, backend, device):
         except OSError as err:
             backend_error(err)
         for line in isrcout:
-            if debug:
+            if options.debug:
                 printf(line)    # already includes a newline
             if line.startswith(b"Track") and len(line) > 12:
                 m = re.search(pattern, line)
@@ -649,7 +649,7 @@ def gather_isrcs(disc, backend, device):
         except OSError as err:
             backend_error(err)
         for line in isrcout:
-            if debug:
+            if options.debug:
                 printf(line)    # already includes a newline
             if line.startswith(b"ISRC") and not line.startswith(b"ISRCS"):
                 m = re.search(pattern, line)
@@ -670,7 +670,7 @@ def gather_isrcs(disc, backend, device):
         tmpname = "cdrdao-%s.toc" % datetime.now()
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
-        if debug:
+        if options.debug:
             print("Saving toc in %s.." % tmpfile)
         if os.name == "nt" and device != "D:":
             print("warning: cdrdao uses the default device")
@@ -690,7 +690,7 @@ def gather_isrcs(disc, backend, device):
             with open(tmpfile, "r") as toc:
                 track_number = None
                 for line in toc:
-                    if debug:
+                    if options.debug:
                         printf(line)    # already includes a newline
                     words = line.split()
                     if words:
@@ -826,7 +826,6 @@ if __name__ == "__main__":
 
     # global variables
     options = gather_options(sys.argv)
-    debug = options.debug
     ws2 = WebService2(options.user)
 
     disc = get_disc(options.device, options.backend)
