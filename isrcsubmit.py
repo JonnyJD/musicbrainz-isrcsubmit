@@ -199,6 +199,7 @@ def gather_options(argv):
         sys.exit(-1)
     elif not options.backend:
         options.backend = find_backend()
+    print("using %s" % get_prog_version(options.backend))
 
     return options
 
@@ -280,8 +281,6 @@ def find_backend():
         print_error2("Isrcsubmit can work with one of the following:")
         print_error2("  " + ", ".join(backend))
         sys.exit(-1)
-    else:
-        print("using %s" % get_prog_version(backend))
 
     return backend
 
@@ -824,7 +823,7 @@ def cleanup_isrcs(isrcs):
 
 if __name__ == "__main__":
 
-    print("%s\n" % script_version())
+    print("%s" % script_version())
 
     # global variables
     options = gather_options(sys.argv)
