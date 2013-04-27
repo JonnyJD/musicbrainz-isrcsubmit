@@ -21,11 +21,13 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-isrcsubmit_version = "2.0.0-beta.2"
-agent_name = "isrcsubmit.py"
-musicbrainz_server = "musicbrainz.org"
+__version__ = "2.0.0-beta.2"
+AGENT_NAME = "isrcsubmit.py"
+MUSICBRAINZ_SERVER = "musicbrainz.org"
 # starting with highest priority
-backends = ["mediatools", "media_info", "libdiscid", "discisrc", "cdrdao"]
+BACKENDS = ["mediatools", "media_info", "libdiscid", "discisrc", "cdrdao"]
+
+DEFAULT_BROWSER = "firefox"
 
 import os
 import re
@@ -60,7 +62,7 @@ except NameError:
     unicode_string = str
 
 def script_version():
-    return "isrcsubmit %s by JonnyJD for MusicBrainz" % isrcsubmit_version
+    return "isrcsubmit %s by JonnyJD for MusicBrainz" % __version__
 
 def print_help(option=None, opt=None, value=None, parser=None):
     print(\
@@ -146,11 +148,11 @@ def gather_options(argv):
         default_device = "1"
     else:
         default_device = discid.DEFAULT_DEVICE
-    default_browser = "firefox"
-    prog = scriptname
+
     parser = OptionParser(version=script_version(), add_help_option=False)
-    parser.set_usage("%s [options] [user] [device]\n       %s -h" % (prog,
-                                                                     prog))
+    parser.set_usage(
+            "{prog} [options] [user] [device]\n       {prog} -h".format(
+            prog=scriptname))
     parser.add_option("-h", action="help",
             help="Short usage help")
     parser.add_option("--help", action="callback", callback=print_help,
@@ -161,12 +163,12 @@ def gather_options(argv):
     parser.add_option("-d", "--device", metavar="DEVICE",
             help="CD device with a loaded audio cd, if not given as argument."
             + " The default is %s." % default_device)
-    parser.add_option("-b", "--backend", choices=backends, metavar="PROGRAM",
+    parser.add_option("-b", "--backend", choices=BACKENDS, metavar="PROGRAM",
             help="Force using a specific backend to extract ISRCs from the"
-            + " disc. Possible backends are: %s." % ", ".join(backends)
+            + " disc. Possible backends are: %s." % ", ".join(BACKENDS)
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
-            help="Program to open urls. The default is " + default_browser)
+            help="Program to open urls. The default is " + DEFAULT_BROWSER)
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -184,15 +186,20 @@ def gather_options(argv):
             # Mac: device is changed again, when we know the final backend
             # Win: cdrdao is not given a device and will try 0,1,0
             options.device = default_device
-    if options.browser is None:
-        options.browser = default_browser
     if args:
         print("WARNING: Superfluous arguments: %s" % ", ".join(args))
+
+    # assign remaining options automatically
+    if options.browser is None:
+        options.browser = DEFAULT_BROWSER
     options.sane_which = test_which()
     if options.backend and not has_backend(options.backend, strict=True):
         print_error("Chosen backend not found. No ISRC extraction possible!")
         print_error2("Make sure that %s is installed." % options.backend)
         sys.exit(-1)
+    elif not options.backend:
+        options.backend = find_backend()
+    print("using %s" % get_prog_version(options.backend))
 
     return options
 
@@ -218,26 +225,11 @@ def test_which():
             return False
 
 def get_prog_version(prog):
-    if prog == "icedax":
-        outdata = Popen([prog, "--version"], stderr=PIPE).communicate()[1]
-        version = outdata.strip()
-    elif prog == "cdda2wav":
-        outdata = Popen([prog, "-version"], stdout=PIPE).communicate()[0]
-        version = b" ".join(outdata.splitlines()[0].split()[0:2])
+    if prog == "libdiscid":
+        version = discid.LIBDISCID_VERSION_STRING
     elif prog == "cdrdao":
         outdata = Popen([prog], stderr=PIPE).communicate()[1]
         version = b" ".join(outdata.splitlines()[0].split()[::2][0:2])
-    elif prog == "cd-info":
-        outdata = Popen([prog, "--version"], stdout=PIPE).communicate()[0]
-        version = b" ".join(outdata.splitlines()[0].split()[::2][0:2])
-    elif prog == "drutil":
-        outdata = Popen([prog, "version"], stdout=PIPE).communicate()[0]
-        version = prog
-        for line in outdata.splitlines():
-            if line:
-                version += b" " + line.split(":")[1].strip()
-    elif prog == "libdiscid":
-        version = discid.LIBDISCID_VERSION_STRING
     else:
         version = prog
 
@@ -257,10 +249,10 @@ def has_backend(backend, strict=False):
         if p_which.returncode == 0:
             # check if it is only a symlink to another backend
             real_backend = os.path.basename(os.path.realpath(backend_path))
-            if backend != real_backend and real_backend in backends: 
+            if backend != real_backend and real_backend in BACKENDS: 
                 if strict:
-                    print("WARNING: %s is a symlink to %s" % (backend,
-                                                              real_backend))
+                    print("WARNING: %s is a symlink to %s"
+                          % (backend, real_backend))
                     return True
                 else:
                     return False # use real backend instead, or higher priority
@@ -275,6 +267,22 @@ def has_backend(backend, strict=False):
             return False
         else:
             return True
+
+def find_backend():
+    """search for an available backend
+    """
+    for prog in BACKENDS:
+        if has_backend(prog):
+            backend = prog
+            break
+
+    if backend is None:
+        print_error("Cannot find a backend to extract the ISRCS!")
+        print_error2("Isrcsubmit can work with one of the following:")
+        print_error2("  " + ", ".join(backend))
+        sys.exit(-1)
+
+    return backend
 
 def get_real_mac_device(option_device):
     """drutil takes numbers as drives.
@@ -353,9 +361,9 @@ def print_error2(*args):
     msg = " ".join(("      ",) + string_args)
     sys.stderr.write(msg + "\n")
 
-def backend_error(backend, err):
+def backend_error(err):
     print_error("Couldn't gather ISRCs with %s: %i - %s"
-                % (backend, err.errno, err.strerror))
+                % (options.backend, err.errno, err.strerror))
     sys.exit(1)
 
 class WebService2():
@@ -367,8 +375,8 @@ class WebService2():
     def __init__(self, username=None):
         self.auth = False
         self.username = username
-        musicbrainzngs.set_hostname(musicbrainz_server)
-        musicbrainzngs.set_useragent(agent_name, isrcsubmit_version,
+        musicbrainzngs.set_hostname(MUSICBRAINZ_SERVER)
+        musicbrainzngs.set_useragent(AGENT_NAME, __version__,
                 "http://github.com/JonnyJD/musicbrainz-isrcsubmit")
 
     def authenticate(self):
@@ -413,7 +421,7 @@ class WebService2():
             sys.exit(1)
 
     def submit_isrcs(self, tracks2isrcs):
-        if debug:
+        if options.debug:
             print("tracks2isrcs: %s" % tracks2isrcs)
         try:
             self.authenticate()
@@ -445,7 +453,7 @@ class Disc(object):
     def __init__(self, device, backend, verified=False):
         if sys.platform == "darwin":
             self._device = get_real_mac_device(device)
-            if debug:
+            if options.debug:
                 print("CD drive #%s corresponds to %s internally"
                       % (device, self._device))
         else:
@@ -453,7 +461,7 @@ class Disc(object):
         self._release = None
         self._backend = backend
         self._verified = verified
-        self.read_disc()        # sets self._id etc.
+        self.read_disc()        # sets self._disc
 
     @property
     def id(self):
@@ -496,10 +504,10 @@ class Disc(object):
         results = ws2.get_releases_by_discid(self.id, includes=includes)
         num_results = len(results)
         if num_results == 0:
-            print("This Disc ID is not in the database.")
+            print("\nThis Disc ID is not in the database.")
             self._release = None
         elif num_results > 1:
-            print("This Disc ID is ambiguous:")
+            print("\nThis Disc ID is ambiguous:")
             for i in range(num_results):
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
@@ -612,9 +620,9 @@ def gather_isrcs(disc, backend, device):
             p = Popen([backend, device], stdout=PIPE)
             isrcout = p.stdout
         except OSError as err:
-            backend_error(backend, err)
+            backend_error(err)
         for line in isrcout:
-            if debug:
+            if options.debug:
                 printf(line)    # already includes a newline
             if line.startswith(b"Track") and len(line) > 12:
                 m = re.search(pattern, line)
@@ -639,9 +647,9 @@ def gather_isrcs(disc, backend, device):
             p = Popen(args, stdout=PIPE)
             isrcout = p.stdout
         except OSError as err:
-            backend_error(backend, err)
+            backend_error(err)
         for line in isrcout:
-            if debug:
+            if options.debug:
                 printf(line)    # already includes a newline
             if line.startswith(b"ISRC") and not line.startswith(b"ISRCS"):
                 m = re.search(pattern, line)
@@ -662,7 +670,7 @@ def gather_isrcs(disc, backend, device):
         tmpname = "cdrdao-%s.toc" % datetime.now()
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
-        if debug:
+        if options.debug:
             print("Saving toc in %s.." % tmpfile)
         if os.name == "nt" and device != "D:":
             print("warning: cdrdao uses the default device")
@@ -676,13 +684,13 @@ def gather_isrcs(disc, backend, device):
                 print_error("%s returned with %i" % (backend, p.returncode))
                 sys.exit(1)
         except OSError as err:
-            backend_error(backend, err)
+            backend_error(err)
         else:
             # that file seems to be opened in Unicode mode in Python 3
             with open(tmpfile, "r") as toc:
                 track_number = None
                 for line in toc:
-                    if debug:
+                    if options.debug:
                         printf(line)    # already includes a newline
                     words = line.split()
                     if words:
@@ -706,8 +714,71 @@ def gather_isrcs(disc, backend, device):
 
     return backend_output
 
+def check_isrcs_local(backend_output, mb_tracks):
+    """check backend_output for (local) duplicates and inconsistencies
+    """
+    isrcs = dict()          # isrcs found on disc
+    tracks2isrcs = dict()   # isrcs to be submitted
+    errors = 0
 
-def cleanup_isrcs(isrcs):
+    for (track_number, isrc) in backend_output:
+        if isrc not in isrcs:
+            isrcs[isrc] = Isrc(isrc)
+            # check if we found this ISRC for multiple tracks
+            with_isrc = [item for item in backend_output if item[1] == isrc]
+            if len(with_isrc) > 1:
+                track_list = [str(item[0]) for item in with_isrc]
+                print_error("%s gave the same ISRC for multiple tracks!"
+                            % options.backend)
+                print_error2("ISRC: %s\ttracks: %s"
+                             % (isrc, ", ".join(track_list)))
+                errors += 1
+        try:
+            track = mb_tracks[track_number - 1]
+        except IndexError:
+            print_error("ISRC %s found for unknown track %d"
+                        % (isrc, track_number))
+            errors += 1
+        else:
+            own_track = OwnTrack(track, track_number)
+            isrcs[isrc].add_track(own_track)
+            # check if the ISRC was already added to the track
+            if isrc not in own_track.get("isrc-list", []):
+                tracks2isrcs[own_track["id"]] = [isrc]
+                print("found new ISRC for track %d: %s"
+                      % (track_number, isrc))
+            else:
+                print("%s is already attached to track %d"
+                      % (isrc, track_number))
+
+    return isrcs, tracks2isrcs, errors
+
+def check_global_duplicates(release, mb_tracks, isrcs):
+    """Help cleaning up global duplicates with the information we got
+    from our disc.
+    """
+    duplicates = 0
+    # add already attached ISRCs
+    for i in range(0, len(mb_tracks)):
+        track = mb_tracks[i]
+        track_number = i + 1
+        track = Track(track, track_number)
+        for isrc in track.get("isrc-list", []):
+            # only check ISRCS we also found on our disc
+            if isrc in isrcs:
+                isrcs[isrc].add_track(track)
+    # check if we have multiple tracks for one ISRC
+    for isrc in isrcs:
+        if len(isrcs[isrc].get_tracks()) > 1:
+            duplicates += 1
+
+    if duplicates > 0:
+        printf("\nThere were %d ISRCs ", duplicates)
+        print("that are attached to multiple tracks on this release.")
+        if user_input("Do you want to help clean those up? [y/N] ") == "y":
+            cleanup_isrcs(release, isrcs)
+
+def cleanup_isrcs(release, isrcs):
     """Show information about duplicate ISRCs
 
     Our attached ISRCs should be correct -> helps to delete from other tracks
@@ -719,7 +790,7 @@ def cleanup_isrcs(isrcs):
             for track in tracks:
                 printf("\t")
                 artist = track.get("artist-credit-phrase")
-                if artist and artist != disc.release["artist-credit-phrase"]:
+                if artist and artist != release["artist-credit-phrase"]:
                     string = "%s - %s" % (artist, track["title"])
                 else:
                     string = "%s" % track["title"]
@@ -749,129 +820,55 @@ def cleanup_isrcs(isrcs):
                 user_input("(press <return> when done with this ISRC) ")
 
 
-# "main" + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+if __name__ == "__main__":
 
-# - - - - "global" variables - - - -
-# gather chosen options
-options = gather_options(sys.argv)
-# we set the device after we know which backend we will use
-backend = options.backend
-debug = options.debug
-# the actual query will be created when it is used the first time
-ws2 = WebService2(options.user)
-disc = None
+    print("%s" % script_version())
 
-print("%s\n" % script_version())
+    # global variables
+    options = gather_options(sys.argv)
+    ws2 = WebService2(options.user)
 
+    disc = get_disc(options.device, options.backend)
+    release_id = disc.release["id"]         # implicitly fetches release
+    print("")
+    print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
+    print_encoded('Release:\t%s\n' % disc.release["title"])
 
-# search for backend
-if backend is None:
-    for prog in backends:
-        if has_backend(prog):
-            backend = prog
-            break
+    media = []
+    for medium in disc.release["medium-list"]:
+        for disc_entry in medium["disc-list"]:
+            if disc_entry["id"] == disc.id:
+                media.append(medium)
+                break
+    if len(media) > 1:
+        raise DiscError("number of discs with id: %d" % len(media))
+    mb_tracks = media[0]["track-list"]
 
-# (still) no backend available?
-if backend is None:
-    verbose_backends = []
-    for program in backends:
-        verbose_backends.append(program)
-    print_error("Cannot find a backend to extract the ISRCS!")
-    print_error2("Isrcsubmit can work with one of the following:")
-    print_error2("  " + ", ".join(verbose_backends))
-    sys.exit(-1)
-else:
-    print("using %s" % get_prog_version(backend))
+    print("")
+    # (track, isrc)
+    backend_output = gather_isrcs(disc, options.backend, options.device)
+    # list, dict
+    isrcs, tracks2isrcs, errors = check_isrcs_local(backend_output, mb_tracks)
 
-disc = get_disc(options.device, backend)
-release_id = disc.release["id"]         # implicitly fetches release
-
-print("")
-discs = []
-for medium in disc.release["medium-list"]:
-    for disc_entry in medium["disc-list"]:
-        if disc_entry["id"] == disc.id:
-            discs.append(medium)
-            break
-if len(discs) > 1:
-    raise DiscError("number of discs with id: %d" % len(discs))
-
-tracks = discs[0]["track-list"]
-print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
-print_encoded('Release:\t%s\n' % disc.release["title"])
-
-
-print("")
-# Extract ISRCs
-backend_output = gather_isrcs(disc, backend, options.device) # (track, isrc)
-
-# prepare to add the ISRC we found to the corresponding track
-# and check for local duplicates now and server duplicates later
-isrcs = dict()          # isrcs found on disc
-tracks2isrcs = dict()   # isrcs to be submitted
-errors = 0
-for (track_number, isrc) in backend_output:
-    if isrc not in isrcs:
-        isrcs[isrc] = Isrc(isrc)
-        # check if we found this ISRC for multiple tracks
-        with_isrc = [item for item in backend_output if item[1] == isrc]
-        if len(with_isrc) > 1:
-            track_list = [str(item[0]) for item in with_isrc]
-            print_error("%s gave the same ISRC for multiple tracks!" % backend)
-            print_error2("ISRC: %s\ttracks: %s"% (isrc, ", ".join(track_list)))
-            errors += 1
-    try:
-        track = tracks[track_number - 1]
-    except IndexError:
-        print_error("ISRC %s found for unknown track %d" % (isrc, track_number))
-        errors += 1
+    if isrcs:
+        print("")
+    # try to submit the ISRCs
+    update_intention = True
+    if not tracks2isrcs:
+        print("No new ISRCs could be found.")
     else:
-        own_track = OwnTrack(track, track_number)
-        isrcs[isrc].add_track(own_track)
-        # check if the ISRC was already added to the track
-        if isrc not in own_track.get("isrc-list", []):
-            tracks2isrcs[own_track["id"]] = [isrc]
-            print("found new ISRC for track %d: %s" % (track_number, isrc))
+        if errors > 0:
+            print_error(errors, "problems detected")
+        if user_input("Do you want to submit? [y/N] ") == "y":
+            ws2.submit_isrcs(tracks2isrcs)
         else:
-            print("%s is already attached to track %d" % (isrc, track_number))
+            update_intention = False
+            print("Nothing was submitted to the server.")
 
-print("")
-# try to submit the ISRCs
-update_intention = True
-if not tracks2isrcs:
-    print("No new ISRCs could be found.")
-else:
-    if errors > 0:
-        print_error(errors, "problems detected")
-    if user_input("Do you want to submit? [y/N] ") == "y":
-        ws2.submit_isrcs(tracks2isrcs)
-    else:
-        update_intention = False
-        print("Nothing was submitted to the server.")
-
-# check for overall duplicate ISRCs, including server provided
-if update_intention:
-    duplicates = 0
-    # add already attached ISRCs
-    for i in range(0, len(tracks)):
-        track = tracks[i]
-        if i in range(0, len(disc.tracks)):
-            track_number = i + 1
-            track = Track(track, track_number)
-        for isrc in track.get("isrc-list", []):
-            # only check ISRCS we also found on our disc
-            if isrc in isrcs:
-                isrcs[isrc].add_track(track)
-    # check if we have multiple tracks for one ISRC
-    for isrc in isrcs:
-        if len(isrcs[isrc].get_tracks()) > 1:
-            duplicates += 1
-
-    if duplicates > 0:
-        printf("\nThere were %d ISRCs ", duplicates)
-        print("that are attached to multiple tracks on this release.")
-        if user_input("Do you want to help clean those up? [y/N] ") == "y":
-            cleanup_isrcs(isrcs)
+    # check for overall duplicate ISRCs, including server provided
+    if update_intention:
+        # the ISRCs are deemed correct, so we can use them to check others
+        check_global_duplicates(disc.release, mb_tracks, isrcs)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
