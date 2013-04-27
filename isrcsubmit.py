@@ -751,7 +751,7 @@ def check_isrcs_local(backend_output, mb_tracks):
                 print("%s is already attached to track %d"
                       % (isrc, track_number))
 
-    return isrcs, tracks2isrcs
+    return isrcs, tracks2isrcs, errors
 
 def check_global_duplicates(release, mb_tracks, isrcs):
     """Help cleaning up global duplicates with the information we got
@@ -848,7 +848,7 @@ if __name__ == "__main__":
     # (track, isrc)
     backend_output = gather_isrcs(disc, options.backend, options.device)
     # list, dict
-    isrcs, tracks2isrcs = check_isrcs_local(backend_output, mb_tracks)
+    isrcs, tracks2isrcs, errors = check_isrcs_local(backend_output, mb_tracks)
 
     print("")
     # try to submit the ISRCs
