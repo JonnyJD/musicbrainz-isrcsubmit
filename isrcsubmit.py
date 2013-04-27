@@ -224,26 +224,11 @@ def test_which():
             return False
 
 def get_prog_version(prog):
-    if prog == "icedax":
-        outdata = Popen([prog, "--version"], stderr=PIPE).communicate()[1]
-        version = outdata.strip()
-    elif prog == "cdda2wav":
-        outdata = Popen([prog, "-version"], stdout=PIPE).communicate()[0]
-        version = b" ".join(outdata.splitlines()[0].split()[0:2])
+    if prog == "libdiscid":
+        version = discid.LIBDISCID_VERSION_STRING
     elif prog == "cdrdao":
         outdata = Popen([prog], stderr=PIPE).communicate()[1]
         version = b" ".join(outdata.splitlines()[0].split()[::2][0:2])
-    elif prog == "cd-info":
-        outdata = Popen([prog, "--version"], stdout=PIPE).communicate()[0]
-        version = b" ".join(outdata.splitlines()[0].split()[::2][0:2])
-    elif prog == "drutil":
-        outdata = Popen([prog, "version"], stdout=PIPE).communicate()[0]
-        version = prog
-        for line in outdata.splitlines():
-            if line:
-                version += b" " + line.split(":")[1].strip()
-    elif prog == "libdiscid":
-        version = discid.LIBDISCID_VERSION_STRING
     else:
         version = prog
 
