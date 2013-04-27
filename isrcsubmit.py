@@ -813,82 +813,80 @@ def cleanup_isrcs(isrcs):
                 user_input("(press <return> when done with this ISRC) ")
 
 
-# "main" + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
+if __name__ == "__main__":
+    # gather chosen options
+    options = gather_options(sys.argv)
+    # we set the device after we know which backend we will use
+    backend = options.backend
+    debug = options.debug
+    # the actual query will be created when it is used the first time
+    ws2 = WebService2(options.user)
+    disc = None
 
-# - - - - "global" variables - - - -
-# gather chosen options
-options = gather_options(sys.argv)
-# we set the device after we know which backend we will use
-backend = options.backend
-debug = options.debug
-# the actual query will be created when it is used the first time
-ws2 = WebService2(options.user)
-disc = None
-
-print("%s\n" % script_version())
+    print("%s\n" % script_version())
 
 
-# search for backend
-if backend is None:
-    for prog in backends:
-        if has_backend(prog):
-            backend = prog
-            break
+    # search for backend
+    if backend is None:
+        for prog in backends:
+            if has_backend(prog):
+                backend = prog
+                break
 
-# (still) no backend available?
-if backend is None:
-    verbose_backends = []
-    for program in backends:
-        verbose_backends.append(program)
-    print_error("Cannot find a backend to extract the ISRCS!")
-    print_error2("Isrcsubmit can work with one of the following:")
-    print_error2("  " + ", ".join(verbose_backends))
-    sys.exit(-1)
-else:
-    print("using %s" % get_prog_version(backend))
-
-disc = get_disc(options.device, backend)
-release_id = disc.release["id"]         # implicitly fetches release
-
-print("")
-discs = []
-for medium in disc.release["medium-list"]:
-    for disc_entry in medium["disc-list"]:
-        if disc_entry["id"] == disc.id:
-            discs.append(medium)
-            break
-if len(discs) > 1:
-    raise DiscError("number of discs with id: %d" % len(discs))
-
-tracks = discs[0]["track-list"]
-print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
-print_encoded('Release:\t%s\n' % disc.release["title"])
-
-
-print("")
-# Extract ISRCs
-backend_output = gather_isrcs(disc, backend, options.device) # (track, isrc)
-
-isrcs, tracks2isrcs = check_isrcs_local(backend_output, backend, tracks)
-
-print("")
-# try to submit the ISRCs
-update_intention = True
-if not tracks2isrcs:
-    print("No new ISRCs could be found.")
-else:
-    if errors > 0:
-        print_error(errors, "problems detected")
-    if user_input("Do you want to submit? [y/N] ") == "y":
-        ws2.submit_isrcs(tracks2isrcs)
+    # (still) no backend available?
+    if backend is None:
+        verbose_backends = []
+        for program in backends:
+            verbose_backends.append(program)
+        print_error("Cannot find a backend to extract the ISRCS!")
+        print_error2("Isrcsubmit can work with one of the following:")
+        print_error2("  " + ", ".join(verbose_backends))
+        sys.exit(-1)
     else:
-        update_intention = False
-        print("Nothing was submitted to the server.")
+        print("using %s" % get_prog_version(backend))
 
-# check for overall duplicate ISRCs, including server provided
-if update_intention:
-    # the ISRCs are deemed correct, so we can use them to check others
-    check_global_duplicates(disc, tracks, isrcs)
+    disc = get_disc(options.device, backend)
+    release_id = disc.release["id"]         # implicitly fetches release
+
+    print("")
+    discs = []
+    for medium in disc.release["medium-list"]:
+        for disc_entry in medium["disc-list"]:
+            if disc_entry["id"] == disc.id:
+                discs.append(medium)
+                break
+    if len(discs) > 1:
+        raise DiscError("number of discs with id: %d" % len(discs))
+
+    tracks = discs[0]["track-list"]
+    print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
+    print_encoded('Release:\t%s\n' % disc.release["title"])
+
+
+    print("")
+    # Extract ISRCs
+    backend_output = gather_isrcs(disc, backend, options.device) # (track, isrc)
+
+    isrcs, tracks2isrcs = check_isrcs_local(backend_output, backend, tracks)
+
+    print("")
+    # try to submit the ISRCs
+    update_intention = True
+    if not tracks2isrcs:
+        print("No new ISRCs could be found.")
+    else:
+        if errors > 0:
+            print_error(errors, "problems detected")
+        if user_input("Do you want to submit? [y/N] ") == "y":
+            ws2.submit_isrcs(tracks2isrcs)
+        else:
+            update_intention = False
+            print("Nothing was submitted to the server.")
+
+    # check for overall duplicate ISRCs, including server provided
+    if update_intention:
+        # the ISRCs are deemed correct, so we can use them to check others
+        check_global_duplicates(disc, tracks, isrcs)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
