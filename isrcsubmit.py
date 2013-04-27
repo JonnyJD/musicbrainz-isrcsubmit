@@ -168,7 +168,7 @@ def gather_options(argv):
             + " disc. Possible backends are: %s." % ", ".join(BACKENDS)
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
-            help="Program to open urls. The default is " + default_browser)
+            help="Program to open urls. The default is " + DEFAULT_BROWSER)
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
