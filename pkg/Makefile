@@ -1,11 +1,10 @@
-version := 2.0.0-beta.1
+version := 2.0.0-beta.2
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
 musicbrainzngs := musicbrainzngs-0.3
-discid := discid-0.3.0
-#libdiscid := libdiscid-0.4.0
-libdiscid := libdiscid-0.2.2
+discid := discid-0.5.0
+libdiscid := libdiscid-0.5.0
 
 #scripts := isrcsubmit.py $(current).py
 scripts := $(current).py
@@ -82,16 +81,12 @@ $(win32).zip: $(source_ref) $(base_libs) $(libdiscid)-win32.zip mediatools
 	rm -rf $(libdiscid)-win32
 	rm -rf $(win32)
 
-# universal library created with:
-#     lipo -create */libdiscid.0.dylib -output libdiscid.0.dylib
-
 mac: $(mac).zip
 $(mac).zip: $(source_ref) $(base_libs) $(libdiscid)-mac.zip
 	$(call cp_source, $(mac))
 	$(call cp_base_libs, $(mac))
 	unzip $(libdiscid)-mac.zip
 	cp -a $(libdiscid)-mac/universal/libdiscid.0.dylib $(mac)/
-	cp -a discisrc-mac/discisrc $(mac)/
 	zip -qr $@ $(mac)
 	rm -rf $(libdiscid)-mac
 	rm -rf $(mac)
