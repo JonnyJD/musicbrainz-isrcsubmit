@@ -276,6 +276,22 @@ def has_backend(backend, strict=False):
         else:
             return True
 
+def find_backend():
+    """search for an available backend
+    """
+    for prog in backends:
+        if has_backend(prog):
+            backend = prog
+            break
+
+    if backend is None:
+        print_error("Cannot find a backend to extract the ISRCS!")
+        print_error2("Isrcsubmit can work with one of the following:")
+        print_error2("  " + ", ".join(backend))
+        sys.exit(-1)
+    else:
+        print("using %s" % get_prog_version(backend))
+
 def get_real_mac_device(option_device):
     """drutil takes numbers as drives.
 
@@ -814,36 +830,17 @@ def cleanup_isrcs(isrcs):
 
 
 if __name__ == "__main__":
-    # gather chosen options
-    options = gather_options(sys.argv)
-    # we set the device after we know which backend we will use
-    backend = options.backend
-    debug = options.debug
-    # the actual query will be created when it is used the first time
-    ws2 = WebService2(options.user)
-    disc = None
 
     print("%s\n" % script_version())
 
-
-    # search for backend
-    if backend is None:
-        for prog in backends:
-            if has_backend(prog):
-                backend = prog
-                break
-
-    # (still) no backend available?
-    if backend is None:
-        verbose_backends = []
-        for program in backends:
-            verbose_backends.append(program)
-        print_error("Cannot find a backend to extract the ISRCS!")
-        print_error2("Isrcsubmit can work with one of the following:")
-        print_error2("  " + ", ".join(verbose_backends))
-        sys.exit(-1)
+    # global variables
+    options = gather_options(sys.argv)
+    if options.backend:
+        backend = options.backend
     else:
-        print("using %s" % get_prog_version(backend))
+        backend = find_backend()
+    debug = options.debug
+    ws2 = WebService2(options.user)
 
     disc = get_disc(options.device, backend)
     release_id = disc.release["id"]         # implicitly fetches release
@@ -862,11 +859,8 @@ if __name__ == "__main__":
     print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
     print_encoded('Release:\t%s\n' % disc.release["title"])
 
-
     print("")
-    # Extract ISRCs
     backend_output = gather_isrcs(disc, backend, options.device) # (track, isrc)
-
     isrcs, tracks2isrcs = check_isrcs_local(backend_output, backend, tracks)
 
     print("")
