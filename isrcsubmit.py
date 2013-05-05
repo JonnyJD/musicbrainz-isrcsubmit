@@ -21,7 +21,7 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-__version__ = "2.0.0-beta.2"
+__version__ = "2.0.0-dev"
 AGENT_NAME = "isrcsubmit.py"
 MUSICBRAINZ_SERVER = "musicbrainz.org"
 # starting with highest priority
@@ -169,6 +169,8 @@ def gather_options(argv):
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
             help="Program to open urls. The default is " + DEFAULT_BROWSER)
+    parser.add_option("--force-submit", action="store_true", default=False,
+            help="Always open TOC/disc ID in browser.")
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -503,7 +505,10 @@ class Disc(object):
                   "artist-credits"] # the last one only for cleanup
         results = ws2.get_releases_by_discid(self.id, includes=includes)
         num_results = len(results)
-        if num_results == 0:
+        if options.force_submit:
+            print("\nSubmission forced.")
+            self._release = None
+        elif num_results == 0:
             print("\nThis Disc ID is not in the database.")
             self._release = None
         elif num_results > 1:
@@ -554,11 +559,16 @@ class Disc(object):
             self._release = None        # don't use stub
             verified = True             # the id is verified by the stub
 
-        if self._release is None:
+        if self._release is None or options.force_submit:
             if verified:
                 url = self.submission_url
-                printf("Would you like to open the browser to submit the disc?")
-                if user_input(" [y/N] ") == "y":
+                if options.force_submit:
+                    submit_requested = True
+                else:
+                    printf("Would you like to open the browser"
+                           + " to submit the disc?")
+                    submit_requested = user_input(" [y/N] ") == "y"
+                if submit_requested:
                     try:
                         if os.name == "nt":
                             # silly but necessary for spaces in the path
