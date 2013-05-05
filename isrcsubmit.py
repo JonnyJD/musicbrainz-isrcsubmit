@@ -827,7 +827,7 @@ def cleanup_isrcs(release, isrcs):
                 else:
                     print("")
 
-            url = "http://%s/isrc/%s" % (musicbrainz_server, isrc)
+            url = "http://%s/isrc/%s" % (MUSICBRAINZ_SERVER, isrc)
             if user_input("Open ISRC in the browser? [Y/n] ") != "n":
                 Popen([options.browser, url])
                 user_input("(press <return> when done with this ISRC) ")
