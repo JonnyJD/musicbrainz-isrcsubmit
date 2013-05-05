@@ -26,8 +26,7 @@ AGENT_NAME = "isrcsubmit.py"
 MUSICBRAINZ_SERVER = "musicbrainz.org"
 # starting with highest priority
 BACKENDS = ["mediatools", "media_info", "cdrdao", "libdiscid", "discisrc"]
-
-DEFAULT_BROWSER = "firefox"
+BROWSERS = ["xdg-open", "firefox", "chromium", "opera", "safari", "explorer"]
 
 import os
 import re
@@ -168,7 +167,8 @@ def gather_options(argv):
             + " disc. Possible backends are: %s." % ", ".join(BACKENDS)
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
-            help="Program to open urls. The default is " + DEFAULT_BROWSER)
+            help="Program to open urls. If not chosen, we try these:\n"
+            + ", ".join(BROWSERS))
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -190,10 +190,10 @@ def gather_options(argv):
         print("WARNING: Superfluous arguments: %s" % ", ".join(args))
 
     # assign remaining options automatically
-    if options.browser is None:
-        options.browser = DEFAULT_BROWSER
     options.sane_which = test_which()
-    if options.backend and not has_backend(options.backend, strict=True):
+    if options.browser is None:
+        options.browser = find_browser()
+    if options.backend and not has_program(options.backend, strict=True):
         print_error("Chosen backend not found. No ISRC extraction possible!")
         print_error2("Make sure that %s is installed." % options.backend)
         sys.exit(-1)
@@ -235,31 +235,32 @@ def get_prog_version(prog):
 
     return decode(version)
 
-def has_backend(backend, strict=False):
+def has_program(program, strict=False):
     """When the backend is only a symlink to another backend,
        we will return False, unless we strictly want to use this backend.
     """
-    if backend == "libdiscid":
+    if program == "libdiscid":
         return "isrc" in discid.FEATURES
 
     devnull = open(os.devnull, "w")
     if options.sane_which:
-        p_which = Popen(["which", backend], stdout=PIPE, stderr=devnull)
-        backend_path = p_which.communicate()[0].strip()
+        p_which = Popen(["which", program], stdout=PIPE, stderr=devnull)
+        program_path = p_which.communicate()[0].strip()
         if p_which.returncode == 0:
             # check if it is only a symlink to another backend
-            real_backend = os.path.basename(os.path.realpath(backend_path))
-            if backend != real_backend and real_backend in BACKENDS: 
+            real_program = os.path.basename(os.path.realpath(program_path))
+            if program != real_program and (
+                    real_program in BACKENDS or real_program in BROWSERS):
                 if strict:
                     print("WARNING: %s is a symlink to %s"
-                          % (backend, real_backend))
+                          % (program, real_program))
                     return True
                 else:
-                    return False # use real backend instead, or higher priority
+                    return False # use real program instead, or higher priority
             return True
         else:
             return False
-    else:
+    elif program in BACKENDS:
         try:
             # we just try to start these non-interactive console apps
             call([backend], stdout=devnull, stderr=devnull)
@@ -267,12 +268,14 @@ def has_backend(backend, strict=False):
             return False
         else:
             return True
+    else:
+        return False
 
 def find_backend():
     """search for an available backend
     """
     for prog in BACKENDS:
-        if has_backend(prog):
+        if has_program(prog):
             backend = prog
             break
 
@@ -283,6 +286,16 @@ def find_backend():
         sys.exit(-1)
 
     return backend
+
+def find_browser():
+    """search for an available browser
+    """
+    for browser in BROWSERS:
+        if has_program(browser):
+            return browser
+
+    # default to the first "real" browser in the list, as of now: firefox
+    return BROWSERS[1]
 
 def get_real_mac_device(option_device):
     """drutil takes numbers as drives.
