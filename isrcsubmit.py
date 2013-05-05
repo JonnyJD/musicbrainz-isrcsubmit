@@ -290,9 +290,9 @@ def get_real_mac_device(option_device):
     We ask drutil what device name corresponds to that drive
     in order so we can use it as a drive for libdiscid
     """
-    p = Popen(["drutil", "status", "-drive", option_device], stdout=PIPE)
+    proc = Popen(["drutil", "status", "-drive", option_device], stdout=PIPE)
     try:
-        given = p.communicate()[0].splitlines()[3].split("Name:")[1].strip()
+        given = proc.communicate()[0].splitlines()[3].split("Name:")[1].strip()
     except IndexError:
         print_error("could not find real device")
         print_error2("maybe there is no disc in the drive?")
@@ -618,8 +618,8 @@ def gather_isrcs(disc, backend, device):
         try:
             if sys.platform == "darwin":
                 device = get_real_mac_device(device)
-            p = Popen([backend, device], stdout=PIPE)
-            isrcout = p.stdout
+            proc = Popen([backend, device], stdout=PIPE)
+            isrcout = proc.stdout
         except OSError as err:
             backend_error(err)
         for line in isrcout:
@@ -645,8 +645,8 @@ def gather_isrcs(disc, backend, device):
         else:
             args = [backend, device]
         try:
-            p = Popen(args, stdout=PIPE)
-            isrcout = p.stdout
+            proc = Popen(args, stdout=PIPE)
+            isrcout = proc.stdout
         except OSError as err:
             backend_error(err)
         for line in isrcout:
@@ -680,9 +680,9 @@ def gather_isrcs(disc, backend, device):
             args = [backend, "read-toc", "--fast-toc", "--device", device,
                 "-v", "0", tmpfile]
         try:
-            p = Popen(args, stdout=devnull, stderr=devnull)
-            if p.wait() != 0:
-                print_error("%s returned with %i" % (backend, p.returncode))
+            proc = Popen(args, stdout=devnull, stderr=devnull)
+            if proc.wait() != 0:
+                print_error("%s returned with %i" % (backend, proc.returncode))
                 sys.exit(1)
         except OSError as err:
             backend_error(err)
