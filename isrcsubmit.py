@@ -352,6 +352,25 @@ def print_encoded(*args):
         except AttributeError:
             sys.stdout.write(msg)
 
+def print_release_position(release, pos):
+    print_encoded("%d: %s - %s"
+                  % (pos, release["artist-credit-phrase"], release["title"]))
+    if release.get("status"):
+        print("(%s)" % release["status"])
+    else:
+        print("")
+    country = (release.get("country") or "").ljust(2)
+    date = (release.get("date") or "").ljust(10)
+    barcode = (release.get("barcode") or "").rjust(13)
+    label_list = release["label-info-list"]
+    catnumber_list = []
+    for label in label_list:
+        cat_number = label.get("catalog-number")
+        if cat_number:
+            catnumber_list.append(cat_number)
+    catnumbers = ", ".join(catnumber_list)
+    print_encoded("\t%s\t%s\t%s\t%s\n" % (country, date, barcode, catnumbers))
+
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
     msg = " ".join(("ERROR:",) + string_args)
@@ -516,25 +535,7 @@ class Disc(object):
             for i in range(num_results):
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
-                print_encoded("%d: %s - %s"
-                              % (i + 1, release["artist-credit-phrase"],
-                                 release["title"]))
-                if release.get("status"):
-                    print("(%s)" % release["status"])
-                else:
-                    print("")
-                country = (release.get("country") or "").ljust(2)
-                date = (release.get("date") or "").ljust(10)
-                barcode = (release.get("barcode") or "").rjust(13)
-                label_list = release["label-info-list"]
-                catnumber_list = []
-                for label in label_list:
-                    cat_number = label.get("catalog-number")
-                    if cat_number:
-                        catnumber_list.append(cat_number)
-                catnumbers = ", ".join(catnumber_list)
-                print_encoded("\t%s\t%s\t%s\t%s\n"
-                              % (country, date, barcode, catnumbers))
+                print_release_position(release, i + 1)
             try:
                 num =  user_input("Which one do you want? [1-%d] "
                                   % num_results)
