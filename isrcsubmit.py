@@ -21,7 +21,7 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-__version__ = "2.0.0-beta.2"
+__version__ = "2.0.0-dev"
 AGENT_NAME = "isrcsubmit.py"
 MUSICBRAINZ_SERVER = "musicbrainz.org"
 # starting with highest priority
@@ -458,6 +458,7 @@ class Disc(object):
                       % (device, self._device))
         else:
             self._device = device
+        self._disc = None
         self._release = None
         self._backend = backend
         self._verified = verified
@@ -829,7 +830,7 @@ if __name__ == "__main__":
     ws2 = WebService2(options.user)
 
     disc = get_disc(options.device, options.backend)
-    release_id = disc.release["id"]         # implicitly fetches release
+    disc.getRelease()
     print("")
     print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
     print_encoded('Release:\t%s\n' % disc.release["title"])
