@@ -387,6 +387,31 @@ def backend_error(err):
                 % (options.backend, err.errno, err.strerror))
     sys.exit(1)
 
+def ask_for_submission(url):
+    if options.force_submit:
+        submit_requested = True
+    else:
+        printf("Would you like to open the browser to submit the disc?")
+        submit_requested = user_input(" [y/N] ") == "y"
+
+    if submit_requested:
+        try:
+            if os.name == "nt":
+                # silly but necessary for spaces in the path
+                os.execlp(options.browser, '"' + options.browser + '"', url)
+            else:
+                # linux/unix works fine with spaces
+                os.execlp(options.browser, options.browser, url)
+        except OSError as err:
+            print_error("Couldn't open the url in %s: %s"
+                        % (options.browser, str(err)))
+            print_error2("Please submit it via:", url)
+            sys.exit(1)
+    else:
+        print("Please submit the Disc ID with this url:")
+        print(url)
+        sys.exit(1)
+
 class WebService2():
     """A web service wrapper that asks for a password when first needed.
 
@@ -563,30 +588,7 @@ class Disc(object):
         if self._release is None or options.force_submit:
             if verified:
                 url = self.submission_url
-                if options.force_submit:
-                    submit_requested = True
-                else:
-                    printf("Would you like to open the browser"
-                           + " to submit the disc?")
-                    submit_requested = user_input(" [y/N] ") == "y"
-                if submit_requested:
-                    try:
-                        if os.name == "nt":
-                            # silly but necessary for spaces in the path
-                            os.execlp(options.browser,
-                                    '"' + options.browser + '"', url)
-                        else:
-                            # linux/unix works fine with spaces
-                            os.execlp(options.browser, options.browser, url)
-                    except OSError as err:
-                        print_error("Couldn't open the url in %s: %s"
-                                    % (options.browser, str(err)))
-                        print_error2("Please submit it via:", url)
-                        sys.exit(1)
-                else:
-                    print("Please submit the Disc ID with this url:")
-                    print(url)
-                    sys.exit(1)
+                ask_for_submission(url) # submission will end the script
             else:
                 print("recalculating to re-check..")
                 self.read_disc()
