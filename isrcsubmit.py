@@ -44,11 +44,11 @@ import musicbrainzngs
 from discid import DiscError
 from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
-shellname = "isrcsubmit.sh"
-if os.path.isfile(shellname):
-    scriptname = shellname
+SHELLNAME = "isrcsubmit.sh"
+if os.path.isfile(SHELLNAME):
+    SCRIPTNAME = SHELLNAME
 else:
-    scriptname = os.path.basename(sys.argv[0])
+    SCRIPTNAME = os.path.basename(sys.argv[0])
 
 # make code run on Python 2 and 3
 try:
@@ -152,7 +152,7 @@ def gather_options(argv):
     parser = OptionParser(version=script_version(), add_help_option=False)
     parser.set_usage(
             "{prog} [options] [user] [device]\n       {prog} -h".format(
-            prog=scriptname))
+            prog=SCRIPTNAME))
     parser.add_option("-h", action="help",
             help="Short usage help")
     parser.add_option("--help", action="callback", callback=print_help,
