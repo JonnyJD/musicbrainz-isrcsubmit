@@ -492,11 +492,11 @@ class Disc(object):
         This will ask the user to choose if the discID is ambiguous.
         """
         if self._release is None:
-            self._release = self.getRelease(self._verified)
+            self._release = self.get_release(self._verified)
             # can still be None
         return self._release
 
-    def getRelease(self, verified=False):
+    def get_release(self, verified=False):
         """Find the corresponding MusicBrainz release
 
         This will ask the user to choose if the discID is ambiguous.
@@ -589,7 +589,7 @@ class Disc(object):
             else:
                 print("recalculating to re-check..")
                 self.read_disc()
-                self.getRelease(verified=True)
+                self.get_release(verified=True)
 
         return self._release
 
