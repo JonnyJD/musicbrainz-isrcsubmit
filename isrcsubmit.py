@@ -21,7 +21,7 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-__version__ = "2.0.0-beta.2"
+__version__ = "2.0.0-dev"
 AGENT_NAME = "isrcsubmit.py"
 MUSICBRAINZ_SERVER = "musicbrainz.org"
 # starting with highest priority
@@ -829,7 +829,11 @@ def cleanup_isrcs(release, isrcs):
 
             url = "http://%s/isrc/%s" % (MUSICBRAINZ_SERVER, isrc)
             if user_input("Open ISRC in the browser? [Y/n] ") != "n":
-                Popen([options.browser, url])
+                if options.debug:
+                    Popen([options.browser, url])
+                else:
+                    devnull = open(os.devnull, "w")
+                    Popen([options.browser, url], stdout=devnull)
                 user_input("(press <return> when done with this ISRC) ")
 
 
