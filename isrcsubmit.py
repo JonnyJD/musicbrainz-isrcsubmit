@@ -487,7 +487,7 @@ class Disc(object):
     def read_disc(self):
         try:
             # calculate disc ID from disc
-            if self._backend == "libdiscid":
+            if self._backend == "libdiscid" and not options.force_submit:
                 disc = discid.read(self._device, features=["mcn", "isrc"])
             else:
                 disc = discid.read(self._device)
