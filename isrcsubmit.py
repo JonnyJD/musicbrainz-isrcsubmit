@@ -605,8 +605,8 @@ def gather_isrcs(disc, backend, device):
         pattern = r'[A-Z]{2}[A-Z0-9]{3}\d{2}\d{5}'
         for track in disc.tracks:
             if track.isrc:
-                m = re.match(pattern, track.isrc)
-                if m is None:
+                match = re.match(pattern, track.isrc)
+                if match is None:
                     print("no valid ISRC: %s" % track.isrc)
                 else:
                     backend_output.append((track.number, track.isrc))
@@ -626,12 +626,13 @@ def gather_isrcs(disc, backend, device):
             if options.debug:
                 printf(line)    # already includes a newline
             if line.startswith(b"Track") and len(line) > 12:
-                m = re.search(pattern, line)
-                if m is None:
+                match = re.search(pattern, line)
+                if match is None:
                     print("can't find ISRC in: %s" % line)
                     continue
-                track_number = int(m.group(1))
-                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                track_number = int(match.group(1))
+                isrc = ("%s%s%s%s" % (match.group(2), match.group(3),
+                                      match.group(4), match.group(5)))
                 isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
@@ -653,12 +654,13 @@ def gather_isrcs(disc, backend, device):
             if options.debug:
                 printf(line)    # already includes a newline
             if line.startswith(b"ISRC") and not line.startswith(b"ISRCS"):
-                m = re.search(pattern, line)
-                if m is None:
+                match = re.search(pattern, line)
+                if match is None:
                     print("can't find ISRC in: %s" % line)
                     continue
-                track_number = int(m.group(1))
-                isrc = m.group(2) + m.group(3) + m.group(4) + m.group(5)
+                track_number = int(match.group(1))
+                isrc = ("%s%s%s%s" % (match.group(2), match.group(3),
+                                      match.group(4), match.group(5)))
                 isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
@@ -699,8 +701,8 @@ def gather_isrcs(disc, backend, device):
                             track_number = int(words[2])
                         elif words[0] == "ISRC" and track_number is not None:
                             isrc = "".join(words[1:]).strip('"- ')
-                            m = re.match(pattern, isrc)
-                            if m is None:
+                            match = re.match(pattern, isrc)
+                            if match is None:
                                 print("no valid ISRC: %s" % isrc)
                             else:
                                 backend_output.append((track_number, isrc))
