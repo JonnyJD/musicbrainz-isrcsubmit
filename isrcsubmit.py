@@ -169,6 +169,8 @@ def gather_options(argv):
     parser.add_option("--browser", metavar="BROWSER",
             help="Program to open urls. If not chosen, we try these:\n"
             + ", ".join(BROWSERS))
+    parser.add_option("--force-submit", action="store_true", default=False,
+            help="Always open TOC/disc ID in browser.")
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -363,6 +365,25 @@ def print_encoded(*args):
         except AttributeError:
             sys.stdout.write(msg)
 
+def print_release_position(release, pos):
+    print_encoded("%d: %s - %s"
+                  % (pos, release["artist-credit-phrase"], release["title"]))
+    if release.get("status"):
+        print("(%s)" % release["status"])
+    else:
+        print("")
+    country = (release.get("country") or "").ljust(2)
+    date = (release.get("date") or "").ljust(10)
+    barcode = (release.get("barcode") or "").rjust(13)
+    label_list = release["label-info-list"]
+    catnumber_list = []
+    for label in label_list:
+        cat_number = label.get("catalog-number")
+        if cat_number:
+            catnumber_list.append(cat_number)
+    catnumbers = ", ".join(catnumber_list)
+    print_encoded("\t%s\t%s\t%s\t%s\n" % (country, date, barcode, catnumbers))
+
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
     msg = " ".join(("ERROR:",) + string_args)
@@ -378,6 +399,31 @@ def backend_error(err):
     print_error("Couldn't gather ISRCs with %s: %i - %s"
                 % (options.backend, err.errno, err.strerror))
     sys.exit(1)
+
+def ask_for_submission(url):
+    if options.force_submit:
+        submit_requested = True
+    else:
+        printf("Would you like to open the browser to submit the disc?")
+        submit_requested = user_input(" [y/N] ") == "y"
+
+    if submit_requested:
+        try:
+            if os.name == "nt":
+                # silly but necessary for spaces in the path
+                os.execlp(options.browser, '"' + options.browser + '"', url)
+            else:
+                # linux/unix works fine with spaces
+                os.execlp(options.browser, options.browser, url)
+        except OSError as err:
+            print_error("Couldn't open the url in %s: %s"
+                        % (options.browser, str(err)))
+            print_error2("Please submit it via:", url)
+            sys.exit(1)
+    else:
+        print("Please submit the Disc ID with this url:")
+        print(url)
+        sys.exit(1)
 
 class WebService2():
     """A web service wrapper that asks for a password when first needed.
@@ -454,7 +500,7 @@ class Disc(object):
     def read_disc(self):
         try:
             # calculate disc ID from disc
-            if self._backend == "libdiscid":
+            if self._backend == "libdiscid" and not options.force_submit:
                 disc = discid.read(self._device, features=["mcn", "isrc"])
             else:
                 disc = discid.read(self._device)
@@ -504,11 +550,11 @@ class Disc(object):
         This will ask the user to choose if the discID is ambiguous.
         """
         if self._release is None:
-            self._release = self.getRelease(self._verified)
+            self._release = self.get_release(self._verified)
             # can still be None
         return self._release
 
-    def getRelease(self, verified=False):
+    def get_release(self, verified=False):
         """Find the corresponding MusicBrainz release
 
         This will ask the user to choose if the discID is ambiguous.
@@ -517,7 +563,10 @@ class Disc(object):
                   "artist-credits"] # the last one only for cleanup
         results = ws2.get_releases_by_discid(self.id, includes=includes)
         num_results = len(results)
-        if num_results == 0:
+        if options.force_submit:
+            print("\nSubmission forced.")
+            self._release = None
+        elif num_results == 0:
             print("\nThis Disc ID is not in the database.")
             self._release = None
         elif num_results > 1:
@@ -525,25 +574,7 @@ class Disc(object):
             for i in range(num_results):
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
-                print_encoded("%d: %s - %s"
-                              % (i + 1, release["artist-credit-phrase"],
-                                 release["title"]))
-                if release.get("status"):
-                    print("(%s)" % release["status"])
-                else:
-                    print("")
-                country = (release.get("country") or "").ljust(2)
-                date = (release.get("date") or "").ljust(10)
-                barcode = (release.get("barcode") or "").rjust(13)
-                label_list = release["label-info-list"]
-                catnumber_list = []
-                for label in label_list:
-                    cat_number = label.get("catalog-number")
-                    if cat_number:
-                        catnumber_list.append(cat_number)
-                catnumbers = ", ".join(catnumber_list)
-                print_encoded("\t%s\t%s\t%s\t%s\n"
-                              % (country, date, barcode, catnumbers))
+                print_release_position(release, i + 1)
             try:
                 num =  user_input("Which one do you want? [1-%d] "
                                   % num_results)
@@ -568,32 +599,14 @@ class Disc(object):
             self._release = None        # don't use stub
             verified = True             # the id is verified by the stub
 
-        if self._release is None:
+        if self._release is None or options.force_submit:
             if verified:
                 url = self.submission_url
-                printf("Would you like to open the browser to submit the disc?")
-                if user_input(" [y/N] ") == "y":
-                    try:
-                        if os.name == "nt":
-                            # silly but necessary for spaces in the path
-                            os.execlp(options.browser,
-                                    '"' + options.browser + '"', url)
-                        else:
-                            # linux/unix works fine with spaces
-                            os.execlp(options.browser, options.browser, url)
-                    except OSError as err:
-                        print_error("Couldn't open the url in %s: %s"
-                                    % (options.browser, str(err)))
-                        print_error2("Please submit it via:", url)
-                        sys.exit(1)
-                else:
-                    print("Please submit the Disc ID with this url:")
-                    print(url)
-                    sys.exit(1)
+                ask_for_submission(url) # submission will end the script
             else:
                 print("recalculating to re-check..")
                 self.read_disc()
-                self.getRelease(verified=True)
+                self.get_release(verified=True)
 
         return self._release
 
