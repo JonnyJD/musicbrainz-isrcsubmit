@@ -862,7 +862,7 @@ if __name__ == "__main__":
     ws2 = WebService2(options.user)
 
     disc = get_disc(options.device, options.backend)
-    disc.getRelease()
+    disc.get_release()
     print("")
     print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
     print_encoded('Release:\t%s\n' % disc.release["title"])
