@@ -546,7 +546,9 @@ class Disc(object):
     @property
     def submission_url(self):
         url = self._disc.submission_url
-        return url.replace("mm.musicbrainz.org", options.server)
+        # mm.mb.o points to mb.o, if present in the url
+        url = url.replace("//mm.", "//")
+        return url.replace("musicbrainz.org", options.server)
 
     @property
     def release(self):
