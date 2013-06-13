@@ -773,7 +773,9 @@ def check_isrcs_local(backend_output, mb_tracks):
             isrcs[isrc].add_track(own_track)
             # check if the ISRC was already added to the track
             if isrc not in own_track.get("isrc-list", []):
-                tracks2isrcs[own_track["id"]] = [isrc]
+                # single isrcs work in python-musicbrainzngs 0.4, but not 0.3
+                # lists of isrcs don't work in 0.4 though, see pymbngs #113
+                tracks2isrcs[own_track["id"]] = isrc
                 print("found new ISRC for track %d: %s"
                       % (track_number, isrc))
             else:
