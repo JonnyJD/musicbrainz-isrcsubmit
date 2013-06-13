@@ -545,7 +545,8 @@ class Disc(object):
 
     @property
     def submission_url(self):
-        return self._disc.submission_url
+        url = self._disc.submission_url
+        return url.replace("mm.musicbrainz.org", options.server)
 
     @property
     def release(self):
