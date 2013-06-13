@@ -162,6 +162,9 @@ def gather_options(argv):
     parser.add_option("-d", "--device", metavar="DEVICE",
             help="CD device with a loaded audio cd, if not given as argument."
             + " The default is %s." % default_device)
+    parser.add_option("--release-id", metavar="RELEASE_ID",
+            help="Optional MusicBrainz ID of the release."
+            + " This will be gathered if not given.")
     parser.add_option("-b", "--backend", choices=BACKENDS, metavar="PROGRAM",
             help="Force using a specific backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(BACKENDS)
@@ -521,6 +524,8 @@ class Disc(object):
         self._release = None
         self._backend = backend
         self._verified = verified
+        self._common_includes=["artists", "labels", "recordings", "isrcs",
+                               "artist-credits"] # the last one only for cleanup
         self.read_disc()        # sets self._disc
 
     @property
@@ -554,21 +559,33 @@ class Disc(object):
             # can still be None
         return self._release
 
-    def get_release(self, verified=False):
-        """Find the corresponding MusicBrainz release
+    def fetch_release(self, release_id):
+        """Check if a pre-selected release has the correct TOC attached
+        """
+        includes = self._common_includes + ["discids"]
+        result = ws2.get_release_by_id(release_id, includes=includes)
+        release = result["release"]
+        for medium in release["medium-list"]:
+            for disc in medium["disc-list"]:
+                if disc["id"] == self.id:
+                    return release
+        # disc ID is not attached to the release
+        return None
+
+    def select_release(self):
+        """Find the corresponding MusicBrainz release by disc ID
 
         This will ask the user to choose if the discID is ambiguous.
         """
-        includes=["artists", "labels", "recordings", "isrcs",
-                  "artist-credits"] # the last one only for cleanup
+        includes = self._common_includes
         results = ws2.get_releases_by_discid(self.id, includes=includes)
         num_results = len(results)
         if options.force_submit:
             print("\nSubmission forced.")
-            self._release = None
+            selected_release = None
         elif num_results == 0:
             print("\nThis Disc ID is not in the database.")
-            self._release = None
+            selected_release = None
         elif num_results > 1:
             print("\nThis Disc ID is ambiguous:")
             for i in range(num_results):
@@ -580,7 +597,7 @@ class Disc(object):
                                   % num_results)
                 if int(num) not in range(1, num_results + 1):
                     raise IndexError
-                self._release = results[int(num) - 1]
+                selected_release = results[int(num) - 1]
             except (ValueError, IndexError):
                 print_error("Invalid Choice")
                 sys.exit(1)
@@ -588,18 +605,31 @@ class Disc(object):
                 print("\nexiting..")
                 sys.exit(1)
         else:
-            self._release = results[0]
+            selected_release = results[0]
 
-        if self._release and self._release["id"] is None:
+        return selected_release
+
+
+    def get_release(self, verified=False):
+        """This will get a release the ISRCs will be added to.
+        """
+
+        # check if a release was pre-selected
+        if options.release_id:
+            chosen_release = self.fetch_release(options.release_id)
+        else:
+            chosen_release = self.select_release()
+
+        if chosen_release and chosen_release["id"] is None:
             # a "release" that is only a stub has no musicbrainz id
             print("\nThere is only a stub in the database:")
             print_encoded("%s - %s\n\n"
-                          % (self._release["artist-credit-phrase"],
-                             self._release["title"]))
-            self._release = None        # don't use stub
+                          % (chosen_release["artist-credit-phrase"],
+                             chosen_release["title"]))
+            chosen_release = None       # don't use stub
             verified = True             # the id is verified by the stub
 
-        if self._release is None or options.force_submit:
+        if chosen_release is None or options.force_submit:
             if verified:
                 url = self.submission_url
                 ask_for_submission(url) # submission will end the script
@@ -608,7 +638,8 @@ class Disc(object):
                 self.read_disc()
                 self.get_release(verified=True)
 
-        return self._release
+        return chosen_release
+
 
 def get_disc(device, backend, verified=False):
     """This creates a Disc object, which also calculates the id of the disc
