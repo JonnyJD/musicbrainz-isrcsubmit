@@ -1,9 +1,9 @@
 #branch := master
 branch := v1
-version := $(shell git describe origin/$(branch) | sed -e 's/v\([0-9.]\+\).*/\1/')
-pre_version := $(shell git describe origin/master | sed -e 's/v\([0-9.]\+-[0-9a-z.]\+\).*/\1/')
-current := isrcsubmit-$(version)
-pre := isrcsubmit-$(pre_version)
+version = $(shell git describe origin/$(branch) | sed -e 's/v\([0-9.]\+\).*/\1/')
+pre_version = $(shell git describe origin/master | sed -e 's/v\([0-9.]\+-[0-9a-z.]\+\).*/\1/')
+current = isrcsubmit-$(version)
+pre = isrcsubmit-$(pre_version)
 changes := changes.markdown
 changes_source := CHANGES.markdown
 git := .git/refs/remote/origin/$(branch)
@@ -14,7 +14,7 @@ all: jekyll
 jekyll: changes version
 	jekyll
 
-version:
+version: $(git)
 	# setting version
 	sed -i -e 's/ version:\s[0-9.]\+/ version: $(version)/' _config.yml
 	sed -i -e 's/current:\sisrcsubmit-[0-9.]\+/current: $(current)/g' \
