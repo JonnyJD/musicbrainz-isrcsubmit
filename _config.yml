@@ -1,8 +1,9 @@
 github:
   repo: JonnyJD/musicbrainz-isrcsubmit
+  raw: https://raw.github.com/JonnyJD/musicbrainz-isrcsubmit/
 
 issues:
-  url: http://github.com/JonnyJD/musicbrainz-isrcsubmit/issues
+  url: https://github.com/JonnyJD/musicbrainz-isrcsubmit/issues
 
 downloads:
   url: http://isrcsubmit.jonnyjd.net/downloads/
