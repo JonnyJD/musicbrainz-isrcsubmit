@@ -23,7 +23,7 @@ https://github.com/JonnyJD/musicbrainz-isrcsubmit
 
 __version__ = "2.0.0-dev"
 AGENT_NAME = "isrcsubmit.py"
-MUSICBRAINZ_SERVER = "musicbrainz.org"
+DEFAULT_SERVER = "musicbrainz.org"
 # starting with highest priority
 BACKENDS = ["mediatools", "media_info", "cdrdao", "libdiscid", "discisrc"]
 BROWSERS = ["xdg-open", "firefox", "chromium", "opera", "safari", "explorer"]
@@ -171,6 +171,8 @@ def gather_options(argv):
             + ", ".join(BROWSERS))
     parser.add_option("--force-submit", action="store_true", default=False,
             help="Always open TOC/disc ID in browser.")
+    parser.add_option("--server", metavar="SERVER",
+            help="Server to send ISRCs to. Default: %s" % DEFAULT_SERVER)
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -195,6 +197,8 @@ def gather_options(argv):
     options.sane_which = test_which()
     if options.browser is None:
         options.browser = find_browser()
+    if options.server is None:
+        options.server = DEFAULT_SERVER
     if options.backend and not has_program(options.backend, strict=True):
         print_error("Chosen backend not found. No ISRC extraction possible!")
         print_error2("Make sure that %s is installed." % options.backend)
@@ -434,7 +438,7 @@ class WebService2():
     def __init__(self, username=None):
         self.auth = False
         self.username = username
-        musicbrainzngs.set_hostname(MUSICBRAINZ_SERVER)
+        musicbrainzngs.set_hostname(options.server)
         musicbrainzngs.set_useragent(AGENT_NAME, __version__,
                 "http://github.com/JonnyJD/musicbrainz-isrcsubmit")
 
@@ -541,7 +545,10 @@ class Disc(object):
 
     @property
     def submission_url(self):
-        return self._disc.submission_url
+        url = self._disc.submission_url
+        # mm.mb.o points to mb.o, if present in the url
+        url = url.replace("//mm.", "//")
+        return url.replace("musicbrainz.org", options.server)
 
     @property
     def release(self):
@@ -845,7 +852,7 @@ def cleanup_isrcs(release, isrcs):
                 else:
                     print("")
 
-            url = "http://%s/isrc/%s" % (MUSICBRAINZ_SERVER, isrc)
+            url = "http://%s/isrc/%s" % (options.server, isrc)
             if user_input("Open ISRC in the browser? [Y/n] ") != "n":
                 if options.debug:
                     Popen([options.browser, url])
