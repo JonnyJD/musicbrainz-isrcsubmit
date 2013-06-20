@@ -2,6 +2,9 @@
 layout: default
 title: changes
 ---
+### Changes in 1.0.2 (2013-06-20)
+* [#58]({{site.issues.url}}/58): fix/allow non-ascii passwords (use UTF-8)
+
 ### Changes in 1.0.1 (2013-03-26)
  * [#52]({{site.issues.url}}/52): fix IndexError when release status unknown
  * [#51]({{site.issues.url}}/51): fix error message using discisrc with no isrcs
