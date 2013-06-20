@@ -1,4 +1,4 @@
-Isrcsubmit 1.0.1 for MusicBrainz
+Isrcsubmit 1.0.2 for MusicBrainz
 ==============================
 (Linux/Mac OS X/Windows)
 ------------------------
