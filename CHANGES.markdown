@@ -1,3 +1,6 @@
+### Changes in 1.0.2 (2013-06-20)
+* [#58] fix/allow non-ascii passwords (use UTF-8)
+
 ### Changes in 1.0.1 (2013-03-26)
  * [#52] fix IndexError when release status unknown
  * [#51] fix error message using discisrc with no isrcs
