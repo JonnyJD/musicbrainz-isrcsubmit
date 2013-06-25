@@ -21,7 +21,7 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-__version__ = "2.0.0-beta.3"
+__version__ = "2.0.0-dev"
 AGENT_NAME = "isrcsubmit.py"
 DEFAULT_SERVER = "musicbrainz.org"
 # starting with highest priority
@@ -146,7 +146,7 @@ def gather_options(argv):
         # /dev/rdisk1 etc. change with multiple hard disks, dmgs mounted etc.
         default_device = "1"
     else:
-        default_device = discid.DEFAULT_DEVICE
+        default_device = discid.get_default_device()
 
     parser = OptionParser(version=script_version(), add_help_option=False)
     parser.set_usage(
