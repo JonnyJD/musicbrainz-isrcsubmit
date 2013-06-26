@@ -9,8 +9,7 @@ from audio cds
 and submits them to [MusicBrainz](http://musicbrainz.org).
 
 This script uses
-[python-musicbrainzngs](http://musicbrainz.org/doc/python-musicbrainz-ngs)
->= 0.4
+[python-musicbrainzngs](http://musicbrainz.org/doc/python-musicbrainz-ngs) >= 0.4
 to access the MusicBrainz API
 and [python-discid](https://python-discid.readthedocs.org/) >= 1.0.0
 to create an identifier for the disc.
