@@ -1,9 +1,9 @@
-version := 2.0.0-beta.3
+version := 2.0.0-beta.4
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
 musicbrainzngs := musicbrainzngs-0.4
-discid := discid-0.5.0
+discid := discid-1.0.0
 libdiscid := libdiscid-0.5.1
 
 #scripts := isrcsubmit.py $(current).py
