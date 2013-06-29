@@ -562,7 +562,7 @@ class Disc(object):
         This will ask the user to choose if the discID is ambiguous.
         """
         if self._release is None:
-            self._release = self.get_release(self._verified)
+            self.get_release(self._verified)
             # can still be None
         return self._release
 
@@ -645,6 +645,7 @@ class Disc(object):
                 self.read_disc()
                 self.get_release(verified=True)
 
+        self._release = chosen_release
         return chosen_release
 
 
