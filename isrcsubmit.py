@@ -897,6 +897,7 @@ discs = release.getDiscs()
 # discCount is actually the count of DiscIDs
 # there can be multiple DiscIDs for a single disc
 discIdCount = len(discs)
+print("")
 print_encoded('Artist:\t\t%s\n' % release.getArtist().getName())
 print_encoded('Release:\t%s\n' % release.getTitle())
 if releaseTrackCount != disc.trackCount:
