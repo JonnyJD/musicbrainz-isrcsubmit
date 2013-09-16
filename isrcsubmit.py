@@ -40,15 +40,16 @@ from subprocess import Popen, PIPE, call
 
 try:
     import discid
+    from discid import DiscError
 except ImportError:
     try:
         from libdiscid.compat import discid
+        from libdiscid.compat.discid import DiscError
     except ImportError:
         # When both are not available, raise exception for python-discid
         import discid
 
 import musicbrainzngs
-from discid import DiscError
 from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
 SHELLNAME = "isrcsubmit.sh"
