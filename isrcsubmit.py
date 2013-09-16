@@ -38,9 +38,18 @@ from datetime import datetime
 from optparse import OptionParser
 from subprocess import Popen, PIPE, call
 
-import discid
+try:
+    import discid
+    from discid import DiscError
+except ImportError:
+    try:
+        from libdiscid.compat import discid
+        from libdiscid.compat.discid import DiscError
+    except ImportError:
+        # When both are not available, raise exception for python-discid
+        import discid
+
 import musicbrainzngs
-from discid import DiscError
 from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
 SHELLNAME = "isrcsubmit.sh"
@@ -897,6 +906,7 @@ def cleanup_isrcs(release, isrcs):
 if __name__ == "__main__":
 
     print("%s" % script_version())
+    print("using discid version %s" % discid.__version__)
 
     # global variables
     options = gather_options(sys.argv)
