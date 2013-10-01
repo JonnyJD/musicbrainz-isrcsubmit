@@ -281,7 +281,7 @@ def has_program(program, strict=False):
     elif program in BACKENDS:
         try:
             # we just try to start these non-interactive console apps
-            call([backend], stdout=devnull, stderr=devnull)
+            call([program], stdout=devnull, stderr=devnull)
         except OSError:
             return False
         else:
