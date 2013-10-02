@@ -26,7 +26,8 @@ AGENT_NAME = "isrcsubmit.py"
 DEFAULT_SERVER = "musicbrainz.org"
 # starting with highest priority
 BACKENDS = ["mediatools", "media_info", "cdrdao", "libdiscid", "discisrc"]
-BROWSERS = ["xdg-open", "firefox", "chromium", "opera", "safari", "explorer"]
+BROWSERS = ["xdg-open", "x-www-browser",
+            "firefox", "chromium", "opera", "safari", "explorer"]
 
 import os
 import re
