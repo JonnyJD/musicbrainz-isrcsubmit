@@ -689,7 +689,7 @@ def gather_isrcs(disc, backend, device):
     # redundant to "libdiscid", but this might be handy for prerelease testing
     elif backend == "discisrc":
         pattern = \
-            br'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            r'Track\s+([0-9]+)\s+:\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         try:
             if sys.platform == "darwin":
                 device = get_real_mac_device(device)
@@ -698,9 +698,10 @@ def gather_isrcs(disc, backend, device):
         except OSError as err:
             backend_error(err)
         for line in isrcout:
+            line = decode(line) # explicitely decode from pipe
             if options.debug:
                 printf(line)    # already includes a newline
-            if line.startswith(b"Track") and len(line) > 12:
+            if line.startswith("Track") and len(line) > 12:
                 match = re.search(pattern, line)
                 if match is None:
                     print("can't find ISRC in: %s" % line)
@@ -708,14 +709,13 @@ def gather_isrcs(disc, backend, device):
                 track_number = int(match.group(1))
                 isrc = ("%s%s%s%s" % (match.group(2), match.group(3),
                                       match.group(4), match.group(5)))
-                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     # media_info is a preview version of mediatools, both are for Windows
     # this does some kind of raw read
     elif backend in ["mediatools", "media_info"]:
         pattern = \
-            br'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
+            r'ISRC\s+([0-9]+)\s+([A-Z]{2})-?([A-Z0-9]{3})-?(\d{2})-?(\d{5})'
         if backend == "mediatools":
             args = [backend, "drive", device, "isrc"]
         else:
@@ -726,9 +726,10 @@ def gather_isrcs(disc, backend, device):
         except OSError as err:
             backend_error(err)
         for line in isrcout:
+            line = decode(line) # explicitely decode from pipe
             if options.debug:
                 printf(line)    # already includes a newline
-            if line.startswith(b"ISRC") and not line.startswith(b"ISRCS"):
+            if line.startswith("ISRC") and not line.startswith("ISRCS"):
                 match = re.search(pattern, line)
                 if match is None:
                     print("can't find ISRC in: %s" % line)
@@ -736,7 +737,6 @@ def gather_isrcs(disc, backend, device):
                 track_number = int(match.group(1))
                 isrc = ("%s%s%s%s" % (match.group(2), match.group(3),
                                       match.group(4), match.group(5)))
-                isrc = decode(isrc)
                 backend_output.append((track_number, isrc))
 
     # cdrdao will create a temp file and we delete it afterwards
