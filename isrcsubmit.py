@@ -382,13 +382,12 @@ def print_encoded(*args):
         except AttributeError:
             sys.stdout.write(msg)
 
-def print_release_position(release, pos):
-    print_encoded("%d: %s - %s"
-                  % (pos, release["artist-credit-phrase"], release["title"]))
-    if release.get("status"):
-        print("(%s)" % release["status"])
-    else:
-        print("")
+def print_release(release, position=None):
+    """Print information about a release.
+
+    If the position is given, this should be an entry
+    in a list of releases (choice)
+    """
     country = (release.get("country") or "").ljust(2)
     date = (release.get("date") or "").ljust(10)
     barcode = (release.get("barcode") or "").rjust(13)
@@ -399,7 +398,26 @@ def print_release_position(release, pos):
         if cat_number:
             catnumber_list.append(cat_number)
     catnumbers = ", ".join(catnumber_list)
-    print_encoded("\t%s\t%s\t%s\t%s\n" % (country, date, barcode, catnumbers))
+
+    if position is None:
+        print_encoded("Artist:\t\t%s\n" % release["artist-credit-phrase"])
+        print_encoded("Release:\t%s" % release["title"])
+    else:
+        print_encoded("%d:" % position)
+        print_encoded("%s - %s" % (
+                      release["artist-credit-phrase"], release["title"]))
+    if release.get("status"):
+        print("(%s)" % release["status"])
+    else:
+        print("")
+    if position is None:
+        print_encoded("Release Event:\t%s\t%s\n" % (country, date))
+        print_encoded("Barcode:\t%s\n" % release.get("barcode") or "")
+        print_encoded("Catalog No.:\t%s\n" % catnumbers)
+        print_encoded("MusicBrainz ID:\t%s\n" % release["id"])
+    else:
+        print_encoded("\t%s\t%s\t%s\t%s\n" % (
+                      country, date, barcode, catnumbers))
 
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
@@ -608,7 +626,7 @@ class Disc(object):
             for i in range(num_results):
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
-                print_release_position(release, i + 1)
+                print_release(release, i + 1)
             try:
                 num =  user_input("Which one do you want? [1-%d] "
                                   % num_results)
@@ -916,9 +934,7 @@ if __name__ == "__main__":
     disc = get_disc(options.device, options.backend)
     disc.get_release()
     print("")
-    print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
-    print_encoded('Release:\t%s\n' % disc.release["title"])
-    print("MusicBrainz ID:\t%s\n" % disc.release["id"])
+    print_release(disc.release)
 
     media = []
     for medium in disc.release["medium-list"]:
