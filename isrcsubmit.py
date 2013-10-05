@@ -435,7 +435,7 @@ def backend_error(err):
                 % (options.backend, err.errno, err.strerror))
     sys.exit(1)
 
-def ask_for_submission(url):
+def ask_for_submission(url, print_url=False):
     if options.force_submit:
         submit_requested = True
     else:
@@ -455,10 +455,9 @@ def ask_for_submission(url):
                         % (options.browser, str(err)))
             print_error2("Please submit it via:", url)
             sys.exit(1)
-    else:
+    elif print_url:
         print("Please submit the Disc ID with this url:")
         print(url)
-        sys.exit(1)
 
 class WebService2():
     """A web service wrapper that asks for a password when first needed.
@@ -667,7 +666,8 @@ class Disc(object):
         if chosen_release is None or options.force_submit:
             if verified:
                 url = self.submission_url
-                ask_for_submission(url) # submission will end the script
+                ask_for_submission(url, print_url=True)
+                sys.exit(1)
             else:
                 print("recalculating to re-check..")
                 self.read_disc()
@@ -935,6 +935,9 @@ if __name__ == "__main__":
     disc.get_release()
     print("")
     print_release(disc.release)
+    print("")
+    print("Is this your release?")
+    ask_for_submission(disc.submission_url)
 
     media = []
     for medium in disc.release["medium-list"]:
