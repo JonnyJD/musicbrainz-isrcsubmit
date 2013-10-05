@@ -27,7 +27,7 @@ DEFAULT_SERVER = "musicbrainz.org"
 # starting with highest priority
 BACKENDS = ["mediatools", "media_info", "cdrdao", "libdiscid", "discisrc"]
 BROWSERS = ["xdg-open", "x-www-browser",
-            "firefox", "chromium", "opera", "safari", "explorer"]
+            "firefox", "chromium", "chrome", "opera"]
 
 import os
 import re
