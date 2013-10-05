@@ -403,7 +403,7 @@ def print_release(release, position=None):
         print_encoded("Artist:\t\t%s\n" % release["artist-credit-phrase"])
         print_encoded("Release:\t%s" % release["title"])
     else:
-        print_encoded("%d:" % position)
+        print_encoded("%#2d:" % position)
         print_encoded("%s - %s" % (
                       release["artist-credit-phrase"], release["title"]))
     if release.get("status"):
@@ -555,6 +555,7 @@ class Disc(object):
         self._release = None
         self._backend = backend
         self._verified = verified
+        self._asked_for_submission = False
         self._common_includes=["artists", "labels", "recordings", "isrcs",
                                "artist-credits"] # the last one only for cleanup
         self.read_disc()        # sets self._disc
@@ -581,6 +582,10 @@ class Disc(object):
         # mm.mb.o points to mb.o, if present in the url
         url = url.replace("//mm.", "//")
         return url.replace("musicbrainz.org", options.server)
+
+    @property
+    def asked_for_submission(self):
+        return self._asked_for_submission
 
     @property
     def release(self):
@@ -622,16 +627,22 @@ class Disc(object):
             selected_release = None
         elif num_results > 1:
             print("\nThis Disc ID is ambiguous:")
+            print(" 0: none of these\n")
+            self._asked_for_submission = True
             for i in range(num_results):
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
                 print_release(release, i + 1)
             try:
-                num =  user_input("Which one do you want? [1-%d] "
+                num =  user_input("Which one do you want? [0-%d] "
                                   % num_results)
-                if int(num) not in range(1, num_results + 1):
+                if int(num) not in range(0, num_results + 1):
                     raise IndexError
-                selected_release = results[int(num) - 1]
+                if int(num) == 0:
+                    ask_for_submission(self.submission_url, print_url=True)
+                    sys.exit(1)
+                else:
+                    selected_release = results[int(num) - 1]
             except (ValueError, IndexError):
                 print_error("Invalid Choice")
                 sys.exit(1)
@@ -935,9 +946,10 @@ if __name__ == "__main__":
     disc.get_release()
     print("")
     print_release(disc.release)
-    print("")
-    print("Is this your release?")
-    ask_for_submission(disc.submission_url)
+    if not disc.asked_for_submission:
+        print("")
+        print("Is this your release?")
+        ask_for_submission(disc.submission_url)
 
     media = []
     for medium in disc.release["medium-list"]:
