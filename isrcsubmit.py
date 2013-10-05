@@ -411,7 +411,7 @@ def print_release(release, position=None):
     else:
         print("")
     if position is None:
-        print_encoded("Release Event:\t%s\t%s\n" % (country, date))
+        print_encoded("Release Event:\t%s\t%s\n" % (date, country))
         print_encoded("Barcode:\t%s\n" % release.get("barcode") or "")
         print_encoded("Catalog No.:\t%s\n" % catnumbers)
         print_encoded("MusicBrainz ID:\t%s\n" % release["id"])
