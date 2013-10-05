@@ -336,17 +336,28 @@ def open_browser(url, exit=False, submit=False):
                     print_error2("Please submit via:", url)
                 sys.exit(1)
         else:
-            if options.debug:
-                Popen([options.browser, url])
-            else:
-                devnull = open(os.devnull, "w")
-                Popen([options.browser, url], stdout=devnull)
+            try:
+                if options.debug:
+                    Popen([options.browser, url])
+                else:
+                    devnull = open(os.devnull, "w")
+                    Popen([options.browser, url], stdout=devnull)
+            except FileNotFoundError as err:
+                print_error("Couldn't open the url in %s: %s"
+                            % (options.browser, str(err)))
+                if submit:
+                    print_error2("Please submit via:", url)
     else:
-        if options.debug:
-            webbrowser.open(url)
-        else:
-            # this supresses stdout
-            webbrowser.get().open(url)
+        try:
+            if options.debug:
+                webbrowser.open(url)
+            else:
+                # this supresses stdout
+                webbrowser.get().open(url)
+        except webbrowser.Error as err:
+            print_error("Couldn't open the url:", str(err))
+            if submit:
+                print_error2("Please submit via:", url)
         if exit:
             sys.exit(1)
 
