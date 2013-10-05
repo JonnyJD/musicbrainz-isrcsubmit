@@ -918,6 +918,7 @@ if __name__ == "__main__":
     print("")
     print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
     print_encoded('Release:\t%s\n' % disc.release["title"])
+    print("MusicBrainz ID:\t%s\n" % disc.release["id"])
 
     media = []
     for medium in disc.release["medium-list"]:
