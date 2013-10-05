@@ -27,7 +27,7 @@ DEFAULT_SERVER = "musicbrainz.org"
 # starting with highest priority
 BACKENDS = ["mediatools", "media_info", "cdrdao", "libdiscid", "discisrc"]
 BROWSERS = ["xdg-open", "x-www-browser",
-            "firefox", "chromium", "opera", "safari", "explorer"]
+            "firefox", "chromium", "chrome", "opera"]
 
 import os
 import re
@@ -35,6 +35,7 @@ import sys
 import codecs
 import getpass
 import tempfile
+import webbrowser
 from datetime import datetime
 from optparse import OptionParser
 from subprocess import Popen, PIPE, call
@@ -313,8 +314,52 @@ def find_browser():
         if has_program(browser):
             return browser
 
-    # default to the first "real" browser in the list, as of now: firefox
-    return BROWSERS[1]
+    # This will use the webbrowser module to find a default
+    return None
+
+def open_browser(url, exit=False, submit=False):
+    """open url in the selected browser, default if none
+    """
+    if options.browser:
+        if exit:
+            try:
+                if os.name == "nt":
+                    # silly but necessary for spaces in the path
+                    os.execlp(options.browser, '"' + options.browser + '"', url)
+                else:
+                    # linux/unix works fine with spaces
+                    os.execlp(options.browser, options.browser, url)
+            except OSError as err:
+                print_error("Couldn't open the url in %s: %s"
+                            % (options.browser, str(err)))
+                if submit:
+                    print_error2("Please submit via:", url)
+                sys.exit(1)
+        else:
+            try:
+                if options.debug:
+                    Popen([options.browser, url])
+                else:
+                    devnull = open(os.devnull, "w")
+                    Popen([options.browser, url], stdout=devnull)
+            except FileNotFoundError as err:
+                print_error("Couldn't open the url in %s: %s"
+                            % (options.browser, str(err)))
+                if submit:
+                    print_error2("Please submit via:", url)
+    else:
+        try:
+            if options.debug:
+                webbrowser.open(url)
+            else:
+                # this supresses stdout
+                webbrowser.get().open(url)
+        except webbrowser.Error as err:
+            print_error("Couldn't open the url:", str(err))
+            if submit:
+                print_error2("Please submit via:", url)
+        if exit:
+            sys.exit(1)
 
 def get_real_mac_device(option_device):
     """drutil takes numbers as drives.
@@ -425,18 +470,7 @@ def ask_for_submission(url):
         submit_requested = user_input(" [y/N] ") == "y"
 
     if submit_requested:
-        try:
-            if os.name == "nt":
-                # silly but necessary for spaces in the path
-                os.execlp(options.browser, '"' + options.browser + '"', url)
-            else:
-                # linux/unix works fine with spaces
-                os.execlp(options.browser, options.browser, url)
-        except OSError as err:
-            print_error("Couldn't open the url in %s: %s"
-                        % (options.browser, str(err)))
-            print_error2("Please submit it via:", url)
-            sys.exit(1)
+        open_browser(url, exit=True, submit=True)
     else:
         print("Please submit the Disc ID with this url:")
         print(url)
@@ -896,11 +930,7 @@ def cleanup_isrcs(release, isrcs):
 
             url = "http://%s/isrc/%s" % (options.server, isrc)
             if user_input("Open ISRC in the browser? [Y/n] ") != "n":
-                if options.debug:
-                    Popen([options.browser, url])
-                else:
-                    devnull = open(os.devnull, "w")
-                    Popen([options.browser, url], stdout=devnull)
+                open_browser(url)
                 user_input("(press <return> when done with this ISRC) ")
 
 
