@@ -228,20 +228,22 @@ def test_which():
     We want to know if the user has a "sane" which we can trust.
     Unxutils has a broken 2.4 version. Which >= 2.16 should be fine.
     """
-    devnull = open(os.devnull, "w")
-    try:
-        # "which" should at least find itself (even without searching which.exe)
-        return_code = call(["which", "which"], stdout=devnull, stderr=devnull)
-    except OSError:
-        return False        # no which at all
-    else:
-        if (return_code == 0):
-            return True
+    with open(os.devnull, "w") as devnull:
+        try:
+            # "which" should at least find itself
+            return_code = call(["which", "which"],
+                               stdout=devnull, stderr=devnull)
+        except OSError:
+            return False        # no which at all
         else:
-            print('warning: your version of the tool "which" is buggy/outdated')
-            if os.name == "nt":
-                print('         unxutils is old/broken, GnuWin32 is good.')
-            return False
+            if (return_code == 0):
+                return True
+            else:
+                print('warning: your version of the tool "which"'
+                      ' is buggy/outdated')
+                if os.name == "nt":
+                    print('         unxutils is old/broken, GnuWin32 is good.')
+                return False
 
 def get_prog_version(prog):
     if prog == "libdiscid":
@@ -261,34 +263,34 @@ def has_program(program, strict=False):
     if program == "libdiscid":
         return "isrc" in discid.FEATURES
 
-    devnull = open(os.devnull, "w")
-    if options.sane_which:
-        p_which = Popen(["which", program], stdout=PIPE, stderr=devnull)
-        program_path = p_which.communicate()[0].strip()
-        if p_which.returncode == 0:
-            # check if it is only a symlink to another backend
-            real_program = os.path.basename(os.path.realpath(program_path))
-            if program != real_program and (
-                    real_program in BACKENDS or real_program in BROWSERS):
-                if strict:
-                    print("WARNING: %s is a symlink to %s"
-                          % (program, real_program))
-                    return True
-                else:
-                    return False # use real program instead, or higher priority
-            return True
+    with open(os.devnull, "w") as devnull:
+        if options.sane_which:
+            p_which = Popen(["which", program], stdout=PIPE, stderr=devnull)
+            program_path = p_which.communicate()[0].strip()
+            if p_which.returncode == 0:
+                # check if it is only a symlink to another backend
+                real_program = os.path.basename(os.path.realpath(program_path))
+                if program != real_program and (
+                        real_program in BACKENDS or real_program in BROWSERS):
+                    if strict:
+                        print("WARNING: %s is a symlink to %s"
+                              % (program, real_program))
+                        return True
+                    else:
+                        return False # use real program (target) instead
+                return True
+            else:
+                return False
+        elif program in BACKENDS:
+            try:
+                # we just try to start these non-interactive console apps
+                call([program], stdout=devnull, stderr=devnull)
+            except OSError:
+                return False
+            else:
+                return True
         else:
             return False
-    elif program in BACKENDS:
-        try:
-            # we just try to start these non-interactive console apps
-            call([program], stdout=devnull, stderr=devnull)
-        except OSError:
-            return False
-        else:
-            return True
-    else:
-        return False
 
 def find_backend():
     """search for an available backend
@@ -819,6 +821,7 @@ def gather_isrcs(disc, backend, device):
             except OSError:
                 pass
 
+    devnull.close()
     return backend_output
 
 def check_isrcs_local(backend_output, mb_tracks):
@@ -928,8 +931,8 @@ def cleanup_isrcs(release, isrcs):
                 if options.debug:
                     Popen([options.browser, url])
                 else:
-                    devnull = open(os.devnull, "w")
-                    Popen([options.browser, url], stdout=devnull)
+                    with open(os.devnull, "w") as devnull:
+                        Popen([options.browser, url], stdout=devnull)
                 user_input("(press <return> when done with this ISRC) ")
 
 
