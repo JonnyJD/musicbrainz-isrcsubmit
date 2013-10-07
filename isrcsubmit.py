@@ -382,13 +382,12 @@ def print_encoded(*args):
         except AttributeError:
             sys.stdout.write(msg)
 
-def print_release_position(release, pos):
-    print_encoded("%d: %s - %s"
-                  % (pos, release["artist-credit-phrase"], release["title"]))
-    if release.get("status"):
-        print("(%s)" % release["status"])
-    else:
-        print("")
+def print_release(release, position=None):
+    """Print information about a release.
+
+    If the position is given, this should be an entry
+    in a list of releases (choice)
+    """
     country = (release.get("country") or "").ljust(2)
     date = (release.get("date") or "").ljust(10)
     barcode = (release.get("barcode") or "").rjust(13)
@@ -399,7 +398,26 @@ def print_release_position(release, pos):
         if cat_number:
             catnumber_list.append(cat_number)
     catnumbers = ", ".join(catnumber_list)
-    print_encoded("\t%s\t%s\t%s\t%s\n" % (country, date, barcode, catnumbers))
+
+    if position is None:
+        print_encoded("Artist:\t\t%s\n" % release["artist-credit-phrase"])
+        print_encoded("Release:\t%s" % release["title"])
+    else:
+        print_encoded("%#2d:" % position)
+        print_encoded("%s - %s" % (
+                      release["artist-credit-phrase"], release["title"]))
+    if release.get("status"):
+        print("(%s)" % release["status"])
+    else:
+        print("")
+    if position is None:
+        print_encoded("Release Event:\t%s\t%s\n" % (date, country))
+        print_encoded("Barcode:\t%s\n" % release.get("barcode") or "")
+        print_encoded("Catalog No.:\t%s\n" % catnumbers)
+        print_encoded("MusicBrainz ID:\t%s\n" % release["id"])
+    else:
+        print_encoded("\t%s\t%s\t%s\t%s\n" % (
+                      country, date, barcode, catnumbers))
 
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
@@ -417,7 +435,7 @@ def backend_error(err):
                 % (options.backend, err.errno, err.strerror))
     sys.exit(1)
 
-def ask_for_submission(url):
+def ask_for_submission(url, print_url=False):
     if options.force_submit:
         submit_requested = True
     else:
@@ -437,10 +455,9 @@ def ask_for_submission(url):
                         % (options.browser, str(err)))
             print_error2("Please submit it via:", url)
             sys.exit(1)
-    else:
+    elif print_url:
         print("Please submit the Disc ID with this url:")
         print(url)
-        sys.exit(1)
 
 class WebService2():
     """A web service wrapper that asks for a password when first needed.
@@ -538,6 +555,7 @@ class Disc(object):
         self._release = None
         self._backend = backend
         self._verified = verified
+        self._asked_for_submission = False
         self._common_includes=["artists", "labels", "recordings", "isrcs",
                                "artist-credits"] # the last one only for cleanup
         self.read_disc()        # sets self._disc
@@ -564,6 +582,10 @@ class Disc(object):
         # mm.mb.o points to mb.o, if present in the url
         url = url.replace("//mm.", "//")
         return url.replace("musicbrainz.org", options.server)
+
+    @property
+    def asked_for_submission(self):
+        return self._asked_for_submission
 
     @property
     def release(self):
@@ -605,16 +627,22 @@ class Disc(object):
             selected_release = None
         elif num_results > 1:
             print("\nThis Disc ID is ambiguous:")
+            print(" 0: none of these\n")
+            self._asked_for_submission = True
             for i in range(num_results):
                 release = results[i]
                 # printed list is 1..n, not 0..n-1 !
-                print_release_position(release, i + 1)
+                print_release(release, i + 1)
             try:
-                num =  user_input("Which one do you want? [1-%d] "
+                num =  user_input("Which one do you want? [0-%d] "
                                   % num_results)
-                if int(num) not in range(1, num_results + 1):
+                if int(num) not in range(0, num_results + 1):
                     raise IndexError
-                selected_release = results[int(num) - 1]
+                if int(num) == 0:
+                    ask_for_submission(self.submission_url, print_url=True)
+                    sys.exit(1)
+                else:
+                    selected_release = results[int(num) - 1]
             except (ValueError, IndexError):
                 print_error("Invalid Choice")
                 sys.exit(1)
@@ -649,7 +677,8 @@ class Disc(object):
         if chosen_release is None or options.force_submit:
             if verified:
                 url = self.submission_url
-                ask_for_submission(url) # submission will end the script
+                ask_for_submission(url, print_url=True)
+                sys.exit(1)
             else:
                 print("recalculating to re-check..")
                 self.read_disc()
@@ -916,8 +945,11 @@ if __name__ == "__main__":
     disc = get_disc(options.device, options.backend)
     disc.get_release()
     print("")
-    print_encoded('Artist:\t\t%s\n' % disc.release["artist-credit-phrase"])
-    print_encoded('Release:\t%s\n' % disc.release["title"])
+    print_release(disc.release)
+    if not disc.asked_for_submission:
+        print("")
+        print("Is this your release?")
+        ask_for_submission(disc.submission_url)
 
     media = []
     for medium in disc.release["medium-list"]:
