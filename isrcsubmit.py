@@ -28,6 +28,8 @@ DEFAULT_SERVER = "musicbrainz.org"
 BACKENDS = ["mediatools", "media_info", "cdrdao", "libdiscid", "discisrc"]
 BROWSERS = ["xdg-open", "x-www-browser",
             "firefox", "chromium", "chrome", "opera"]
+# The webbrowser module is used when nothing is found in this list.
+# This especially happens on Windows and Mac OS X (browser mostly not in PATH)
 
 import os
 import re
@@ -181,8 +183,8 @@ def gather_options(argv):
             + " disc. Possible backends are: %s." % ", ".join(BACKENDS)
             + " They are tried in this order otherwise." )
     parser.add_option("--browser", metavar="BROWSER",
-            help="Program to open urls. If not chosen, we try these:\n"
-            + ", ".join(BROWSERS))
+            help="Program to open urls. This will be automatically detected"
+            " for most setups, if not chosen manually.")
     parser.add_option("--force-submit", action="store_true", default=False,
             help="Always open TOC/disc ID in browser.")
     parser.add_option("--server", metavar="SERVER",
