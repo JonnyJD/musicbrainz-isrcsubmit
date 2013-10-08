@@ -948,7 +948,7 @@ if __name__ == "__main__":
     print_release(disc.release)
     if not disc.asked_for_submission:
         print("")
-        print("Is this your release?")
+        print("Is this information different for your release?")
         ask_for_submission(disc.submission_url)
 
     media = []
