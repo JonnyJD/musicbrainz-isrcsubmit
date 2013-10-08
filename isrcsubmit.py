@@ -514,8 +514,11 @@ class WebService2():
         if not self.auth:
             print("")
             if self.username is None:
-                printf("Please input your MusicBrainz username: ")
+                printf("Please input your MusicBrainz username (empty=abort): ")
                 self.username = user_input()
+            if len(self.username) == 0:
+                print("(aborted)")
+                sys.exit(1)
             password = getpass.getpass(
                                     "Please input your MusicBrainz password: ")
             print("")
@@ -552,17 +555,21 @@ class WebService2():
     def submit_isrcs(self, tracks2isrcs):
         if options.debug:
             print("tracks2isrcs: %s" % tracks2isrcs)
-        try:
-            self.authenticate()
-            musicbrainzngs.submit_isrcs(tracks2isrcs)
-        except AuthenticationError as err:
-            print_error("Invalid credentials: %s" % err)
-            sys.exit(1)
-        except WebServiceError as err:
-            print_error("Couldn't send ISRCs: %s" % err)
-            sys.exit(1)
-        else:
-            print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
+        while True:
+            try:
+                self.authenticate()
+                musicbrainzngs.submit_isrcs(tracks2isrcs)
+            except AuthenticationError as err:
+                print_error("Invalid credentials: %s" % err)
+                self.auth = False
+                self.username = None
+                continue
+            except WebServiceError as err:
+                print_error("Couldn't send ISRCs: %s" % err)
+                sys.exit(1)
+            else:
+                print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
+                break
 
 
 
