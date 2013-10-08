@@ -36,8 +36,8 @@ Options
     backends are: mediatools, media_info, cdrdao, libdiscid, discisrc. They are
     tried in this order otherwise.
 --browser=<browser>
-    Program to open URLs. If not given, xdg-open, firefox, chromium, opera and
-    explorer are tried.
+    Program to open URLs. This will be automatically deteced for most setups,
+    if not chosen manually.
 --force-submit
     Always open TOC/disc ID submission page in browser.
 --server=<server>
