@@ -2,6 +2,7 @@ version := 2.0.0-beta.5
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
+upload := ftp://isrcsubmit.jonnyjd.net/downloads/
 musicbrainzngs := musicbrainzngs-0.4
 discid := discid-1.1.0
 libdiscid := libdiscid-0.6.1
@@ -55,7 +56,7 @@ all: $(all)
 
 upload: $(all)
 	cp -a $^ $(downloads)
-	cd $(downloads) && ftpsync -cn . ftp://isrcsubmit.jonnyjd.net/downloads/
+	cd $(downloads) && ftpsync -cn . $(upload)
 
 
 isrcsubmit.py: $(source_ref)
