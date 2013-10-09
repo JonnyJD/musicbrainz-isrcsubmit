@@ -83,14 +83,16 @@ $(win32).zip: $(source_ref) $(base_libs) $(libdiscid)-win32.zip mediatools
 #     lipo -create */libdiscid.0.dylib -output libdiscid.0.dylib
 
 mac: $(mac).zip
-$(mac).zip: $(source_ref) $(base_libs) $(libdiscid)-mac.zip
+$(mac).zip: $(source_ref) $(base_libs) $(libdiscid)-mac.zip discisrc-mac.zip
 	$(call cp_source, $(mac))
 	$(call cp_base_libs, $(mac))
 	unzip $(libdiscid)-mac.zip
 	cp -a $(libdiscid)-mac/universal/libdiscid.0.dylib $(mac)/
+	unzip discisrc-mac.zip
 	cp -a discisrc-mac/discisrc $(mac)/
 	zip -qr $@ $(mac)
 	rm -rf $(libdiscid)-mac
+	rm -rf discisrc-mac
 	rm -rf $(mac)
 
 # sources:
@@ -119,6 +121,9 @@ $(libdiscid).tar.gz:
 
 $(libdiscid)-%.zip:
 	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
+
+discisrc-mac.zip:
+	wget http://isrcsubmit.jonnyjd.net/downloads/$@
 
 mediatools: mediatools.zip
 	unzip -o $^
