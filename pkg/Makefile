@@ -3,8 +3,8 @@ current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
 musicbrainzngs := musicbrainzngs-0.4
-discid := discid-1.0.2
-libdiscid := libdiscid-0.6.0
+discid := discid-1.1.0
+libdiscid := libdiscid-0.6.1
 
 #scripts := isrcsubmit.py $(current).py
 scripts := $(current).py
