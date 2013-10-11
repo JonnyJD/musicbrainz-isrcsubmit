@@ -74,13 +74,17 @@ seems to be wrong.
 Installation:
 -------------
 
+If you downloaded isrcsubmit as a zip package for your platform
+then you only need to extract that somewhere and start using it.
+You can also stop reading this section.
+
 The script itself does not need any installation,
 but "python2 setup.py install" might work for you.
 However, the backends and libraries should get
 installed so that the script has access to them.
 
 On Linux you just install the above mentioneed dependencies with
-the package manager of your disstribution.
+the package manager of your distribution.
 For Ubuntu all dependencies should be in the MusicBrainz Stable PPA,
 if not in the official repositories.
 
