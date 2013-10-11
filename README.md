@@ -5,7 +5,7 @@ Isrcsubmit 2.0.0-dev for MusicBrainz
 
 This python script extracts
 [ISRCs](http://en.wikipedia.org/wiki/International_Standard_Recording_Code)
-from audio cds
+from audio CDs
 and submits them to [MusicBrainz](http://musicbrainz.org).
 
 This script uses
@@ -61,7 +61,7 @@ Others don't, for the same physical disc.
 For me my dvd writer worked better.
 On Windows the mediatools backend should give correct results either way.
 
-Isrcsubmit 2.0.0-dev for problems with duplicate ISRCs and prints a warning.
+Isrcsubmit checks for problems with duplicate ISRCs and prints a warning.
 You will always have the choice to cancel the submission if something
 seems to be wrong.
 
