@@ -194,6 +194,9 @@ def gather_options(argv):
             + " Currently shows some backend messages.")
     (options, args) = parser.parse_args(argv[1:])
 
+    print("%s" % script_version())
+    print("using discid version %s" % discid.__version__)
+
     # assign positional arguments to options
     if options.user is None and args:
         options.user = args[0]
@@ -976,9 +979,6 @@ def cleanup_isrcs(release, isrcs):
 
 
 if __name__ == "__main__":
-
-    print("%s" % script_version())
-    print("using discid version %s" % discid.__version__)
 
     # global variables
     options = gather_options(sys.argv)
