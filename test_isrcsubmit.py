@@ -16,6 +16,20 @@ class TestInternal(unittest.TestCase):
             self._old_stdout = os.dup(sys.stdout.fileno())
             os.dup2(devnull.fileno(), 1)
 
+    def test_encoding(self):
+        self.assertTrue(type(isrcsubmit.encode("test")) is type(b"test"))
+        self.assertEqual(isrcsubmit.encode("test"), b"test")
+        self.assertTrue(type(isrcsubmit.decode(b"test"))
+                        is type(b"test".decode()))
+        self.assertEqual(isrcsubmit.decode(b"test"), "test")
+
+        string = "test"
+        self.assertEqual(isrcsubmit.decode(isrcsubmit.encode(string)),
+                         string)
+        bytestring = b"test"
+        self.assertEqual(isrcsubmit.encode(isrcsubmit.decode(bytestring)),
+                         bytestring)
+
     def test_gather_options(self):
         # make sure most important options always work
         options = isrcsubmit.gather_options(["isrcsubmit.py"])
