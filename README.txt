@@ -1,4 +1,4 @@
-Isrcsubmit 2.0.0-dev for MusicBrainz
+Isrcsubmit 2.0.0-beta.5 for MusicBrainz
 ====================================
 (Linux/Mac OS X/Windows)
 ------------------------
