@@ -110,3 +110,5 @@ Bugs:
 -----
 Please report bugs on GitHub:
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
+
+License:	GNU General Public License Version 3 or later
