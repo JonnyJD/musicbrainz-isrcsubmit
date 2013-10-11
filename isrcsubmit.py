@@ -56,7 +56,10 @@ except ImportError:
 import musicbrainzngs
 from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
-SHELLNAME = "isrcsubmit.sh"
+if os.name == "nt":
+    SHELLNAME = "isrcsubmit.bat"
+else:
+    SHELLNAME = "isrcsubmit.sh"
 if os.path.isfile(SHELLNAME):
     SCRIPTNAME = SHELLNAME
 else:
