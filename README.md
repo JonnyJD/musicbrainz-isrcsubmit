@@ -3,20 +3,16 @@ Isrcsubmit 2.0.0-dev for MusicBrainz
 (Linux/Mac OS X/Windows)
 ------------------------
 
-This python script extracts
-[ISRCs](http://en.wikipedia.org/wiki/International_Standard_Recording_Code)
-from audio CDs
-and submits them to [MusicBrainz](http://musicbrainz.org).
+This python script extracts [ISRCs][11] from audio CDs
+and submits them to [MusicBrainz][12].
 
-This script uses
-[python-musicbrainzngs](http://musicbrainz.org/doc/python-musicbrainz-ngs) >= 0.4
-to access the MusicBrainz API
-and [python-discid](https://python-discid.readthedocs.org/) >= 1.0.0
-to create an identifier for the disc.
-You need Python 2 >= 2.6 or Python 3 >= 3.1.
+This script uses python-musicbrainzngs to access the MusicBrainz API
+and python-discid to create an identifier for the disc.
 
 The script works for Linux, Mac OS X and Windows.
 
+[11]: http://en.wikipedia.org/wiki/International_Standard_Recording_Code
+[12]: http://musicbrainz.org
 
 Features:
 --------
@@ -33,8 +29,12 @@ Dependencies:
 -------------
 
 * Python 2 >= 2.6 or Python 3 >= 3.1
-* python-discid >= 1.0.0 (or python-libdiscid >= 0.2.0)
-* python-musicbrainzngs
+* [python-discid][21] >= 1.0.0 (or [python-libdiscid][22] >= 0.2.0)
+* [python-musicbrainzngs][23] >= 0.4
+
+[21]: http://python-discid.readthedocs.org/
+[22]: http://pythonhosted.org/python-libdiscid
+[23]: http://python-musicbrainzngs.readthedocs.org/
 
 
 Usage:
