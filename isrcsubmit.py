@@ -77,6 +77,7 @@ def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % __version__
 
 def print_help(option=None, opt=None, value=None, parser=None):
+    print("%s" % script_version())
     print(\
 """
 This python script extracts ISRCs from audio cds and submits them to MusicBrainz (musicbrainz.org).
@@ -92,6 +93,10 @@ The ISRC-track relationship we found on our disc is taken as our correct evaluat
 Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit""")
     sys.exit(0)
 
+def print_usage(option=None, opt=None, value=None, parser=None):
+    print("%s\n" % script_version())
+    parser.print_help()
+    sys.exit(0)
 
 class Isrc(object):
     def __init__(self, isrc, track=None):
@@ -165,7 +170,7 @@ def gather_options(argv):
     parser.set_usage(
             "{prog} [options] [user] [device]\n       {prog} -h".format(
             prog=SCRIPTNAME))
-    parser.add_option("-h", action="help",
+    parser.add_option("-h", action="callback", callback=print_usage,
             help="Short usage help")
     parser.add_option("--help", action="callback", callback=print_help,
             help="Complete help for the script")
