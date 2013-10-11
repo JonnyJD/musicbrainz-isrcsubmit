@@ -18,19 +18,7 @@ You need Python 2 >= 2.6 or Python 3 >= 3.1.
 The script works for Linux, Mac OS X and Windows.
 
 
-Usable backends:
----------------
-
-* [mediatools](http://www.flanagan-family.com/mediatools.zip)
-* [Cdrdao](http://en.wikipedia.org/wiki/Cdrdao)
-* discisrc ([mac build](http://isrcsubmit.jonnyjd.net/downloads/discisrc-mac.zip), others can be built from [libdiscid](https://github.com/metabrainz/libdiscid))
-* cd-info ([libcdio](http://www.gnu.org/software/libcdio/))
-* Cdda2wav (in [cdrtools](http://en.wikipedia.org/wiki/Cdrtools))
-* Icedax (in [cdrkit](http://en.wikipedia.org/wiki/Cdrkit))
-* drutil (in Mac OS X)
-
-
-features:
+Features:
 --------
 
 * read ISRCs from disc
@@ -41,8 +29,16 @@ features:
 * duplicate ISRC detection (local and on server)
 
 
-usage:
------
+Dependencies:
+-------------
+
+* Python 2 >= 2.6 or Python 3 >= 3.1
+* python-discid >= 1.0.0 (or python-libdiscid >= 0.2.0)
+* python-musicbrainzngs
+
+
+Usage:
+------
 
     isrcsubmit.py [options] [username] [device]
 
@@ -53,9 +49,6 @@ for detailed usage see:
 Mac users should rather use **isrcsubmit.sh**, which also works on Linux.
 Windows users should use **isrcsubmit.bat**.
 
-That is the username at musicbrainz and the device should be something like
-`/dev/cdrom` (default), `/dev/dvdrw`, a drive letter (on Windows)
-or a number (Mac OS X).
 Some cd readers report the same ISRCs for different (adjacent) tracks.
 Others don't, for the same physical disc.
 For me my dvd writer worked better.
@@ -71,30 +64,30 @@ If the disc is unknown, you will be given the chance to submit the ID
 to the server.
 
 
-help:
------
-
-    isrcsubmit.py --help
-
-
-"installation":
+"Installation":
 ---------------
+
+If you downloaded isrcsubmit as a zip package for your platform
+then you only need to extract that somewhere and start using it.
+You can also stop reading this section.
 
 The script itself does not need any installation,
 but "python2 setup.py install" might work for you.
-However, the backends and libraries should get installed so that the
-script has access to them.
+However, the backends and libraries should get
+installed so that the script has access to them.
 
-On Linux you just install python-musicbrainz2 and one of the backends with the package manager of your distribution.
+On Linux you just install the above mentioneed dependencies with
+the package manager of your distribution.
+For Ubuntu all dependencies should be in the MusicBrainz Stable PPA,
+if not in the official repositories.
 
-On Windows and Mac you have to put the musicbrainz2 folder of python-musicbrainz2 in the same directory as this script or adjust the python path.
-On Windows you also have to install a backend in the PATH or the same directory as the script.
-The best backend is mediatools, but you can download a
-[windows build of cdrdao](http://www.student.tugraz.at/thomas.plank/).
-On Mac drutil is part of the Mac OS X.
+On Windows and Mac you have to put the musicbrainzngs folder of
+python-musicbrainzngs in the same directory as this script or
+adjust the python path.
 
 
--
+Additional information:
+-----------------------
 
 In order to submit ISRCs to musicbrainz.org you need to have a user acount.
 You can create an account at http://musicbrainz.org/register free of charge.
@@ -102,10 +95,12 @@ You can create an account at http://musicbrainz.org/register free of charge.
 The core of the MusicBrainz dataset including the ISRC contributions is placed
 into the Public Domain.
 
--
-
 You might find additional information about this script at the
 [MusicBrainz forums](http://forums.musicbrainz.org/viewtopic.php?id=3444).
+
+
+Bugs:
+-----
 
 Please report bugs on
 [GitHub](https://github.com/JonnyJD/musicbrainz-isrcsubmit).
