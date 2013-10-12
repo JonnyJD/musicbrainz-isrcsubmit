@@ -4,6 +4,9 @@ version := 2.0.0-dev
 build:
 	./setup.py build
 
+check:
+	./setup.py test
+
 install:
 	./setup.py install
 
