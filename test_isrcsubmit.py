@@ -9,6 +9,12 @@ import unittest
 
 import isrcsubmit
 
+try:
+    from cStringIO import StringIO      # Python 2
+except ImportError:
+    from io import StringIO             # Python 3
+    # io is already present in Python 2.6, but works with unicode instead of str
+
 SCRIPT_NAME = "isrcsubmit.py"
 
 class TestInternal(unittest.TestCase):
@@ -62,7 +68,36 @@ class TestInternal(unittest.TestCase):
 
 
 class TestScript(unittest.TestCase):
-    pass
+    def setUp(self):
+        # gather output
+        self._old_stdout = sys.stdout
+        self._stdout = StringIO()
+        sys.stdout = self._stdout
+
+    def _output(self):
+        return self._stdout.getvalue()
+
+    def test_version(self):
+        try:
+            isrcsubmit.main([SCRIPT_NAME, "--version"])
+        except SystemExit:
+            pass
+        finally:
+            self.assertTrue(isrcsubmit.__version__ in self._output().strip())
+
+    def test_help(self):
+        try:
+            isrcsubmit.main([SCRIPT_NAME, "-h"])
+        except SystemExit:
+            pass
+        finally:
+            self.assertTrue(self._output().strip())
+
+    def tearDown(self):
+        # restore output
+        sys.stdout = self._old_stdout
+        self._stdout.close()
+
 
 
 class TestDisc(unittest.TestCase):
