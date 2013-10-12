@@ -9,6 +9,8 @@ import unittest
 
 import isrcsubmit
 
+SCRIPT_NAME = "isrcsubmit.py"
+
 class TestInternal(unittest.TestCase):
     def setUp(self):
         # suppress output
@@ -32,7 +34,7 @@ class TestInternal(unittest.TestCase):
 
     def test_gather_options(self):
         # make sure most important options always work
-        options = isrcsubmit.gather_options(["isrcsubmit.py"])
+        options = isrcsubmit.gather_options([SCRIPT_NAME])
         self.assertFalse(options.debug)
         self.assertTrue(options.backend)
         self.assertEqual(options.server, "musicbrainz.org")
@@ -42,14 +44,14 @@ class TestInternal(unittest.TestCase):
 
         user = "JonnyJD"
         device = "/some/other/device"
-        options = isrcsubmit.gather_options(["isrcsubmit.py", user, device])
+        options = isrcsubmit.gather_options([SCRIPT_NAME, user, device])
         self.assertEqual(options.user, user)
         self.assertEqual(options.device, device)
-        options = isrcsubmit.gather_options(["isrcsubmit.py",
-                                             "-u", user, "-d", device])
+        options = isrcsubmit.gather_options([SCRIPT_NAME,
+                                             "-d", device, "-u", user])
         self.assertEqual(options.user, user)
         self.assertEqual(options.device, device)
-        options = isrcsubmit.gather_options(["isrcsubmit.py", "--user", user,
+        options = isrcsubmit.gather_options([SCRIPT_NAME, "--user", user,
                                              "--device", device])
         self.assertEqual(options.user, user)
         self.assertEqual(options.device, device)
