@@ -73,6 +73,10 @@ try:
 except NameError:
     unicode_string = str
 
+# global variables
+options = None
+ws2 = None
+
 def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % __version__
 
@@ -975,13 +979,15 @@ def cleanup_isrcs(release, isrcs):
                 user_input("(press <return> when done with this ISRC) ")
 
 
-if __name__ == "__main__":
+def main(argv):
+    global options
+    global ws2
 
     print("%s" % script_version())
     print("using discid version %s" % discid.__version__)
 
     # global variables
-    options = gather_options(sys.argv)
+    options = gather_options(argv)
     ws2 = WebService2(options.user)
 
     disc = get_disc(options.device, options.backend)
@@ -1028,6 +1034,9 @@ if __name__ == "__main__":
     if update_intention:
         # the ISRCs are deemed correct, so we can use them to check others
         check_global_duplicates(disc.release, mb_tracks, isrcs)
+
+if __name__ == "__main__":
+    main(sys.argv)
 
 
 # vim:set shiftwidth=4 smarttab expandtab:
