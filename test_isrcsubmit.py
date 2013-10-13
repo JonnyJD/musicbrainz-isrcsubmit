@@ -141,11 +141,19 @@ def _read(device=None, features=[]):
 discid.read = _read
 
 
+class StdoutBuffer(TextIOWrapper):
+    def write(self, string):
+        try:
+            return super(StdoutBuffer, self).write(string)
+        except TypeError:
+            # redirect encoded byte strings directly to buffer
+            return super(StdoutBuffer, self).buffer.write(string)
+
 class TestScript(unittest.TestCase):
     def setUp(self):
         # gather output
         self._old_stdout = sys.stdout
-        self._stdout = TextIOWrapper(BytesIO(), sys.stdout.encoding)
+        self._stdout = StdoutBuffer(BytesIO(), sys.stdout.encoding)
         sys.stdout = self._stdout
 
     def _output(self):
