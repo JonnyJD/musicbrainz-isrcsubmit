@@ -211,20 +211,19 @@ def handle_question(string):
 
 class SmartStdin(TextIOWrapper):
     def write(self, string):
-        try:
-            return super(type(self), self).write(string)
-        except TypeError:
-            # redirect encoded byte strings directly to buffer
-            return super(type(self), self).buffer.write(string)
+        if type(string) == bytes:
+            string = string.decode()
+        return super(type(self), self).write(string)
 
 class SmartStdout(TextIOWrapper):
     def write(self, string):
         handle_question(string)
-        try:
-            return super(type(self), self).write(string)
-        except TypeError:
-            # redirect encoded byte strings directly to buffer
-            return super(type(self), self).buffer.write(string)
+        # using "except TypeError" and the buffer would be nice
+        # but exceptions don't seem to work here in Python 2.6
+        # additionally TexIOWrapper doesn't have "buffer" in 2.6
+        if type(string) == bytes:
+            string = string.decode()
+        return super(type(self), self).write(string)
 
 
 # the actual tests of the overall script
