@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+import sys
+import unittest
+from distutils.core import setup, Command
 from distutils.command.build import build
 
 from isrcsubmit import __version__
@@ -38,6 +40,46 @@ if using_sphinx:
     ]
 else:
     man_pages = []
+
+
+class Test(Command):
+    description = "run the test suite"
+    # options as listed with "--help test"
+    # --verbose --quiet -> self.verbose are already handles as global options
+    user_options = [
+            ("tests=", None,
+                "a comma separated list of tests to run (default all)")
+            ]
+
+    def initialize_options(self):
+        # set defaults
+        self.tests = None
+
+    def finalize_options(self):
+        if self.verbose:
+            self.verbosity = 2
+        else:
+            self.verbosity = 1
+        if self.tests is not None:
+            if self.tests:
+                self.names = self.tests.split(",")
+            else:
+                self.names = []
+        else:
+            self.names = ["test_isrcsubmit.TestInternal",
+                          "test_isrcsubmit.TestScript"]
+
+    def run(self):
+        suite = unittest.defaultTestLoader.loadTestsFromNames(self.names)
+        runner = unittest.TextTestRunner(verbosity=self.verbosity)
+        result = runner.run(suite)
+        if result.wasSuccessful():
+            sys.exit(0)
+        else:
+            sys.exit(len(result.failures) + len(result.errors))
+
+cmdclass["test"] = Test
+
 
 setup(name="isrcsubmit",
         version=__version__,
