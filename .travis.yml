@@ -5,9 +5,6 @@ python:
  - "3.2"
  - "3.3"
  - "pypy"
-before_install:
- - sudo apt-get update -qq
- - sudo apt-get install -qq python-libdiscid python3-libdiscid
 install: python setup.py build
 script: python setup.py test
 branches:
