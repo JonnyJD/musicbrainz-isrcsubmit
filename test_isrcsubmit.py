@@ -26,6 +26,7 @@ SCRIPT_NAME = "isrcsubmit.py"
 TEST_DATA = "test_data/"
 SAVE_RUN = False
 
+
 class TestInternal(unittest.TestCase):
     def setUp(self):
         # suppress output
@@ -76,25 +77,6 @@ class TestInternal(unittest.TestCase):
         os.dup2(self._old_stdout, 1)
 
 
-data_sent = {}
-mocked_disc_id = None
-
-class MockedTrack(object):
-    def __init__(self, track):
-        self.number = track.number
-        self.isrc = track.isrc
-
-class MockedDisc(object):
-    def __init__(self, disc):
-        self.id = disc.id
-        self.submission_url = disc.submission_url
-        self.mcn = disc.mcn
-        tracks = []
-        for track in disc.tracks:
-            tracks.append(MockedTrack(track))
-        self.tracks = tracks
-
-
 # mock musicbrainzngs queries
 # - - - - - - - - - - - - - -
 
@@ -140,6 +122,21 @@ musicbrainzngs.submit_isrcs = _submit_isrcs
 # mock discid reading
 # - - - - - - - - - -
 
+class MockedTrack(object):
+    def __init__(self, track):
+        self.number = track.number
+        self.isrc = track.isrc
+
+class MockedDisc(object):
+    def __init__(self, disc):
+        self.id = disc.id
+        self.submission_url = disc.submission_url
+        self.mcn = disc.mcn
+        tracks = []
+        for track in disc.tracks:
+            tracks.append(MockedTrack(track))
+        self.tracks = tracks
+
 # save discid functions
 _discid_read = discid.read
 
@@ -158,7 +155,9 @@ def _read(device=None, features=[]):
 
 discid.read = _read
 
-last_question = None
+
+# mock answers given by user
+# - - - - - - - - - - - - -
 
 def append_to_stdin(msg):
     position = sys.stdin.tell()
@@ -184,8 +183,10 @@ def handle_question(string):
     elif "password" in string:
         append_to_stdin("invalid_password\n")   # doesn't matter, mocked
     elif "Which one do you want?" in string:
-        #TODO: don't pick at random
-        append_to_stdin("1\n")
+        try:
+            append_to_stdin("%d\n" % answers["choice"])
+        except KeyError:
+            append_to_stdin("1\n")
     elif "press <return>" in string:
         append_to_stdin("\n")
 
@@ -201,8 +202,12 @@ def handle_question(string):
     if "[Y/n]" in string: question = True; default = True
 
     if question:
-        #TODO: don't just pick default, use last_question
-        answer_on_stdin(default, default)
+        try:
+            answer = answers[last_question]
+        except KeyError:
+            answer = default
+        answer_on_stdin(answer, default)
+
 
 class SmartStdin(TextIOWrapper):
     def write(self, string):
@@ -221,8 +226,19 @@ class SmartStdout(TextIOWrapper):
             # redirect encoded byte strings directly to buffer
             return super(type(self), self).buffer.write(string)
 
+
+# the actual tests of the overall script
+# - - - - - - - - - - - - - - - - - - -
+
 class TestScript(unittest.TestCase):
     def setUp(self):
+        global answers, data_sent, mocked_disc_id
+        global last_question
+
+        # make sure globals are unset
+        answers = data_sent = {}
+        mocked_disc_id = last_question = None
+
         # gather output
         self._old_stdout = sys.stdout
         self._stdout = SmartStdout(BytesIO(), sys.stdout.encoding)
@@ -234,6 +250,9 @@ class TestScript(unittest.TestCase):
     def _output(self):
         sys.stdout.seek(0)
         return sys.stdout.read()
+
+    def assert_output(self, string):
+        self.assertTrue(string in self._output().strip())
 
     def _debug(self):
         return sys.stderr.write(self._output())
@@ -257,12 +276,18 @@ class TestScript(unittest.TestCase):
     def test_libdiscid(self):
         global mocked_disc_id
         mocked_disc_id = "TqvKjMu7dMliSfmVEBtrL7sBSno-"
+        # we use defaults to questions -> no settings here
         try:
             isrcsubmit.main([SCRIPT_NAME, "--backend", "libdiscid"])
         except SystemExit:
             pass
         finally:
             self.assertTrue(isrcsubmit.__version__ in self._output().strip())
+            self.assert_output("TqvKjMu7dMliSfmVEBtrL7sBSno-")
+            self.assert_output("07090529-0fbf-4bd3-adc4-fe627343976d")
+            self.assert_output("submit the disc?")
+            self.assert_output("DEC680000220 is already attached to track 4")
+            self.assert_output("No new ISRCs")
 
     def tearDown(self):
         # restore output
