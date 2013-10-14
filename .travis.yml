@@ -5,7 +5,7 @@ python:
  - "3.2"
  - "3.3"
  - "pypy"
-install: python setup.py build
+install: pip install -q --use-mirrors discid musicbrainzngs
 script: python setup.py test
 branches:
   except:
