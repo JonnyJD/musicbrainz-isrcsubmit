@@ -158,9 +158,63 @@ def _read(device=None, features=[]):
 
 discid.read = _read
 
+last_question = None
 
-class SmartBuffer(TextIOWrapper):
+def append_to_stdin(msg):
+    position = sys.stdin.tell()
+    sys.stdin.write(msg)
+    sys.stdin.seek(position)
+
+def answer_on_stdin(answer, default=True):
+    if answer == default:
+        append_to_stdin("\n")
+    elif answer:
+        append_to_stdin("y\n")
+    else:
+        append_to_stdin("n\n")
+
+def handle_question(string):
+    global last_question
+    question = False
+    default = False
+
+    # these questions can be handled right now
+    if "username" in string:
+        append_to_stdin("invalid_username\n")   # doesn't matter, mocked
+    elif "password" in string:
+        append_to_stdin("invalid_password\n")   # doesn't matter, mocked
+    elif "Which one do you want?" in string:
+        #TODO: don't pick at random
+        append_to_stdin("1\n")
+    elif "press <return>" in string:
+        append_to_stdin("\n")
+
+    # these questions use multiple writes
+    if "submit" in string and "disc" in string:
+        last_question = "submit_disc"
+    elif "help clean" in string:
+        last_question = "clean"
+    elif "ISRC in browser" in string:
+        last_question = "open_isrc"
+    # question and prompt can be on different writes
+    if "[y/N]" in string: question = True; default = False
+    if "[Y/n]" in string: question = True; default = True
+
+    if question:
+        #TODO: don't just pick default, use last_question
+        answer_on_stdin(default, default)
+
+class SmartStdin(TextIOWrapper):
     def write(self, string):
+        try:
+            return super(type(self), self).write(string)
+        except TypeError:
+            # redirect encoded byte strings directly to buffer
+            return super(type(self), self).buffer.write(string)
+
+class SmartStdout(TextIOWrapper):
+    def write(self, string):
+        handle_question(string)
         try:
             return super(type(self), self).write(string)
         except TypeError:
@@ -171,19 +225,15 @@ class TestScript(unittest.TestCase):
     def setUp(self):
         # gather output
         self._old_stdout = sys.stdout
-        self._stdout = SmartBuffer(BytesIO(), sys.stdout.encoding)
+        self._stdout = SmartStdout(BytesIO(), sys.stdout.encoding)
         sys.stdout = self._stdout
         self._old_stdin = sys.stdin
-        self._stdin = SmartBuffer(BytesIO(), sys.stdin.encoding)
+        self._stdin = SmartStdin(BytesIO(), sys.stdin.encoding)
         sys.stdin = self._stdin
 
-    def _input(self, msg):
-        self._stdin.write(msg)
-        self._stdin.seek(0)
-
     def _output(self):
-        self._stdout.seek(0)
-        return self._stdout.read()
+        sys.stdout.seek(0)
+        return sys.stdout.read()
 
     def _debug(self):
         return sys.stderr.write(self._output())
@@ -207,7 +257,6 @@ class TestScript(unittest.TestCase):
     def test_libdiscid(self):
         global mocked_disc_id
         mocked_disc_id = "TqvKjMu7dMliSfmVEBtrL7sBSno-"
-        self._input("\n")
         try:
             isrcsubmit.main([SCRIPT_NAME, "--backend", "libdiscid"])
         except SystemExit:
