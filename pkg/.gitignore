@@ -2,3 +2,8 @@ old
 *.py
 *.zip
 *.tar.gz
+discid-*/
+libdiscid-*/
+musicbrainzngs-*/
+isrcsubmit/
+mediatools/

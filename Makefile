@@ -13,4 +13,7 @@ version:
 	sed -i -e 's/\(__version__\s=\s"\)[0-9.]\+[0-9a-z.-]*/\1$(version)/' \
 		isrcsubmit.py
 
+clean:
+	rm -f *.pyc
+
 .PHONY: build install version
