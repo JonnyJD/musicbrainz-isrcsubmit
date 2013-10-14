@@ -141,20 +141,27 @@ def _read(device=None, features=[]):
 discid.read = _read
 
 
-class StdoutBuffer(TextIOWrapper):
+class SmartBuffer(TextIOWrapper):
     def write(self, string):
         try:
-            return super(StdoutBuffer, self).write(string)
+            return super(type(self), self).write(string)
         except TypeError:
             # redirect encoded byte strings directly to buffer
-            return super(StdoutBuffer, self).buffer.write(string)
+            return super(type(self), self).buffer.write(string)
 
 class TestScript(unittest.TestCase):
     def setUp(self):
         # gather output
         self._old_stdout = sys.stdout
-        self._stdout = StdoutBuffer(BytesIO(), sys.stdout.encoding)
+        self._stdout = SmartBuffer(BytesIO(), sys.stdout.encoding)
         sys.stdout = self._stdout
+        self._old_stdin = sys.stdin
+        self._stdin = SmartBuffer(BytesIO(), sys.stdin.encoding)
+        sys.stdin = self._stdin
+
+    def _input(self, msg):
+        self._stdin.write(msg)
+        self._stdin.seek(0)
 
     def _output(self):
         self._stdout.seek(0)
@@ -182,6 +189,7 @@ class TestScript(unittest.TestCase):
     def test_read(self):
         global mocked_disc
         mocked_disc = Mocked_Disc("id zeug", "064811650", [])
+        self._input("\n")
         try:
             isrcsubmit.main([SCRIPT_NAME])
         except SystemExit:
@@ -193,6 +201,7 @@ class TestScript(unittest.TestCase):
         # restore output
         sys.stdout = self._old_stdout
         self._stdout.close()
+        sys.stdin = self._old_stdin
 
 
 
