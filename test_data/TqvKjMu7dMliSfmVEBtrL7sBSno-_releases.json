@@ -1,0 +1,587 @@
+{
+  "disc": {
+    "id": "TqvKjMu7dMliSfmVEBtrL7sBSno-", 
+    "sectors": "258725", 
+    "release-list": [
+      {
+        "id": "07090529-0fbf-4bd3-adc4-fe627343976d", 
+        "asin": "B00004STZ8", 
+        "date": "2000-05-02", 
+        "text-representation": {
+          "script": "Latn", 
+          "language": "eng"
+        }, 
+        "status": "Official", 
+        "country": "DE", 
+        "quality": "normal", 
+        "artist-credit-phrase": "Guano Apes", 
+        "title": "Don\u2019t Give Me Names", 
+        "barcode": "743217522421", 
+        "label-info-list": [
+          {
+            "label": {
+              "id": "29d7c88f-5200-4418-a683-5c94ea032e38", 
+              "disambiguation": "Bertelsmann Music Group", 
+              "name": "BMG", 
+              "sort-name": "BMG", 
+              "label-code": "116"
+            }, 
+            "catalog-number": "74321 75224 2"
+          }, 
+          {
+            "label": {
+              "id": "da631842-b2b2-4b65-a526-592f1b776c18", 
+              "disambiguation": "German rock, subsidiary of GUN Records", 
+              "name": "Supersonic Records", 
+              "sort-name": "Supersonic Records", 
+              "label-code": "1892"
+            }, 
+            "catalog-number": "SUPERSONIC 051"
+          }
+        ], 
+        "artist-credit": [
+          {
+            "artist": {
+              "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+              "name": "Guano Apes", 
+              "sort-name": "Guano Apes"
+            }
+          }
+        ], 
+        "medium-list": [
+          {
+            "track-list": [
+              {
+                "track_or_recording_length": "231466", 
+                "position": "1", 
+                "recording": {
+                  "id": "95042c0a-5b64-4f61-ba75-2a1be26466d3", 
+                  "isrc-list": [
+                    "DEC680000212"
+                  ], 
+                  "title": "Innocent Greed", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "231466", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "231466", 
+                "number": "1", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "210200", 
+                "position": "2", 
+                "recording": {
+                  "id": "f987b1c3-fc48-4466-9323-3bdcff6cba24", 
+                  "isrc-list": [
+                    "DEC680000218"
+                  ], 
+                  "title": "No Speech", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "210200", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "210200", 
+                "number": "2", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "168466", 
+                "position": "3", 
+                "recording": {
+                  "id": "be817c76-e7eb-44f8-9ad1-733725040674", 
+                  "isrc-list": [
+                    "DEC680000202"
+                  ], 
+                  "title": "Big in Japan", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "168466", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "168466", 
+                "number": "3", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "158600", 
+                "position": "4", 
+                "recording": {
+                  "id": "26a688d6-e7f1-419e-9528-7581f36bf776", 
+                  "isrc-list": [
+                    "DEC680000220"
+                  ], 
+                  "title": "Money & Milk", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "158600", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "158600", 
+                "number": "4", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "273400", 
+                "position": "5", 
+                "recording": {
+                  "id": "8664d10b-72e6-436d-bbeb-b9926cdc97c2", 
+                  "isrc-list": [
+                    "DEC680000221"
+                  ], 
+                  "title": "Living in a Lie", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "273400", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "273400", 
+                "number": "5", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "217866", 
+                "position": "6", 
+                "recording": {
+                  "id": "37d0fabb-b4dd-4d8f-910c-d8e780fa2c74", 
+                  "isrc-list": [
+                    "DEC680000223"
+                  ], 
+                  "title": "D\u00f6del Up", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "217866", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "217866", 
+                "number": "6", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "199066", 
+                "position": "7", 
+                "recording": {
+                  "id": "99e70ae0-89a3-42d6-9687-ad78f61b720d", 
+                  "isrc-list": [
+                    "DEC680000204"
+                  ], 
+                  "title": "I Want It", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "199066", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "199066", 
+                "number": "7", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "299066", 
+                "position": "8", 
+                "recording": {
+                  "id": "1f8e3771-a70c-470d-a887-d5bb96a94dde", 
+                  "isrc-list": [
+                    "DEC680000222"
+                  ], 
+                  "title": "Heaven", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "299066", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "299066", 
+                "number": "8", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "228666", 
+                "position": "9", 
+                "recording": {
+                  "id": "e51130d5-2151-4eb6-b874-b6334ad839e2", 
+                  "isrc-list": [
+                    "DEC680000224"
+                  ], 
+                  "title": "Mine All Mine", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "228666", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "228666", 
+                "number": "9", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "212733", 
+                "position": "10", 
+                "recording": {
+                  "id": "f4db8da8-62fd-43ea-872a-55a40efd583e", 
+                  "isrc-list": [
+                    "DEC680000225"
+                  ], 
+                  "title": "Too Close to Leave", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "212733", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "212733", 
+                "number": "10", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "167933", 
+                "position": "11", 
+                "recording": {
+                  "id": "218dc3ad-2c7f-40b5-b912-887928c46810", 
+                  "isrc-list": [
+                    "DEC680000203"
+                  ], 
+                  "title": "Gogan", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "167933", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "167933", 
+                "number": "11", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "341533", 
+                "position": "12", 
+                "recording": {
+                  "id": "59186c4a-9463-4cfb-9a3d-3e161e9c65a6", 
+                  "isrc-list": [
+                    "DEC680000227"
+                  ], 
+                  "title": "Anne Claire", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "341533", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "341533", 
+                "number": "12", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "163066", 
+                "position": "13", 
+                "recording": {
+                  "id": "8bcda8b6-9724-4d90-abbf-c4103d1f3b85", 
+                  "isrc-list": [
+                    "DEC680000226"
+                  ], 
+                  "title": "Ain\u2019t Got Time", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "163066", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "163066", 
+                "number": "13", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "267133", 
+                "position": "14", 
+                "recording": {
+                  "id": "375537ed-4ad6-4d55-906a-7ff423823234", 
+                  "isrc-list": [
+                    "DEC680000376"
+                  ], 
+                  "title": "Living in a Lie (unplugged)", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "267133", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "267133", 
+                "number": "14", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }, 
+              {
+                "track_or_recording_length": "310466", 
+                "position": "15", 
+                "recording": {
+                  "id": "680d7037-1cab-403c-88a6-36e93d82fded", 
+                  "isrc-list": [
+                    "DEC680000377"
+                  ], 
+                  "title": "Anne Claire (unplugged)", 
+                  "artist-credit-phrase": "Guano Apes", 
+                  "length": "310466", 
+                  "artist-credit": [
+                    {
+                      "artist": {
+                        "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                        "name": "Guano Apes", 
+                        "sort-name": "Guano Apes"
+                      }
+                    }
+                  ]
+                }, 
+                "artist-credit-phrase": "Guano Apes", 
+                "length": "310466", 
+                "number": "15", 
+                "artist-credit": [
+                  {
+                    "artist": {
+                      "id": "66da25f9-1534-4dd1-b88c-718bc24e1ccd", 
+                      "name": "Guano Apes", 
+                      "sort-name": "Guano Apes"
+                    }
+                  }
+                ]
+              }
+            ], 
+            "format": "CD", 
+            "position": "1", 
+            "disc-list": [
+              {
+                "id": "4QErGPmWoXZEA8ztu4.c2aApaUA-", 
+                "sectors": "260165"
+              }, 
+              {
+                "id": "TqvKjMu7dMliSfmVEBtrL7sBSno-", 
+                "sectors": "258725"
+              }, 
+              {
+                "id": "V_X6KyyJXpCGI6KuicNFrBuko08-", 
+                "sectors": "258875"
+              }
+            ]
+          }
+        ], 
+        "packaging": "Digipak"
+      }
+    ]
+  }
+}
