@@ -313,6 +313,7 @@ def has_program(program, strict=False):
 def find_backend():
     """search for an available backend
     """
+    backend = None
     for prog in BACKENDS:
         if has_program(prog):
             backend = prog

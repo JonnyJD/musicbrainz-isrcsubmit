@@ -155,6 +155,18 @@ def _read(device=None, features=[]):
 
 discid.read = _read
 
+_isrcsubmit_has_program = isrcsubmit.has_program
+
+def _has_program(program, strict=False):
+    if program == "libdiscid":
+        # we mock it anyways
+        # libdiscid >= 0.2.2 still needed to load discid
+        return True
+    else:
+        return _isrcsubmit_has_program(program, strict)
+
+isrcsubmit.has_program = _has_program
+
 
 # mock answers given by user
 # - - - - - - - - - - - - -
