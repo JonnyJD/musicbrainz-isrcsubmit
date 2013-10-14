@@ -5,6 +5,8 @@
 import os
 import sys
 import math
+import json
+import pickle
 import unittest
 from io import TextIOWrapper, BytesIO
 
@@ -21,6 +23,8 @@ except ImportError:
     from libdiscid.compat.discid import DiscError
 
 SCRIPT_NAME = "isrcsubmit.py"
+TEST_DATA = "test_data/"
+SAVE_RUN = False
 
 class TestInternal(unittest.TestCase):
     def setUp(self):
@@ -72,15 +76,22 @@ class TestInternal(unittest.TestCase):
         os.dup2(self._old_stdout, 1)
 
 
-TEST_DATA = "test_data/"
-save_run = True
 data_sent = {}
-mocked_disc = None
+mocked_disc_id = None
 
-class Mocked_Disc(object):
-    def __init__(self, id, mcn, tracks):
-        self.id = id
-        self.mcn = mcn
+class MockedTrack(object):
+    def __init__(self, track):
+        self.number = track.number
+        self.isrc = track.isrc
+
+class MockedDisc(object):
+    def __init__(self, disc):
+        self.id = disc.id
+        self.submission_url = disc.submission_url
+        self.mcn = disc.mcn
+        tracks = []
+        for track in disc.tracks:
+            tracks.append(MockedTrack(track))
         self.tracks = tracks
 
 
@@ -93,28 +104,28 @@ _mbngs_get_release_by_id = musicbrainzngs.get_release_by_id
 _mbngs_submit_isrcs = musicbrainzngs.submit_isrcs
 
 def _get_releases_by_discid(disc_id, includes=[]):
-    file_name = "%s%s_releases.py" % (TEST_DATA, disc_id)
-    if save_run:
+    file_name = "%s%s_releases.json" % (TEST_DATA, disc_id)
+    if SAVE_RUN:
         releases = _mbngs_get_releases_by_discid(disc_id, includes)
         with open(file_name, "w") as releases_file:
-            releases_file.write(repr(releases))
+            json.dump(releases, releases_file, indent=2)
         return releases
     else:
         with open(file_name, "r") as releases_file:
-            return releases_file.read()
+            return json.load(releases_file)
 
 musicbrainzngs.get_releases_by_discid = _get_releases_by_discid
 
 def _get_release_by_id(release_id, includes=[]):
-    file_name = "%s%s.py" % (TEST_DATA, release_id)
-    if save_run:
+    file_name = "%s%s.json" % (TEST_DATA, release_id)
+    if SAVE_RUN:
         release = _mbngs_get_release_by_id(release_id, includes)
         with open(file_name, "w") as release_file:
-            releases_file.write(repr(release))
+            json.dump(release, releases_file, indent=2)
         return releases
     else:
         with open(file_name, "r") as release_file:
-            return release_file.read()
+            return json.load(release_file)
 
 musicbrainzngs.get_release_by_id = _get_release_by_id
 
@@ -133,10 +144,17 @@ musicbrainzngs.submit_isrcs = _submit_isrcs
 _discid_read = discid.read
 
 def _read(device=None, features=[]):
-    if save_run:
-        return _discid_read(device, features)
+    if SAVE_RUN:
+        # always read all features to save full libdiscid information
+        disc = _discid_read(device, ["read", "mcn", "isrc"])
+        file_name = "%s%s.pickle" % (TEST_DATA, disc.id)
+        with open(file_name, "wb") as disc_file:
+            pickle.dump(MockedDisc(disc), disc_file, 2)
+        return disc
     else:
-        return mocked_disc
+        file_name = "%s%s.pickle" % (TEST_DATA, mocked_disc_id)
+        with open(file_name, "rb") as disc_file:
+            return pickle.load(disc_file)
 
 discid.read = _read
 
@@ -186,12 +204,12 @@ class TestScript(unittest.TestCase):
         finally:
             self.assertTrue(self._output().strip())
 
-    def test_read(self):
-        global mocked_disc
-        mocked_disc = Mocked_Disc("id zeug", "064811650", [])
+    def test_libdiscid(self):
+        global mocked_disc_id
+        mocked_disc_id = "TqvKjMu7dMliSfmVEBtrL7sBSno-"
         self._input("\n")
         try:
-            isrcsubmit.main([SCRIPT_NAME])
+            isrcsubmit.main([SCRIPT_NAME, "--backend", "libdiscid"])
         except SystemExit:
             pass
         finally:
