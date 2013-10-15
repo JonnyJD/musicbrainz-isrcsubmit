@@ -3,12 +3,14 @@
 # This test is free. You can redistribute and/or modify it at will.
 
 import os
+import re
 import sys
 import math
 import json
 import pickle
 import unittest
 from io import TextIOWrapper, BytesIO
+from subprocess import Popen
 
 import discid
 import musicbrainzngs
@@ -155,17 +157,61 @@ def _read(device=None, features=[]):
 
 discid.read = _read
 
+
+# mock cdrdao reading
+# - - - - - - - - - -
+
+class _Popen(Popen):
+    def __new__(cls, args, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr):
+        if args[0] == "cdrdao":
+            file_name = "%s%s_cdrdao.toc" % (TEST_DATA, mocked_disc_id)
+            if SAVE_RUN:
+                # save file to a different place
+                args[-1] = file_name
+                # delete file so cdrdao doesn't complain it's already there
+                os.remove(file_name)
+            else:
+                # don't actually call cdrdao
+                args = ["echo", "mocked cdrdao"]
+        return Popen(args, stdin=stdin, stdout=stdout, stderr=stderr)
+
+isrcsubmit.Popen = _Popen
+
+def _open(name, mode):
+    if re.search("cdrdao-.*\.toc", name):
+        name = "%s%s_cdrdao.toc" % (TEST_DATA, mocked_disc_id)
+    return open(name, mode)
+
+isrcsubmit.open = _open
+
+# general mocking
+# - - - - - - - -
+
 _isrcsubmit_has_program = isrcsubmit.has_program
+_isrcsubmit_get_prog_version = isrcsubmit.get_prog_version
 
 def _has_program(program, strict=False):
     if program == "libdiscid":
         # we mock it anyways
         # libdiscid >= 0.2.2 still needed to load discid
         return True
+    elif program == "cdrdao":
+        # also mocked
+        return True
     else:
         return _isrcsubmit_has_program(program, strict)
 
+def _get_prog_version(prog):
+    if prog == "libdiscid":
+        version = "mocked libdiscid"
+    elif prog == "cdrdao":
+        version = "mocked cdrdao"
+    else:
+        return _isrcsubmit_get_prog_version(prog)
+    return isrcsubmit.decode(version)
+
 isrcsubmit.has_program = _has_program
+isrcsubmit.get_prog_version = _get_prog_version
 
 
 # mock answers given by user
@@ -294,10 +340,28 @@ class TestScript(unittest.TestCase):
             pass
         finally:
             self.assertTrue(isrcsubmit.__version__ in self._output().strip())
+            self.assert_output("mocked libdiscid")
             self.assert_output("TqvKjMu7dMliSfmVEBtrL7sBSno-")
             self.assert_output("07090529-0fbf-4bd3-adc4-fe627343976d")
             self.assert_output("submit the disc?")
             self.assert_output("DEC680000220 is already attached to track 4")
+            self.assert_output("No new ISRCs")
+
+    def test_cdrdao(self):
+        global mocked_disc_id
+        mocked_disc_id = "hSI7B4G4AkB5.DEBcW.3KCn.D_E-"
+        answers["choice"] = 1
+        try:
+            isrcsubmit.main([SCRIPT_NAME, "--backend", "cdrdao", "--device", "/dev/cdrw"])
+        except SystemExit:
+            pass
+        finally:
+            self.assertTrue(isrcsubmit.__version__ in self._output().strip())
+            self.assert_output("mocked cdrdao")
+            self.assert_output("hSI7B4G4AkB5.DEBcW.3KCn.D_E-")
+            self.assert_output("none of these")
+            self.assert_output("174a5513-73d1-3c9d-a316-3c1c179e35f8")
+            self.assert_output("GBBBN7902023 is already attached to track 7")
             self.assert_output("No new ISRCs")
 
     def tearDown(self):

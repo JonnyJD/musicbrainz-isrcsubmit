@@ -3,3 +3,7 @@ musicbrainz2
 *.exe
 *.dll
 *.dylib
+/*.cue
+/*.toc
+*.pyc
+.tox
