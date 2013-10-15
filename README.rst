@@ -112,6 +112,8 @@ directory as this script or adjust the python path.
 You also need to put discid.dll (Windows) and libdiscid.dylib.0 (Mac)
 into this location or in the PATH.
 
+.. _pypi: https://pypi.python.org/pypi
+
 
 Additional information:
 -----------------------
