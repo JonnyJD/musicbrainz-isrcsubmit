@@ -1,0 +1,6 @@
+include README.md AUTHORS CHANGES.markdown COPYING
+include isrcsubmit.bat isrcsubmit.sh test_isrcsubmit.py
+include Makefile MANIFEST.in tox.ini
+recursive-include test_data *.toc *.pickle *.json
+recursive-include doc *.rst conf.py
+exclude setup.cfg
