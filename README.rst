@@ -89,8 +89,15 @@ If you downloaded isrcsubmit as a zip package for your platform
 then you only need to extract that somewhere and start using it.
 You can also stop reading this section.
 
+You can install using pypi_ with::
+
+    pip install isrcsubmit
+
+This handles all python dependencies, but you still need to
+install libdiscid (before running pip).
+
 The script itself does not need any installation,
-but "python2 setup.py install" might work for you.
+but "python setup.py install" might work for you.
 However, the backends and libraries should get
 installed so that the script has access to them.
 
@@ -100,8 +107,10 @@ For Ubuntu all dependencies should be in the MusicBrainz Stable PPA,
 if not in the official repositories.
 
 On Windows and Mac you have to put the musicbrainzngs folder of
-python-musicbrainzngs in the same directory as this script or
-adjust the python path.
+python-musicbrainzngs, discid of python-discid in the same
+directory as this script or adjust the python path.
+You also need to put discid.dll (Windows) and libdiscid.dylib.0 (Mac)
+into this location or in the PATH.
 
 
 Additional information:
