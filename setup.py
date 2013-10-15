@@ -42,7 +42,7 @@ else:
 setup(name="isrcsubmit",
         version=__version__,
         description="submit ISRCs from disc to MusicBrainz",
-        long_description=open("README.md").read(),
+        long_description=open("README.rst").read(),
         author="Johannes Dewender",
         author_email="brainz@JonnyJD.net",
         url="https://github.com/JonnyJD/musicbrainz-isrcsubmit",
