@@ -52,9 +52,6 @@ if have_setuptools:
     args["install_requires"] = ["discid >=1.0.0", "musicbrainzngs >=0.4"],
     # we load isrcsubmit on setup
     args["setup_requires"] = args["install_requires"],
-else:
-    pass
-    #args["requires"] = ["discid(>=1.0.0)", "musicbrainzngs(>=0.4)"]
 
 class Test(Command):
     description = "run the test suite"
@@ -116,6 +113,9 @@ setup(name="isrcsubmit",
             "Programming Language :: Python :: 2.6",
             "Programming Language :: Python :: 2.7",
             "Programming Language :: Python :: 3",
+            "Programming Language :: Python :: 3.1",
+            "Programming Language :: Python :: 3.2",
+            "Programming Language :: Python :: 3.3",
             "Topic :: Database :: Front-Ends",
             "Topic :: Multimedia :: Sound/Audio :: CD Audio :: CD Ripping",
             "Topic :: Text Processing :: Filters"
