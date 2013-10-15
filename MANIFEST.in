@@ -1,0 +1,5 @@
+include README.md AUTHORS CHANGES.markdown COPYING
+include isrcsubmit.bat isrcsubmit.sh
+include Makefile MANIFEST.in
+recursive-include doc *.rst conf.py
+exclude setup.cfg
