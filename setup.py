@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+import sys
+import unittest
+try:
+    from setuptools import setup, Command
+    have_setuptools = True
+except ImportError:
+    from distutils.core import setup, Command
+    have_setuptools = False
 from distutils.command.build import build
 
 from isrcsubmit import __version__
@@ -39,6 +46,16 @@ if using_sphinx:
 else:
     man_pages = []
 
+
+args = {}
+if have_setuptools:
+    args["install_requires"] = ["discid >=1.0.0", "musicbrainzngs >=0.4"],
+    # we load isrcsubmit on setup
+    args["setup_requires"] = args["install_requires"],
+else:
+    pass
+    #args["requires"] = ["discid(>=1.0.0)", "musicbrainzngs(>=0.4)"]
+
 setup(name="isrcsubmit",
         version=__version__,
         description="submit ISRCs from disc to MusicBrainz",
@@ -46,6 +63,7 @@ setup(name="isrcsubmit",
         author="Johannes Dewender",
         author_email="brainz@JonnyJD.net",
         url="https://github.com/JonnyJD/musicbrainz-isrcsubmit",
+        requires=["discid(>=1.0.0)", "musicbrainzngs(>=0.4)"],
         scripts=["isrcsubmit.py"],
         license="GPLv3+",
         classifiers=[
@@ -64,7 +82,8 @@ setup(name="isrcsubmit",
             "Topic :: Text Processing :: Filters"
             ],
         data_files=man_pages,
-        cmdclass=cmdclass
+        cmdclass=cmdclass,
+        **args
         )
 
 # vim:set shiftwidth=4 smarttab expandtab:
