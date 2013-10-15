@@ -1,21 +1,19 @@
 Isrcsubmit 2.0.0-dev for MusicBrainz
-================================
-(Linux/Mac OS X/Windows)
-------------------------
+====================================
 
-This python script extracts [ISRCs][11] from audio CDs
-and submits them to [MusicBrainz][12].
+This python script extracts ISRCs_ from audio CDs
+and submits them to MusicBrainz_.
 
 This script uses python-musicbrainzngs to access the MusicBrainz API
 and python-discid to create an identifier for the disc.
 
 The script works for Linux, Mac OS X and Windows.
 
-[11]: http://en.wikipedia.org/wiki/International_Standard_Recording_Code
-[12]: http://musicbrainz.org
+.. _ISRCs: http://en.wikipedia.org/wiki/International_Standard_Recording_Code
+.. _MusicBrainz: http://musicbrainz.org
 
 Features:
---------
+---------
 
 * read ISRCs from disc
 * search for releases with the TOC of the disc
@@ -29,25 +27,45 @@ Dependencies:
 -------------
 
 * Python 2 >= 2.6 or Python 3 >= 3.1
-* [python-discid][21] >= 1.0.0 (or [python-libdiscid][22] >= 0.2.0)
-* [python-musicbrainzngs][23] >= 0.4
+* python-discid_ >= 1.0.0 (or python-libdiscid_ >= 0.2.0)
+* python-musicbrainzngs_ >= 0.4
 
-[21]: http://python-discid.readthedocs.org/
-[22]: http://pythonhosted.org/python-libdiscid
-[23]: http://python-musicbrainzngs.readthedocs.org/
+.. _python-discid: http://python-discid.readthedocs.org/
+.. _python-libdiscid: http://pythonhosted.org/python-libdiscid
+.. _python-musicbrainzngs: http://python-musicbrainzngs.readthedocs.org/
 
 
 Usage:
 ------
+::
 
     isrcsubmit.py [options] [username] [device]
 
-for detailed usage see:
+All arguments are optional. For detailed usage see::
 
     isrcsubmit.py -h
 
-Mac users should rather use **isrcsubmit.sh**, which also works on Linux.
-Windows users should use **isrcsubmit.bat**.
+
+Windows Usage:
+--------------
+
+Windows users should use::
+
+    isrcsubmit.bat
+
+
+Mac Usage:
+----------
+
+Mac users should rather use::
+
+    isrcsubmit.sh
+
+This also works on Linux.
+
+
+Duplicate ISRCs:
+----------------
 
 Some cd readers report the same ISRCs for different (adjacent) tracks.
 Others don't, for the same physical disc.
@@ -96,14 +114,17 @@ The core of the MusicBrainz dataset including the ISRC contributions is placed
 into the Public Domain.
 
 You might find additional information about this script at the
-[MusicBrainz forums](http://forums.musicbrainz.org/viewtopic.php?id=3444).
+`MusicBrainz forums`_.
+
+.. _MusicBrainz forums: http://forums.musicbrainz.org/viewtopic.php?id=3444
 
 
 Bugs:
 -----
 
-Please report bugs on
-[GitHub](https://github.com/JonnyJD/musicbrainz-isrcsubmit).
+Please report bugs on GitHub_.
+
+.. _GitHub: https://github.com/JonnyJD/musicbrainz-isrcsubmit
 
 
 License:
