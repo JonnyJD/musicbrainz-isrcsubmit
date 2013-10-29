@@ -58,7 +58,6 @@ from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
 try:
     import keyring
-    import keyring.errors
 except ImportError:
     keyring = None
 
@@ -527,6 +526,7 @@ class WebService2():
 
     def __init__(self, username=None):
         self.auth = False
+        self.keyring_failed = False
         self.username = username
         musicbrainzngs.set_hostname(options.server)
         musicbrainzngs.set_useragent(AGENT_NAME, __version__,
@@ -544,7 +544,7 @@ class WebService2():
                 print("(aborted)")
                 sys.exit(1)
             password = None
-            if keyring is not None:
+            if keyring is not None and not self.keyring_failed:
                 password = keyring.get_password(options.server, self.username)
             if password is None:
                 password = getpass.getpass(
@@ -552,6 +552,7 @@ class WebService2():
             print("")
             musicbrainzngs.auth(self.username, password)
             self.auth = True
+            self.keyring_failed = False
             if keyring is not None:
                 keyring.set_password(options.server, self.username, password)
 
@@ -592,12 +593,8 @@ class WebService2():
             except AuthenticationError as err:
                 print_error("Invalid credentials: %s" % err)
                 self.auth = False
+                self.keyring_failed = True
                 self.username = None
-                if keyring is not None:
-                    try:
-                        keyring.delete_password(options.server, self.username)
-                    except keyring.errors.PasswordDeleteError:
-                        pass
                 continue
             except WebServiceError as err:
                 print_error("Couldn't send ISRCs: %s" % err)
