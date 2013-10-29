@@ -58,6 +58,7 @@ from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
 try:
     import keyring
+    import keyring.errors
 except ImportError:
     keyring = None
 
@@ -593,7 +594,10 @@ class WebService2():
                 self.auth = False
                 self.username = None
                 if keyring is not None:
-                    keyring.delete_password(options.server, self.username)
+                    try:
+                        keyring.delete_password(options.server, self.username)
+                    except keyring.errors.PasswordDeleteError:
+                        pass
                 continue
             except WebServiceError as err:
                 print_error("Couldn't send ISRCs: %s" % err)
