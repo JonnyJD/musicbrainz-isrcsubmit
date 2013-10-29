@@ -56,6 +56,11 @@ except ImportError:
 import musicbrainzngs
 from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
+try:
+    import keyring
+except ImportError:
+    keyring = None
+
 if os.name == "nt":
     SHELLNAME = "isrcsubmit.bat"
 else:
@@ -537,11 +542,17 @@ class WebService2():
             if len(self.username) == 0:
                 print("(aborted)")
                 sys.exit(1)
-            password = getpass.getpass(
+            password = None
+            if keyring is not None:
+                password = keyring.get_password(options.server, self.username)
+            if password is None:
+                password = getpass.getpass(
                                     "Please input your MusicBrainz password: ")
             print("")
             musicbrainzngs.auth(self.username, password)
             self.auth = True
+            if keyring is not None:
+                keyring.set_password(options.server, self.username, password)
 
     def get_releases_by_discid(self, disc_id, includes=[]):
         try:
@@ -581,6 +592,8 @@ class WebService2():
                 print_error("Invalid credentials: %s" % err)
                 self.auth = False
                 self.username = None
+                if keyring is not None:
+                    keyring.delete_password(options.server, self.username)
                 continue
             except WebServiceError as err:
                 print_error("Couldn't send ISRCs: %s" % err)
