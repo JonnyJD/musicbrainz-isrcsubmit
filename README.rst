@@ -29,10 +29,12 @@ Dependencies:
 * Python 2 >= 2.6 or Python 3 >= 3.1
 * python-discid_ >= 1.0.0 (or python-libdiscid_ >= 0.2.0)
 * python-musicbrainzngs_ >= 0.4
+* keyring_ (optional)
 
 .. _python-discid: http://python-discid.readthedocs.org/
 .. _python-libdiscid: http://pythonhosted.org/python-libdiscid
 .. _python-musicbrainzngs: http://python-musicbrainzngs.readthedocs.org/
+.. _keyring: https://bitbucket.org/kang/python-keyring-lib
 
 
 Usage:
