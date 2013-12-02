@@ -256,6 +256,11 @@ def gather_options(argv):
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
+    parser.add_option("--keyring", action="store_true", dest="keyring",
+            help="Use keyring if available.")
+    parser.add_option("--no-keyring", action="store_false", dest="keyring",
+            help="Disable keyring.")
+    parser.set_defaults(keyring=config.getboolean("general", "keyring"))
     # propagate non-empty values from the config file as defaults to
     # OptionsParser
     if config.get("general", "backend"):
@@ -603,7 +608,7 @@ class WebService2():
                 print("(aborted)")
                 sys.exit(1)
             password = None
-            if keyring is not None and not self.keyring_failed:
+            if keyring is not None and options.keyring and not self.keyring_failed:
                 password = keyring.get_password(options.server, self.username)
             if password is None:
                 password = getpass.getpass(
@@ -612,7 +617,7 @@ class WebService2():
             musicbrainzngs.auth(self.username, password)
             self.auth = True
             self.keyring_failed = False
-            if keyring is not None:
+            if keyring is not None and options.keyring:
                 keyring.set_password(options.server, self.username, password)
 
     def get_releases_by_discid(self, disc_id, includes=[]):

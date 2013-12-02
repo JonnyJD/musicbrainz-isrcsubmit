@@ -33,6 +33,10 @@ device
 ^^^^^^
 CD device with a loaded audio CD.
 
+keyring
+^^^^^^^
+Use keyring if it is available.
+
 
 musicbrainz
 -----------
