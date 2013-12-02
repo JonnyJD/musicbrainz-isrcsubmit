@@ -61,6 +61,11 @@ try:
 except ImportError:
     keyring = None
 
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser
+
 if os.name == "nt":
     SHELLNAME = "isrcsubmit.bat"
 else:
@@ -163,6 +168,33 @@ class OwnTrack(Track):
     """A track found on an analyzed (own) disc"""
     pass
 
+def get_config_home():
+    """Returns the base directory for isrcsubmit's configuration files."""
+
+    if os.name == "nt":
+        default_location = os.environ.get("APPDATA")
+    else:
+        default_location = os.path.expanduser("~/.config")
+
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME", default_location)
+    return os.path.join(xdg_config_home, "isrcsubmit")
+
+def config_path():
+    """Returns isrsubmit's config file location."""
+
+    return os.path.join(get_config_home(), "config")
+
+def fill_config_with_default_values(config, default_values):
+    """Fill ConfigParser instance with default values."""
+
+    for section in default_values.keys():
+        if not config.has_section(section):
+            config.add_section(section)
+
+        for (opt, val) in default_values[section].items():
+            if not config.has_option(section, opt):
+                config.set(section, opt, str(val))
+
 def gather_options(argv):
     global options
 
@@ -177,6 +209,21 @@ def gather_options(argv):
         default_device = "1"
     else:
         default_device = discid.get_default_device()
+
+    config = ConfigParser()
+    fill_config_with_default_values(config, {
+        "musicbrainz": {
+            "server": "",
+            "user": ""
+        },
+        "general": {
+            "keyring": True,
+            "browser": "",
+            "backend": "",
+            "device": ""
+        }
+    })
+    config.read(config_path())
 
     parser = OptionParser(version=script_version(), add_help_option=False)
     parser.set_usage(
@@ -198,7 +245,7 @@ def gather_options(argv):
     parser.add_option("-b", "--backend", choices=BACKENDS, metavar="PROGRAM",
             help="Force using a specific backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(BACKENDS)
-            + " They are tried in this order otherwise." )
+            + " They are tried in this order otherwise.")
     parser.add_option("--browser", metavar="BROWSER",
             help="Program to open URLs. This will be automatically detected"
             " for most setups, if not chosen manually.")
@@ -209,6 +256,18 @@ def gather_options(argv):
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
+    # propagate non-empty values from the config file as defaults to
+    # OptionsParser
+    if config.get("general", "backend"):
+        parser.set_defaults(backend=config.get("general", "backend"))
+    if config.get("general", "browser"):
+        parser.set_defaults(browser=config.get("general", "browser"))
+    if config.get("general", "device"):
+        parser.set_defaults(device=config.get("general", "device"))
+    if config.get("musicbrainz", "server"):
+        parser.set_defaults(server=config.get("musicbrainz", "server"))
+    if config.get("musicbrainz", "user"):
+        parser.set_defaults(user=config.get("musicbrainz", "user"))
     (options, args) = parser.parse_args(argv[1:])
 
     print("%s" % script_version())
