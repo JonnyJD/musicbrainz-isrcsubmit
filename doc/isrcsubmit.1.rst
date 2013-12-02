@@ -46,4 +46,5 @@ Options
 Author
 ------
 
-:program:`isrcsubmit` was written by Johannes Dewender.
+This manual page was written by Sebastian Ramacher. :program:`isrcsubmit` was
+written by Johannes Dewender.
