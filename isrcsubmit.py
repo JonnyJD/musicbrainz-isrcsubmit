@@ -583,7 +583,7 @@ class WebService2():
             sys.exit(1)
 
     def submit_isrcs(self, tracks2isrcs):
-        logger.debug("tracks2isrcs: %s" % tracks2isrcs)
+        logger.info("tracks2isrcs: %s" % tracks2isrcs)
         while True:
             try:
                 self.authenticate()
@@ -619,8 +619,8 @@ class Disc(object):
     def __init__(self, device, backend, verified=False):
         if sys.platform == "darwin":
             self._device = get_real_mac_device(device)
-            logger.debug("CD drive #%s corresponds to %s internally"
-                         % (device, self._device))
+            logger.info("CD drive #%s corresponds to %s internally"
+                        % (device, self._device))
         else:
             self._device = device
         self._disc = None
@@ -1005,18 +1005,18 @@ def main(argv):
     # global variables
     options = gather_options(argv)
     if options.debug:
-        logging.basicConfig(format="%(levelname)s: %(message)s",
+        logging.basicConfig(format="%(levelname)s:%(name)s: %(message)s",
+                            filename="isrcsubmit.log", filemode='w',
                             level=logging.DEBUG)
         # don't output full DEBUG for musicbrainzngs
-        logging.getLogger("musicbrainzngs").setLevel(logging.INFO)
+        #logging.getLogger("musicbrainzngs").setLevel(logging.INFO)
+        #logging.getLogger("musicbrainzngs").setLevel(logging.INFO)
 
-        # add a file handler with detailed output
-        file_handler = logging.FileHandler("isrcsubmit.log", mode='w',
-                            encoding="utf8", delay=True)
-        file_handler.setLevel(logging.DEBUG)
-        formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
-        file_handler.setFormatter(formatter)
-        logging.getLogger().addHandler(file_handler)
+        # log to console with less detail
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        logging.getLogger().addHandler(handler)
     ws2 = WebService2(options.user)
 
     disc = get_disc(options.device, options.backend)
