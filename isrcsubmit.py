@@ -35,6 +35,7 @@ import os
 import re
 import sys
 import codecs
+import logging
 import getpass
 import tempfile
 import webbrowser
@@ -1011,6 +1012,8 @@ def main(argv):
 
     # global variables
     options = gather_options(argv)
+    if options.debug:
+        logging.basicConfig(level=logging.DEBUG)
     ws2 = WebService2(options.user)
 
     disc = get_disc(options.device, options.backend)
