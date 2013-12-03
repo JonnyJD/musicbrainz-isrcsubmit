@@ -85,6 +85,7 @@ except NameError:
 # global variables
 options = None
 ws2 = None
+logger = logging.getLogger("isrcsubmit")
 
 def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % __version__
@@ -585,8 +586,7 @@ class WebService2():
             sys.exit(1)
 
     def submit_isrcs(self, tracks2isrcs):
-        if options.debug:
-            print("tracks2isrcs: %s" % tracks2isrcs)
+        logger.debug("tracks2isrcs: %s" % tracks2isrcs)
         while True:
             try:
                 self.authenticate()
@@ -622,9 +622,8 @@ class Disc(object):
     def __init__(self, device, backend, verified=False):
         if sys.platform == "darwin":
             self._device = get_real_mac_device(device)
-            if options.debug:
-                print("CD drive #%s corresponds to %s internally"
-                      % (device, self._device))
+            logger.debug("CD drive #%s corresponds to %s internally"
+                         % (device, self._device))
         else:
             self._device = device
         self._disc = None
@@ -804,8 +803,7 @@ def gather_isrcs(disc, backend, device):
             backend_error(err)
         for line in isrcout:
             line = decode(line) # explicitely decode from pipe
-            if options.debug:
-                printf(line)    # already includes a newline
+            logger.debug(line.rstrip())    # rstrip newline
             if line.startswith("Track") and len(line) > 12:
                 match = re.search(pattern, line)
                 if match is None:
@@ -832,8 +830,7 @@ def gather_isrcs(disc, backend, device):
             backend_error(err)
         for line in isrcout:
             line = decode(line) # explicitely decode from pipe
-            if options.debug:
-                printf(line)    # already includes a newline
+            logger.debug(line.rstrip())    # rstrip newline
             if line.startswith("ISRC") and not line.startswith("ISRCS"):
                 match = re.search(pattern, line)
                 if match is None:
@@ -853,8 +850,7 @@ def gather_isrcs(disc, backend, device):
         tmpname = "cdrdao-%s.toc" % datetime.now()
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
-        if options.debug:
-            print("Saving toc in %s.." % tmpfile)
+        logger.info("Saving toc in %s.." % tmpfile)
         if os.name == "nt" and device != "D:":
             print("warning: cdrdao uses the default device")
             args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
@@ -873,8 +869,7 @@ def gather_isrcs(disc, backend, device):
             with open(tmpfile, "r") as toc:
                 track_number = None
                 for line in toc:
-                    if options.debug:
-                        printf(line)    # already includes a newline
+                    logger.debug(line.rstrip())    # rstrip newline
                     words = line.split()
                     if words:
                         if words[0] == "//":
@@ -1013,7 +1008,18 @@ def main(argv):
     # global variables
     options = gather_options(argv)
     if options.debug:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(format="%(levelname)s: %(message)s",
+                            level=logging.DEBUG)
+        # don't output full DEBUG for musicbrainzngs
+        logging.getLogger("musicbrainzngs").setLevel(logging.INFO)
+
+        # add a file handler with detailed output
+        file_handler = logging.FileHandler("isrcsubmit.log", mode='w',
+                            encoding="utf8", delay=True)
+        file_handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
+        file_handler.setFormatter(formatter)
+        logging.getLogger().addHandler(file_handler)
     ws2 = WebService2(options.user)
 
     disc = get_disc(options.device, options.backend)
