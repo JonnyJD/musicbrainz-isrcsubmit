@@ -35,6 +35,7 @@ import os
 import re
 import sys
 import codecs
+import logging
 import getpass
 import tempfile
 import webbrowser
@@ -84,6 +85,7 @@ except NameError:
 # global variables
 options = None
 ws2 = None
+logger = logging.getLogger("isrcsubmit")
 
 def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % __version__
@@ -212,7 +214,6 @@ def gather_options(argv):
     (options, args) = parser.parse_args(argv[1:])
 
     print("%s" % script_version())
-    print("using discid version %s" % discid.__version__)
 
     # assign positional arguments to options
     if options.user is None and args:
@@ -227,7 +228,7 @@ def gather_options(argv):
             # Win: cdrdao is not given a device and will try 0,1,0
             options.device = default_device
     if args:
-        print("WARNING: Superfluous arguments: %s" % ", ".join(args))
+        logger.warning("Superfluous arguments: %s" % ", ".join(args))
 
     # assign remaining options automatically
     options.sane_which = test_which()
@@ -236,12 +237,11 @@ def gather_options(argv):
     if options.server is None:
         options.server = DEFAULT_SERVER
     if options.backend and not has_program(options.backend, strict=True):
-        print_error("Chosen backend not found. No ISRC extraction possible!")
-        print_error2("Make sure that %s is installed." % options.backend)
+        print_error("Chosen backend not found. No ISRC extraction possible!",
+                    "Make sure that %s is installed." % options.backend)
         sys.exit(-1)
     elif not options.backend:
         options.backend = find_backend()
-    print("using %s" % get_prog_version(options.backend))
 
     return options
 
@@ -325,9 +325,9 @@ def find_backend():
             break
 
     if backend is None:
-        print_error("Cannot find a backend to extract the ISRCS!")
-        print_error2("Isrcsubmit can work with one of the following:")
-        print_error2("  " + ", ".join(backend))
+        print_error("Cannot find a backend to extract the ISRCS!",
+                    "Isrcsubmit can work with one of the following:",
+                    "  " + ", ".join(backend))
         sys.exit(-1)
 
     return backend
@@ -355,10 +355,11 @@ def open_browser(url, exit=False, submit=False):
                     # linux/unix works fine with spaces
                     os.execlp(options.browser, options.browser, url)
             except OSError as err:
-                print_error("Couldn't open the url in %s: %s"
-                            % (options.browser, str(err)))
+                error = ["Couldn't open the url in %s: %s"
+                         % (options.browser, str(err))]
                 if submit:
-                    print_error2("Please submit via:", url)
+                    error.append("Please submit via: %s" % url)
+                print_error(*error)
                 sys.exit(1)
         else:
             try:
@@ -368,10 +369,11 @@ def open_browser(url, exit=False, submit=False):
                     with open(os.devnull, "w") as devnull:
                         Popen([options.browser, url], stdout=devnull)
             except FileNotFoundError as err:
-                print_error("Couldn't open the url in %s: %s"
-                            % (options.browser, str(err)))
+                error = ["Couldn't open the url in %s: %s"
+                            % (options.browser, str(err))]
                 if submit:
-                    print_error2("Please submit via:", url)
+                    error.append("Please submit via: %s" % url)
+                print_error(*error)
     else:
         try:
             if options.debug:
@@ -380,9 +382,10 @@ def open_browser(url, exit=False, submit=False):
                 # this supresses stdout
                 webbrowser.get().open(url)
         except webbrowser.Error as err:
-            print_error("Couldn't open the url:", str(err))
+            error = ["Couldn't open the url: %s" % str(err)]
             if submit:
-                print_error2("Please submit via:", url)
+                error.append("Please submit via: %s" % url)
+            print_error(*error)
         if exit:
             sys.exit(1)
 
@@ -396,8 +399,8 @@ def get_real_mac_device(option_device):
     try:
         given = proc.communicate()[0].splitlines()[3].split("Name:")[1].strip()
     except IndexError:
-        print_error("could not find real device")
-        print_error2("maybe there is no disc in the drive?")
+        print_error("could not find real device",
+                     "maybe there is no disc in the drive?")
         sys.exit(-1)
     # libdiscid needs the "raw" version
     return given.replace("/disk", "/rdisk")
@@ -491,14 +494,8 @@ def print_release(release, position=None):
 
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
-    msg = " ".join(("ERROR:",) + string_args)
-    sys.stderr.write(msg + "\n")
+    logger.error("\n       ".join(string_args))
 
-def print_error2(*args):
-    """following lines for print_error()"""
-    string_args = tuple([str(arg) for arg in args])
-    msg = " ".join(("      ",) + string_args)
-    sys.stderr.write(msg + "\n")
 
 def backend_error(err):
     print_error("Couldn't gather ISRCs with %s: %i - %s"
@@ -584,8 +581,7 @@ class WebService2():
             sys.exit(1)
 
     def submit_isrcs(self, tracks2isrcs):
-        if options.debug:
-            print("tracks2isrcs: %s" % tracks2isrcs)
+        logger.info("tracks2isrcs: %s" % tracks2isrcs)
         while True:
             try:
                 self.authenticate()
@@ -621,9 +617,8 @@ class Disc(object):
     def __init__(self, device, backend, verified=False):
         if sys.platform == "darwin":
             self._device = get_real_mac_device(device)
-            if options.debug:
-                print("CD drive #%s corresponds to %s internally"
-                      % (device, self._device))
+            logger.info("CD drive #%s corresponds to %s internally"
+                        % (device, self._device))
         else:
             self._device = device
         self._disc = None
@@ -803,8 +798,8 @@ def gather_isrcs(disc, backend, device):
             backend_error(err)
         for line in isrcout:
             line = decode(line) # explicitely decode from pipe
-            if options.debug:
-                printf(line)    # already includes a newline
+            ext_logger = logging.getLogger("discisrc")
+            ext_logger.debug(line.rstrip())    # rstrip newline
             if line.startswith("Track") and len(line) > 12:
                 match = re.search(pattern, line)
                 if match is None:
@@ -831,8 +826,8 @@ def gather_isrcs(disc, backend, device):
             backend_error(err)
         for line in isrcout:
             line = decode(line) # explicitely decode from pipe
-            if options.debug:
-                printf(line)    # already includes a newline
+            ext_logger = logging.getLogger("mediatools")
+            ext_logger.debug(line.rstrip())    # rstrip newline
             if line.startswith("ISRC") and not line.startswith("ISRCS"):
                 match = re.search(pattern, line)
                 if match is None:
@@ -852,8 +847,7 @@ def gather_isrcs(disc, backend, device):
         tmpname = "cdrdao-%s.toc" % datetime.now()
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
-        if options.debug:
-            print("Saving toc in %s.." % tmpfile)
+        logger.info("Saving toc in %s.." % tmpfile)
         if os.name == "nt" and device != "D:":
             print("warning: cdrdao uses the default device")
             args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
@@ -872,8 +866,8 @@ def gather_isrcs(disc, backend, device):
             with open(tmpfile, "r") as toc:
                 track_number = None
                 for line in toc:
-                    if options.debug:
-                        printf(line)    # already includes a newline
+                    ext_logger = logging.getLogger("cdrdao")
+                    ext_logger.debug(line.rstrip())    # rstrip newline
                     words = line.split()
                     if words:
                         if words[0] == "//":
@@ -912,9 +906,9 @@ def check_isrcs_local(backend_output, mb_tracks):
             if len(with_isrc) > 1:
                 track_list = [str(item[0]) for item in with_isrc]
                 print_error("%s gave the same ISRC for multiple tracks!"
-                            % options.backend)
-                print_error2("ISRC: %s\ttracks: %s"
-                             % (isrc, ", ".join(track_list)))
+                            % options.backend,
+                            "ISRC: %s\ttracks: %s"
+                            % (isrc, ", ".join(track_list)))
                 errors += 1
         try:
             track = mb_tracks[track_number - 1]
@@ -1009,9 +1003,32 @@ def main(argv):
     global options
     global ws2
 
+    # preset logger
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logging.getLogger().addHandler(stream_handler) # add to root handler
+
     # global variables
     options = gather_options(argv)
     ws2 = WebService2(options.user)
+
+    if options.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+        stream_handler.setLevel(logging.INFO)
+
+        # adding log file
+        file_handler = logging.FileHandler("isrcsubmit.log", mode='w',
+                            encoding="utf8", delay=True)
+        formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logging.getLogger().addHandler(file_handler)
+
+        # add context to log file (DEBUG only added there)
+        logger.debug("%s" % script_version())
+
+    logger.info("using discid version %s" % discid.__version__)
+    print("using %s" % get_prog_version(options.backend))
 
     disc = get_disc(options.device, options.backend)
     disc.get_release()
@@ -1046,7 +1063,7 @@ def main(argv):
         print("No new ISRCs could be found.")
     else:
         if errors > 0:
-            print_error(errors, "problems detected")
+            print_error("%d problems detected" % errors)
         if user_input("Do you want to submit? [y/N] ") == "y":
             ws2.submit_isrcs(tracks2isrcs)
         else:
