@@ -35,6 +35,7 @@ import os
 import re
 import sys
 import codecs
+import logging
 import getpass
 import tempfile
 import webbrowser
@@ -84,6 +85,7 @@ except NameError:
 # global variables
 options = None
 ws2 = None
+logger = logging.getLogger("isrcsubmit")
 
 def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % __version__
@@ -166,14 +168,10 @@ class OwnTrack(Track):
 def gather_options(argv):
     global options
 
-    if os.name == "nt":
-        default_device = "D:"
-        # this is "cdaudio" in libdiscid, but no user understands that..
-        # cdrdao is not given a device and will try 0,1,0
-        # this default is only for libdiscid and mediatools
-    elif sys.platform == "darwin":
+    if sys.platform == "darwin":
         # That is the device drutil expects and stable
         # /dev/rdisk1 etc. change with multiple hard disks, dmgs mounted etc.
+        # libdiscid < 0.6.0 can't handle drive numbers
         default_device = "1"
     else:
         default_device = discid.get_default_device()
@@ -223,8 +221,6 @@ def gather_options(argv):
             options.device = args[0]
             args = args[1:]
         else:
-            # Mac: device is changed again, when we know the final backend
-            # Win: cdrdao is not given a device and will try 0,1,0
             options.device = default_device
     if args:
         print("WARNING: Superfluous arguments: %s" % ", ".join(args))
@@ -854,8 +850,9 @@ def gather_isrcs(disc, backend, device):
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
         if options.debug:
             print("Saving toc in %s.." % tmpfile)
-        if os.name == "nt" and device != "D:":
-            print("warning: cdrdao uses the default device")
+        if os.name == "nt":
+            if device != discid.get_default_device():
+                logger.warning("cdrdao uses the default device")
             args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
         else:
             args = [backend, "read-toc", "--fast-toc", "--device", device,
