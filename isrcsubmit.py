@@ -1007,20 +1007,20 @@ def main(argv):
 
     # global variables
     options = gather_options(argv)
+    ws2 = WebService2(options.user)
+
     if options.debug:
         logging.basicConfig(format="%(levelname)s:%(name)s: %(message)s",
                             filename="isrcsubmit.log", filemode='w',
                             level=logging.DEBUG)
-        # don't output full DEBUG for musicbrainzngs
-        #logging.getLogger("musicbrainzngs").setLevel(logging.INFO)
-        #logging.getLogger("musicbrainzngs").setLevel(logging.INFO)
 
         # log to console with less detail
         handler = logging.StreamHandler()
         handler.setLevel(logging.INFO)
         handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
         logging.getLogger().addHandler(handler)
-    ws2 = WebService2(options.user)
+    else:
+        logging.basicConfig(format="%(levelname)s: %(message)s")
 
     disc = get_disc(options.device, options.backend)
     disc.get_release()
