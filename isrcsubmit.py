@@ -238,8 +238,8 @@ def gather_options(argv):
     if options.server is None:
         options.server = DEFAULT_SERVER
     if options.backend and not has_program(options.backend, strict=True):
-        print_error("Chosen backend not found. No ISRC extraction possible!")
-        print_error2("Make sure that %s is installed." % options.backend)
+        print_error("Chosen backend not found. No ISRC extraction possible!",
+                    "Make sure that %s is installed." % options.backend)
         sys.exit(-1)
     elif not options.backend:
         options.backend = find_backend()
@@ -327,9 +327,9 @@ def find_backend():
             break
 
     if backend is None:
-        print_error("Cannot find a backend to extract the ISRCS!")
-        print_error2("Isrcsubmit can work with one of the following:")
-        print_error2("  " + ", ".join(backend))
+        print_error("Cannot find a backend to extract the ISRCS!",
+                    "Isrcsubmit can work with one of the following:",
+                    "  " + ", ".join(backend))
         sys.exit(-1)
 
     return backend
@@ -357,10 +357,11 @@ def open_browser(url, exit=False, submit=False):
                     # linux/unix works fine with spaces
                     os.execlp(options.browser, options.browser, url)
             except OSError as err:
-                print_error("Couldn't open the url in %s: %s"
-                            % (options.browser, str(err)))
+                error = ["Couldn't open the url in %s: %s"
+                         % (options.browser, str(err))]
                 if submit:
-                    print_error2("Please submit via:", url)
+                    error.append("Please submit via: %s" % url)
+                print_error(*error)
                 sys.exit(1)
         else:
             try:
@@ -370,10 +371,11 @@ def open_browser(url, exit=False, submit=False):
                     with open(os.devnull, "w") as devnull:
                         Popen([options.browser, url], stdout=devnull)
             except FileNotFoundError as err:
-                print_error("Couldn't open the url in %s: %s"
-                            % (options.browser, str(err)))
+                error = ["Couldn't open the url in %s: %s"
+                            % (options.browser, str(err))]
                 if submit:
-                    print_error2("Please submit via:", url)
+                    error.append("Please submit via: %s" % url)
+                print_error(*error)
     else:
         try:
             if options.debug:
@@ -382,9 +384,10 @@ def open_browser(url, exit=False, submit=False):
                 # this supresses stdout
                 webbrowser.get().open(url)
         except webbrowser.Error as err:
-            print_error("Couldn't open the url:", str(err))
+            error = ["Couldn't open the url: %s" % str(err)]
             if submit:
-                print_error2("Please submit via:", url)
+                error.append("Please submit via: %s" % url)
+            print_error(*error)
         if exit:
             sys.exit(1)
 
@@ -398,8 +401,8 @@ def get_real_mac_device(option_device):
     try:
         given = proc.communicate()[0].splitlines()[3].split("Name:")[1].strip()
     except IndexError:
-        print_error("could not find real device")
-        print_error2("maybe there is no disc in the drive?")
+        print_error("could not find real device",
+                     "maybe there is no disc in the drive?")
         sys.exit(-1)
     # libdiscid needs the "raw" version
     return given.replace("/disk", "/rdisk")
@@ -493,14 +496,8 @@ def print_release(release, position=None):
 
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
-    msg = " ".join(("ERROR:",) + string_args)
-    sys.stderr.write(msg + "\n")
+    logger.error("\n       ".join(string_args))
 
-def print_error2(*args):
-    """following lines for print_error()"""
-    string_args = tuple([str(arg) for arg in args])
-    msg = " ".join(("      ",) + string_args)
-    sys.stderr.write(msg + "\n")
 
 def backend_error(err):
     print_error("Couldn't gather ISRCs with %s: %i - %s"
@@ -908,9 +905,9 @@ def check_isrcs_local(backend_output, mb_tracks):
             if len(with_isrc) > 1:
                 track_list = [str(item[0]) for item in with_isrc]
                 print_error("%s gave the same ISRC for multiple tracks!"
-                            % options.backend)
-                print_error2("ISRC: %s\ttracks: %s"
-                             % (isrc, ", ".join(track_list)))
+                            % options.backend,
+                            "ISRC: %s\ttracks: %s"
+                            % (isrc, ", ".join(track_list)))
                 errors += 1
         try:
             track = mb_tracks[track_number - 1]
@@ -1055,7 +1052,7 @@ def main(argv):
         print("No new ISRCs could be found.")
     else:
         if errors > 0:
-            print_error(errors, "problems detected")
+            print_error("%d problems detected" % errors)
         if user_input("Do you want to submit? [y/N] ") == "y":
             ws2.submit_isrcs(tracks2isrcs)
         else:
