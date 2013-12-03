@@ -800,7 +800,8 @@ def gather_isrcs(disc, backend, device):
             backend_error(err)
         for line in isrcout:
             line = decode(line) # explicitely decode from pipe
-            logger.debug(line.rstrip())    # rstrip newline
+            ext_logger = logging.getLogger("discisrc")
+            ext_logger.debug(line.rstrip())    # rstrip newline
             if line.startswith("Track") and len(line) > 12:
                 match = re.search(pattern, line)
                 if match is None:
@@ -827,7 +828,8 @@ def gather_isrcs(disc, backend, device):
             backend_error(err)
         for line in isrcout:
             line = decode(line) # explicitely decode from pipe
-            logger.debug(line.rstrip())    # rstrip newline
+            ext_logger = logging.getLogger("mediatools")
+            ext_logger.debug(line.rstrip())    # rstrip newline
             if line.startswith("ISRC") and not line.startswith("ISRCS"):
                 match = re.search(pattern, line)
                 if match is None:
@@ -866,7 +868,8 @@ def gather_isrcs(disc, backend, device):
             with open(tmpfile, "r") as toc:
                 track_number = None
                 for line in toc:
-                    logger.debug(line.rstrip())    # rstrip newline
+                    ext_logger = logging.getLogger("cdrdao")
+                    ext_logger.debug(line.rstrip())    # rstrip newline
                     words = line.split()
                     if words:
                         if words[0] == "//":
