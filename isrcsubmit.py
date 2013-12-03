@@ -214,7 +214,6 @@ def gather_options(argv):
     (options, args) = parser.parse_args(argv[1:])
 
     print("%s" % script_version())
-    print("using discid version %s" % discid.__version__)
 
     # assign positional arguments to options
     if options.user is None and args:
@@ -229,7 +228,7 @@ def gather_options(argv):
             # Win: cdrdao is not given a device and will try 0,1,0
             options.device = default_device
     if args:
-        print("WARNING: Superfluous arguments: %s" % ", ".join(args))
+        logger.warning("Superfluous arguments: %s" % ", ".join(args))
 
     # assign remaining options automatically
     options.sane_which = test_which()
@@ -243,7 +242,6 @@ def gather_options(argv):
         sys.exit(-1)
     elif not options.backend:
         options.backend = find_backend()
-    print("using %s" % get_prog_version(options.backend))
 
     return options
 
@@ -1005,22 +1003,32 @@ def main(argv):
     global options
     global ws2
 
+    # preset logger
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logging.getLogger().addHandler(stream_handler) # add to root handler
+
     # global variables
     options = gather_options(argv)
     ws2 = WebService2(options.user)
 
     if options.debug:
-        logging.basicConfig(format="%(levelname)s:%(name)s: %(message)s",
-                            filename="isrcsubmit.log", filemode='w',
-                            level=logging.DEBUG)
+        logging.getLogger().setLevel(logging.DEBUG)
+        stream_handler.setLevel(logging.INFO)
 
-        # log to console with less detail
-        handler = logging.StreamHandler()
-        handler.setLevel(logging.INFO)
-        handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-        logging.getLogger().addHandler(handler)
-    else:
-        logging.basicConfig(format="%(levelname)s: %(message)s")
+        # adding log file
+        file_handler = logging.FileHandler("isrcsubmit.log", mode='w',
+                            encoding="utf8", delay=True)
+        formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logging.getLogger().addHandler(file_handler)
+
+        # add context to log file (DEBUG only added there)
+        logger.debug("%s" % script_version())
+
+    logger.info("using discid version %s" % discid.__version__)
+    print("using %s" % get_prog_version(options.backend))
 
     disc = get_disc(options.device, options.backend)
     disc.get_release()
