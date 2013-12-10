@@ -184,17 +184,6 @@ def config_path():
 
     return os.path.join(get_config_home(), "config")
 
-def fill_config_with_default_values(config, default_values):
-    """Fill ConfigParser instance with default values."""
-
-    for section in default_values.keys():
-        if not config.has_section(section):
-            config.add_section(section)
-
-        for (opt, val) in default_values[section].items():
-            if not config.has_option(section, opt):
-                config.set(section, opt, str(val))
-
 def gather_options(argv):
     global options
 
@@ -211,18 +200,6 @@ def gather_options(argv):
         default_device = discid.get_default_device()
 
     config = ConfigParser()
-    fill_config_with_default_values(config, {
-        "musicbrainz": {
-            "server": "",
-            "user": ""
-        },
-        "general": {
-            "keyring": True,
-            "browser": "",
-            "backend": "",
-            "device": ""
-        }
-    })
     config.read(config_path())
 
     parser = OptionParser(version=script_version(), add_help_option=False)
@@ -260,23 +237,25 @@ def gather_options(argv):
             help="Use keyring if available.")
     parser.add_option("--no-keyring", action="store_false", dest="keyring",
             help="Disable keyring.")
-    parser.set_defaults(keyring=config.getboolean("general", "keyring"))
-    # propagate non-empty values from the config file as defaults to
-    # OptionsParser
-    if config.get("general", "backend"):
-        parser.set_defaults(backend=config.get("general", "backend"))
-    if config.get("general", "browser"):
-        parser.set_defaults(browser=config.get("general", "browser"))
-    if config.get("general", "device"):
-        parser.set_defaults(device=config.get("general", "device"))
-    if config.get("musicbrainz", "server"):
-        parser.set_defaults(server=config.get("musicbrainz", "server"))
-    if config.get("musicbrainz", "user"):
-        parser.set_defaults(user=config.get("musicbrainz", "user"))
     (options, args) = parser.parse_args(argv[1:])
 
     print("%s" % script_version())
     print("using discid version %s" % discid.__version__)
+
+    # If an option is set in the config and not overriden on the command line,
+    # assign them to options.
+    if options.keyring is None and config.has_option("general", "keyring"):
+        options.keyring = config.getboolean("general", "keyring")
+    if options.backend is None and config.has_option("general", "backend"):
+        options.backend = config.get("general", "backend")
+    if options.browser is None and config.has_option("general", "browser"):
+        options.browser = config.get("general", "browser")
+    if options.device is None and config.has_option("general", "device"):
+        options.device = config.get("general", "device")
+    if options.server is None and config.has_option("musicbrainz", "server"):
+        options.server = config.get("musicbrainz", "server")
+    if options.user is None and config.has_option("musicbrainz", "user"):
+        options.user = config.get("musicbrainz", "user")
 
     # assign positional arguments to options
     if options.user is None and args:
