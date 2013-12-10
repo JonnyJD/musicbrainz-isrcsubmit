@@ -282,6 +282,8 @@ def gather_options(argv):
         options.browser = find_browser()
     if options.server is None:
         options.server = DEFAULT_SERVER
+    if options.keyring is None:
+        options.keyring = True
     if options.backend and not has_program(options.backend, strict=True):
         print_error("Chosen backend not found. No ISRC extraction possible!")
         print_error2("Make sure that %s is installed." % options.backend)
