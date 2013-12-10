@@ -62,6 +62,11 @@ try:
 except ImportError:
     keyring = None
 
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser
+
 if os.name == "nt":
     SHELLNAME = "isrcsubmit.bat"
 else:
@@ -165,6 +170,22 @@ class OwnTrack(Track):
     """A track found on an analyzed (own) disc"""
     pass
 
+def get_config_home():
+    """Returns the base directory for isrcsubmit's configuration files."""
+
+    if os.name == "nt":
+        default_location = os.environ.get("APPDATA")
+    else:
+        default_location = os.path.expanduser("~/.config")
+
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME", default_location)
+    return os.path.join(xdg_config_home, "isrcsubmit")
+
+def config_path():
+    """Returns isrsubmit's config file location."""
+
+    return os.path.join(get_config_home(), "config")
+
 def gather_options(argv):
     global options
 
@@ -175,6 +196,9 @@ def gather_options(argv):
         default_device = "1"
     else:
         default_device = discid.get_default_device()
+
+    config = ConfigParser()
+    config.read(config_path())
 
     parser = OptionParser(version=script_version(), add_help_option=False)
     parser.set_usage(
@@ -196,7 +220,7 @@ def gather_options(argv):
     parser.add_option("-b", "--backend", choices=BACKENDS, metavar="PROGRAM",
             help="Force using a specific backend to extract ISRCs from the"
             + " disc. Possible backends are: %s." % ", ".join(BACKENDS)
-            + " They are tried in this order otherwise." )
+            + " They are tried in this order otherwise.")
     parser.add_option("--browser", metavar="BROWSER",
             help="Program to open URLs. This will be automatically detected"
             " for most setups, if not chosen manually.")
@@ -207,9 +231,32 @@ def gather_options(argv):
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
+    parser.add_option("--keyring", action="store_true", dest="keyring",
+            help="Use keyring if available.")
+    parser.add_option("--no-keyring", action="store_false", dest="keyring",
+            help="Disable keyring.")
     (options, args) = parser.parse_args(argv[1:])
 
     print("%s" % script_version())
+
+    # If an option is set in the config and not overriden on the command line,
+    # assign them to options.
+    if options.keyring is None and config.has_option("general", "keyring"):
+        options.keyring = config.getboolean("general", "keyring")
+    if options.backend is None and config.has_option("general", "backend"):
+        options.backend = config.get("general", "backend")
+        if options.backend not in BACKENDS:
+            print_error("Backend given in config file is not a valid choice.")
+            print_error2("Choose a backend from %s" % ", ".join(BACKENDS))
+            sys.exit(-1)
+    if options.browser is None and config.has_option("general", "browser"):
+        options.browser = config.get("general", "browser")
+    if options.device is None and config.has_option("general", "device"):
+        options.device = config.get("general", "device")
+    if options.server is None and config.has_option("musicbrainz", "server"):
+        options.server = config.get("musicbrainz", "server")
+    if options.user is None and config.has_option("musicbrainz", "user"):
+        options.user = config.get("musicbrainz", "user")
 
     # assign positional arguments to options
     if options.user is None and args:
@@ -230,6 +277,8 @@ def gather_options(argv):
         options.browser = find_browser()
     if options.server is None:
         options.server = DEFAULT_SERVER
+    if options.keyring is None:
+        options.keyring = True
     if options.backend and not has_program(options.backend, strict=True):
         print_error("Chosen backend not found. No ISRC extraction possible!",
                     "Make sure that %s is installed." % options.backend)
@@ -535,7 +584,7 @@ class WebService2():
                 print("(aborted)")
                 sys.exit(1)
             password = None
-            if keyring is not None and not self.keyring_failed:
+            if keyring is not None and options.keyring and not self.keyring_failed:
                 password = keyring.get_password(options.server, self.username)
             if password is None:
                 password = getpass.getpass(
@@ -544,7 +593,7 @@ class WebService2():
             musicbrainzngs.auth(self.username, password)
             self.auth = True
             self.keyring_failed = False
-            if keyring is not None:
+            if keyring is not None and options.keyring:
                 keyring.set_password(options.server, self.username, password)
 
     def get_releases_by_discid(self, disc_id, includes=[]):

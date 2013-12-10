@@ -175,6 +175,8 @@ htmlhelp_basename = 'isrcsubmitdoc'
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('isrcsubmit.1', 'isrcsubmit', u'isrcsubmit Documentation', [], 1)
+    ('isrcsubmit-config.5', 'isrcsubmit-config', u'isrcsubmit Documentation',
+     [], 5)
 ]
 
 # If true, show URL addresses after external links.
