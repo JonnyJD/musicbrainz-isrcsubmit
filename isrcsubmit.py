@@ -239,6 +239,16 @@ def gather_options(argv):
 
     print("%s" % script_version())
 
+    # assign positional arguments to options
+    if options.user is None and args:
+        options.user = args[0]
+        args = args[1:]
+    if options.device is None and args:
+        options.device = args[0]
+        args = args[1:]
+    if args:
+        logger.warning("Superfluous arguments: %s" % ", ".join(args))
+
     # If an option is set in the config and not overriden on the command line,
     # assign them to options.
     if options.keyring is None and config.has_option("general", "keyring"):
@@ -258,20 +268,9 @@ def gather_options(argv):
     if options.user is None and config.has_option("musicbrainz", "user"):
         options.user = config.get("musicbrainz", "user")
 
-    # assign positional arguments to options
-    if options.user is None and args:
-        options.user = args[0]
-        args = args[1:]
-    if options.device is None:
-        if args:
-            options.device = args[0]
-            args = args[1:]
-        else:
-            options.device = default_device
-    if args:
-        logger.warning("Superfluous arguments: %s" % ", ".join(args))
-
     # assign remaining options automatically
+    if options.device is None:
+        options.device = default_device
     options.sane_which = test_which()
     if options.browser is None:
         options.browser = find_browser()
