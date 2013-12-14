@@ -42,6 +42,15 @@ Options
     Always open TOC/disc ID submission page in browser.
 --server=<server>
     Server to send ISRCs to. If not given, musicbrainz.org is used.
+--keyring
+    Use keyring if it is available.
+--no-keyring
+    Do not use keyring.
+
+See also
+--------
+
+:manpage:`isrcsubmit-config(5)`
 
 Author
 ------
