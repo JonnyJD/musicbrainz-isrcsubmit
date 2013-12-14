@@ -246,8 +246,8 @@ def gather_options(argv):
     if options.backend is None and config.has_option("general", "backend"):
         options.backend = config.get("general", "backend")
         if options.backend not in BACKENDS:
-            print_error("Backend given in config file is not a valid choice.")
-            print_error2("Choose a backend from %s" % ", ".join(BACKENDS))
+            print_error("Backend given in config file is not a valid choice.",
+                        "Choose a backend from %s" % ", ".join(BACKENDS))
             sys.exit(-1)
     if options.browser is None and config.has_option("general", "browser"):
         options.browser = config.get("general", "browser")
