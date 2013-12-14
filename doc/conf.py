@@ -174,7 +174,7 @@ htmlhelp_basename = 'isrcsubmitdoc'
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('isrcsubmit.1', 'isrcsubmit', u'isrcsubmit Documentation', [], 1)
+    ('isrcsubmit.1', 'isrcsubmit', u'isrcsubmit Documentation', [], 1),
     ('isrcsubmit-config.5', 'isrcsubmit-config', u'isrcsubmit Documentation',
      [], 5)
 ]
