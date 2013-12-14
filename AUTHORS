@@ -8,11 +8,16 @@ The following people have contributed to this isrcsubmit.py:
   Johannes Dewender <github@JonnyJD.net>
    - creator and maintainer
   
-  jesus2099
-   - tested the windows support excessively
+  Sebastian Ramacher
+   - keyring support
+   - configuration file
+   - man pages
 
   Frederik "Freso" S. Olesen
    - multiple bugfixes
+
+  jesus2099
+   - tested the windows support excessively
 
   Ulrich Klauer
   Jim Patterson
