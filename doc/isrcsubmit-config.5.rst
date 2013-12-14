@@ -15,6 +15,9 @@ The configuration file contains various options controlling the behavior of
 :program:`isrcsubmit`. All the options given here can be overriden by passing
 command line arguments to :program:`isrcsubmit`.
 
+If **$XDG_CONFIG_HOME** is not set, **%APPDATA%** is used on Windows
+and **~/.config** for all other systems.
+
 general
 -------
 
@@ -60,9 +63,11 @@ This snippet demonstrates the format of the configuration file.
 
     [general]
     backend = libdiscid
+    keyring = False
 
     [musicbrainz]
     server = test.musicbrainz.org
+    user = foo
 
 Author
 ------
