@@ -57,7 +57,6 @@ class TestInternal(unittest.TestCase):
         self.assertTrue(options.backend)
         self.assertEqual(options.server, "musicbrainz.org")
         self.assertFalse(options.force_submit)
-        self.assertTrue(options.user is None)
         self.assertTrue(options.release_id is None)
 
         user = "JonnyJD"
