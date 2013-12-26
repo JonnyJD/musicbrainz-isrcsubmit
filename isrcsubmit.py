@@ -58,8 +58,13 @@ import musicbrainzngs
 from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
 
 try:
-    import keyring
+    from secretstorage import ItemNotFoundException
 except ImportError:
+    ItemNotFoundException = LookupError
+try:
+    import keyring
+except (ImportError, ItemNotFoundException):
+    # importing keyring can fail if no actual keyring is configured (#90)
     keyring = None
 
 try:
