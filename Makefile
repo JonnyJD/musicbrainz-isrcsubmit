@@ -12,7 +12,7 @@ git := .git/refs/remote/origin/$(branch)
 all: jekyll
 
 jekyll: changes version
-	jekyll
+	jekyll build
 
 version: $(git)
 	# setting version
