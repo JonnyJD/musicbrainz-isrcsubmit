@@ -1,9 +1,9 @@
-version := 2.0.0-beta.5
+version := 2.0.0-rc.1
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
 upload := ftp://isrcsubmit.jonnyjd.net/downloads/
-musicbrainzngs := musicbrainzngs-0.4
+musicbrainzngs := musicbrainzngs-0.5
 discid := discid-1.1.0
 libdiscid := libdiscid-0.6.1
 
