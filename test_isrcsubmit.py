@@ -12,7 +12,6 @@ import unittest
 from io import TextIOWrapper, BytesIO
 from subprocess import Popen
 
-import discid
 import musicbrainzngs
 import isrcsubmit
 
