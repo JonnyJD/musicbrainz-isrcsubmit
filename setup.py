@@ -116,6 +116,7 @@ setup(name="isrcsubmit",
             "Programming Language :: Python :: 3.1",
             "Programming Language :: Python :: 3.2",
             "Programming Language :: Python :: 3.3",
+            "Programming Language :: Python :: 3.4",
             "Topic :: Database :: Front-Ends",
             "Topic :: Multimedia :: Sound/Audio :: CD Audio :: CD Ripping",
             "Topic :: Text Processing :: Filters"
