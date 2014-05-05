@@ -18,6 +18,7 @@ source_repo := ..
 source_branch := master
 source_dir := isrcsubmit
 
+# TODO: make sure isrcsubmit.py is really updated!
 
 tag_ref := $(source_repo)/.git/refs/tags/v$(version)
 branch_ref := $(source_repo)/.git/refs/heads/$(source_branch)

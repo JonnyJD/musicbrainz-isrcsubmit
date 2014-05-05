@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2013  Johannes Dewender
+# Copyright (C) 2014  Johannes Dewender
 # This test is free. You can redistribute and/or modify it at will.
 
 import os
