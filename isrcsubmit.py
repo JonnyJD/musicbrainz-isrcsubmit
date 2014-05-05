@@ -21,7 +21,7 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-__version__ = "2.0.0-rc.1"
+__version__ = "2.0.0-dev"
 AGENT_NAME = "isrcsubmit.py"
 DEFAULT_SERVER = "musicbrainz.org"
 # starting with highest priority

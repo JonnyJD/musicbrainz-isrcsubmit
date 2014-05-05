@@ -1,3 +1,19 @@
+### Changes in 2.0.0 (2014-05-??)
+ * [#59] use libdiscid as isrc backend
+ * [#6] use the NGS (WS/2) web service
+ * [#54] Python 3 support
+ * [#77] opening a browser from command line on Windows and Mac OS X
+ * [#83] use keyring to store/retrieve password (if available)
+ * [#84] configuration file
+ * [#86] use new libdiscid 0.6.0 device detection (if available)
+ * [#72] added manpage isrcsubmit.1
+ * [#65] added --release-id parameter to skip release selection
+ * [#64] added --server parameter
+ * [#60] added --force-submit parameter to always submit the TOC as new
+ * [#78] Ask user to re-enter user/password on authentication errors
+ * [#87] expose musicbrainzngs logging with --debug
+ * [#74] 400 bad request with mediatools or discisrcs on Python 3
+
 ### Changes in 1.0.0 (2013-03-12)
  * [#35] add discisrc backend (Mac/Win/Linux)
  * [#32] Index release choice starting with 1, rather than 0
