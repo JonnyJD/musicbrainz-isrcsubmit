@@ -2,12 +2,21 @@
 layout: default
 title: changes
 ---
-### Changes in 1.0.2 (2013-06-20)
-* [#58]({{site.issues.url}}/58): fix/allow non-ascii passwords (use UTF-8)
-
-### Changes in 1.0.1 (2013-03-26)
- * [#52]({{site.issues.url}}/52): fix IndexError when release status unknown
- * [#51]({{site.issues.url}}/51): fix error message using discisrc with no isrcs
+### Changes in 2.0.0 (2014-05-??)
+ * [#59]({{site.issues.url}}/59): use libdiscid as isrc backend
+ * [#6]({{site.issues.url}}/6): use the NGS (WS/2) web service
+ * [#54]({{site.issues.url}}/54): Python 3 support
+ * [#77]({{site.issues.url}}/77): opening a browser from command line on Windows and Mac OS X
+ * [#83]({{site.issues.url}}/83): use keyring to store/retrieve password (if available)
+ * [#84]({{site.issues.url}}/84): configuration file
+ * [#86]({{site.issues.url}}/86): use new libdiscid 0.6.0 device detection (if available)
+ * [#72]({{site.issues.url}}/72): added manpage isrcsubmit.1
+ * [#65]({{site.issues.url}}/65): added --release-id parameter to skip release selection
+ * [#64]({{site.issues.url}}/64): added --server parameter
+ * [#60]({{site.issues.url}}/60): added --force-submit parameter to always submit the TOC as new
+ * [#78]({{site.issues.url}}/78): Ask user to re-enter user/password on authentication errors
+ * [#87]({{site.issues.url}}/87): expose musicbrainzngs logging with --debug
+ * [#74]({{site.issues.url}}/74): 400 bad request with mediatools or discisrcs on Python 3
 
 ### Changes in 1.0.0 (2013-03-12)
  * [#35]({{site.issues.url}}/35): add discisrc backend (Mac/Win/Linux)

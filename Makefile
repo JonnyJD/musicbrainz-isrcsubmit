@@ -1,9 +1,9 @@
-#branch := master
-branch := v1
+branch := master
+#branch := v1
 version = $(shell git describe origin/$(branch) | sed -e 's/v\([0-9.]\+\).*/\1/')
-pre_version = $(shell git describe origin/master | sed -e 's/v\([0-9.]\+-[0-9a-z.]\+\).*/\1/')
+old_version = $(shell git describe origin/v1 | sed -e 's/v\([0-9.]\+\).*/\1/')
 current = isrcsubmit-$(version)
-pre = isrcsubmit-$(pre_version)
+old = isrcsubmit-$(old_version)
 changes := changes.markdown
 changes_source := CHANGES.markdown
 git := .git/refs/remote/origin/$(branch)
@@ -19,10 +19,10 @@ version: $(git)
 	sed -i -e 's/ version:\s[0-9.]\+/ version: $(version)/' _config.yml
 	sed -i -e 's/current:\sisrcsubmit-[0-9.]\+/current: $(current)/g' \
 		_config.yml
-	# setting pre-release version
-	sed -i -e 's/ pre_version:\s[0-9a-z.-]\+/ pre_version: $(pre_version)/'\
+	# setting old version
+	sed -i -e 's/ old_version:\s[0-9a-z.-]\+/ old_version: $(old_version)/'\
 		_config.yml
-	sed -i -e 's/pre:\sisrcsubmit-[0-9a-z.-]\+/pre: $(pre)/g' \
+	sed -i -e 's/old:\sisrcsubmit-[0-9a-z.-]\+/old: $(old)/g' \
 		_config.yml
 
 changes: $(changes)

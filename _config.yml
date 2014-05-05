@@ -10,10 +10,10 @@ downloads:
 
 script:
   name: isrcsubmit
-  version: 1.0.2
-  current: isrcsubmit-1.0.2
-  pre_version: 2.0.0-rc.1
-  pre: isrcsubmit-2.0.0-rc.1
+  old_version: 1.0.2
+  old: isrcsubmit-1.0.2
+  version: 2.0.0-rc.1
+  current: isrcsubmit-2.0.0-rc.1
 
 nav:
 - title: home

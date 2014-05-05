@@ -22,10 +22,10 @@ of your distribution or manually.
 <a href="{{ site.downloads.url }}{{ site.script.current }}-win32.zip">
 {{ site.script.current }}-win32.zip</a>:
 </h3>
-<h4>(script + libdiscid + python-musicbrainz2 + mediatools + .bat)</h4>
+<h4>(script + libdiscid + python-discid + python-musicbrainzngs + mediatools + .bat)</h4>
 
 This is the package for Windows users.
-There is a precompiled discid.dll, python-musicbrainz2
+There is a precompiled discid.dll, python-discid, python-musicbrainzngs
 and mediatools.exe included.
 It also includes a batchfile to start iscrsubmit in a terminal.
 Mediatools is the preferred backend on windows since it has a nice algorithm to make sure the ISRCs are attached to the correct tracks.
@@ -36,7 +36,7 @@ Mediatools is the preferred backend on windows since it has a nice algorithm to 
 {{ site.script.current }}-mac.zip
 </a>:
 </h3>
-<h4>(script + libdiscid + python-musicbrainz2 + .sh)</h4>
+<h4>(script + libdiscid + python-discid + python-musicbrainzngs + .sh)</h4>
 
 These are packages for Mac OS X users.
 It is more difficult to get libdiscid precompiled for Mac and less
@@ -60,24 +60,23 @@ A setup.py and all script from the other packages are included.
 
 </div>
 
-<h3>Pre-release versions:</h3>
+<h3 id="old">Isrcsubmit 1:</h3>
 
-<p>These don't use python-musicbrainz2, but
-<a href="https://github.com/alastair/python-musicbrainz-ngs">python-musicbrainzngs</a>
-and
-<a href="https://python-discid.readthedocs.org/">python-discid</a>.
-They are both included in the Windows and Mac package.
-The script runs with Python 2 and Python 3.
+<p>Isrcsubmit 1 doesn't need python-discid or python-musicbrainzngs, but uses
+<a href="https://musicbrainz.org/doc/python-musicbrainz2">python-musicbrainz2</a>.
+Libidiscid is still needed.
+Isrcsubit 1 only works with Python 2.
 </p>
 
 <ul>
-  <li><a href="{{ site.downloads.url }}{{ site.script.pre }}.tar.gz">
-    {{ site.script.pre }}.tar.gz
+  <li><a href="{{ site.github.raw }}v{{ site.script.old_version }}/isrcsubmit.py">isrcsubmit.py</a></li>
+  <li><a href="{{ site.downloads.url }}{{ site.script.old }}.tar.gz">
+    {{ site.script.old }}.tar.gz
     </a></li>
-  <li><a href="{{ site.downloads.url }}{{ site.script.pre }}-win32.zip">
-    {{ site.script.pre }}-win32.zip
+  <li><a href="{{ site.downloads.url }}{{ site.script.old }}-win32.zip">
+    {{ site.script.old }}-win32.zip
     </a></li>
-  <li><a href="{{ site.downloads.url }}{{ site.script.pre }}-mac.zip">
-    {{ site.script.pre }}-mac.zip
+  <li><a href="{{ site.downloads.url }}{{ site.script.old }}-mac.zip">
+    {{ site.script.old }}-mac.zip
     </a></li>
 </ul>

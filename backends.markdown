@@ -2,35 +2,26 @@
 layout: default
 title: home
 ---
-## Available Backends
+
+## Additional Backends
+
+Isrcsubmit 2 can use libdiscid >= 0.3.0 directly as an ISRC backend.
+However there are other backend options available:
 
 ### Linux
 
  * [Cdrdao]((http://en.wikipedia.org/wiki/Cdrdao)
-   can read ISRCs from subchannel and CD-Text and is the preferred backend
- * cd-info is a small utility included in
-   [libcdio](http://www.gnu.org/software/libcdio/)
- * Cdda2wav also supports ISRC extraction and is included in
-   [cdrtools](http://en.wikipedia.org/wiki/Cdrtools)
- * Icedax is in [cdrkit](http://en.wikipedia.org/wiki/Cdrkit),
-   which is an outdated fork of cdrtools
+   can read ISRCs from subchannel and CD-Text
 
 The Cdrdao backend can read ISRCs from CD-Text if no ISRCs are
 in the subchannel information.
 This is rarely the case.
 
 When ISRCs are in the subchannel,
-all of these backens should yield the same results on the same drive.
+all of these backends should yield the same results on the same drive.
 However, some drives tend to randomly give duplicats.
 Restarting the script might help and often CD writer drives
 give less duplicates than CD reader drives.
-
-
-### Mac OS X
- * [discisrc]({{ site.downloads.url }}discisrc-mac.zip) (recommended)
-   is an example of the libdiscid project.
-   There is a build available for mac.
- * drutil (in Mac OS X; very slow!)
 
 
 ### Windows

@@ -18,7 +18,7 @@ and submits them to <a href="http://musicbrainz.org">MusicBrainz</a>.
   <li>read ISRCs from disc</li>
   <li>search for releases with the TOC of the disc</li>
   <li>display release information from MusicBrainz</li>
-  <li>submit (unknown) discIds / TOCs</li>
+  <li>submit discIds / TOCs</li>
   <li>duplicate ISRC detection (local and on server)</li>
 </ul>
 
@@ -26,34 +26,19 @@ and submits them to <a href="http://musicbrainz.org">MusicBrainz</a>.
 
 <h2>Dependencies</h2>
 <ul>
-  <li>Python2 &gt;= 2.4</li>
+  <li>Python2 &gt;= 2.6 or Python 2 &gt;= 3.1</li>
   <li>
-<a href="http://musicbrainz.org/doc/python-musicbrainz2">python-musicbrainz2</a>
-to access the MusicBrainz XMP API version 1
+<a href="http://python-discid.readthedocs.org">python-discid</a> &gt; 1.0.0
+or <a href="http://pythonhosted.org/python-libdiscid/">python-libdiscid</a> &gt; 0.2.0
   </li>
   <li>
-<a href="http://musicbrainz.org/doc/libdiscid">libdiscid</a>
-to calculate an ID for a disc
+<a href="http://python-musicbrainzngs.readthedocs.org">python-musicbrainzngs</a>
+to access the MusicBrainz XMP API version 2
   </li>
   <li>
-  (<a href="http://starship.python.net/crew/theller/ctypes/">ctypes</a>
-  with Python &lt; 2.5)
+  <a href="https://bitbucket.org/kang/python-keyring-lib/">python-keyring</a> (optional)
   </li>
-  <li>one of the usable backends
 </ul>
-
-<h3>Usable Backends</h3>
-<ul>
-  <li><a href="http://www.flanagan-family.com/mediatools.zip">mediatools</a>
-    </li>
-  <li><a href="http://en.wikipedia.org/wiki/Cdrdao">Cdrdao</a></li>
-  <li>cd-info (<a href="http://www.gnu.org/software/libcdio/">libcdio</a>)</li>
-  <li>Cdda2wav (in <a href="http://en.wikipedia.org/wiki/Cdrtools">cdrtools</a>)</li>
-  <li>Icedax (in <a href="http://en.wikipedia.org/wiki/Cdrkit">cdrkit</a>)</li>
-  <li>discisrc (libdiscid, see <a href="backends">backends</a>)</li>
-  <li>drutil (in Mac OS X; very slow!)</li>
-</ul>
-
 
 <h2>Usage</h2>
 <pre>Usage: isrcsubmit.py [options] [user] [device]
@@ -70,6 +55,7 @@ and on Windows <b><tt>isrcsubmit.bat</tt></b> is recommended</p>
 
 <h2>Authors / Contributors</h2>
 <p>Johannes Dewender
+<br/>Sebastian Ramacher
 <br/>Frederik "Freso" S. Olesen
 <br/>jesus2099 (lots of Windows testing/reporting)
 <br/>Ulrich Klauer

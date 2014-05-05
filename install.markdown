@@ -10,18 +10,20 @@ other than making it executable on Linux:
 
     $ chmod a+x isrcsubmit.py
 
-However, the backends and libraries should get installed so that the
+However, the libraries should get installed so that the
 script has access to them.
 
-On Linux you just install
-[python-musicbrainz2](http://musicbrainz.org/doc/python-musicbrainz2)
-and one of the backends with the package manager of your distribution.
+You need
+[python-musicbrainzngs](http://python-musicbrainzngs.readthedocs.org)
+and
+either [python-discid](http://python-discid.readthedocs.org)
+or [python-libdiscid](http://pythonhosted.org/python-libdiscid/).
 
-On Windows and Mac you have to put the musicbrainz2 folder of python-musicbrainz2 in the same directory as this script or adjust the python path.
-On Windows you also have to install a backend in the PATH
-or the same directory you start the script from.
-If you start from another script in another directory you might change
-to the isrcsubmit directory before or install the files at that other directory.
-The best backend is mediatools, but you can download a
-[windows build of cdrdao](http://www.student.tugraz.at/thomas.plank/).
-On Mac drutil is part of the Mac OS X, but the discisrc backend is recommended.
+On Windows and Mac OS X it is recommended to download
+the [binary packages of isrcsubmit](download).
+These include all dependencies.
+
+On Linux you should use find the dependencies
+with the software management tool of your distribution.
+If you can't find these packages you can try using [isrcsubmit 1](download#old),
+which only depends on python-musicbrainz2 and libdiscid.
