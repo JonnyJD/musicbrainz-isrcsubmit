@@ -410,7 +410,7 @@ def open_browser(url, exit=False, submit=False):
                 else:
                     with open(os.devnull, "w") as devnull:
                         Popen([options.browser, url], stdout=devnull)
-            except FileNotFoundError as err:
+            except OSError as err:
                 error = ["Couldn't open the url in %s: %s"
                             % (options.browser, str(err))]
                 if submit:
