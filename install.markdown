@@ -23,7 +23,8 @@ On Windows and Mac OS X it is recommended to download
 the [binary packages of isrcsubmit](download).
 These include all dependencies.
 
-On Linux you should use find the dependencies
+Some Linux Distributions already included isrcsubmit in the repositories.
+If not you should at least find the dependencies
 with the software management tool of your distribution.
 If you can't find these packages you can try using [isrcsubmit 1](download#old),
 which only depends on python-musicbrainz2 and libdiscid.
