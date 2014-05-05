@@ -103,7 +103,7 @@ setup(name="isrcsubmit",
         scripts=["isrcsubmit.py"],
         license="GPLv3+",
         classifiers=[
-            "Development Status :: 4 - Beta",
+            "Development Status :: 5 - Production/Stable",
             "Environment :: Console",
             "Environment :: MacOS X",
             "Environment :: Win32 (MS Windows)",

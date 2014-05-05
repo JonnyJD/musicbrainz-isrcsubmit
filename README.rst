@@ -1,4 +1,4 @@
-Isrcsubmit 2.0.0-dev for MusicBrainz
+Isrcsubmit 2.0.0 for MusicBrainz
 ====================================
 
 This python script extracts ISRCs_ from audio CDs
@@ -17,7 +17,7 @@ Features:
 
 * read ISRCs from disc
 * search for releases with the TOC of the disc
-* display release information from MB
+* display release information from MusicBrainz
 * submit ISRCs
 * submit discIds / TOCs
 * duplicate ISRC detection (local and on server)
@@ -32,9 +32,9 @@ Dependencies:
 * keyring_ (optional)
 
 .. _python-discid: http://python-discid.readthedocs.org/
-.. _python-libdiscid: http://pythonhosted.org/python-libdiscid
+.. _python-libdiscid: http://pythonhosted.org/python-libdiscid/
 .. _python-musicbrainzngs: http://python-musicbrainzngs.readthedocs.org/
-.. _keyring: https://bitbucket.org/kang/python-keyring-lib
+.. _keyring: https://bitbucket.org/kang/python-keyring-lib/
 
 
 Usage:

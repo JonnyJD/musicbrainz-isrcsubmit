@@ -1,4 +1,4 @@
-### Changes in 2.0.0 (2014-05-??)
+### Changes in 2.0.0 (2014-05-05)
  * [#59] use libdiscid as isrc backend
  * [#6] use the NGS (WS/2) web service
  * [#54] Python 3 support
