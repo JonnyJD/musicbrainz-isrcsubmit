@@ -91,11 +91,13 @@ class Test(Command):
 
 cmdclass["test"] = Test
 
+with open("README.rst") as readme:
+    long_description = readme.read()
 
 setup(name="isrcsubmit",
         version=__version__,
         description="submit ISRCs from disc to MusicBrainz",
-        long_description=open("README.rst").read(),
+        long_description=long_description,
         author="Johannes Dewender",
         author_email="brainz@JonnyJD.net",
         url="https://github.com/JonnyJD/musicbrainz-isrcsubmit",
