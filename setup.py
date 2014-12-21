@@ -42,6 +42,7 @@ if using_sphinx:
     import os.path
     man_pages = [
         (os.path.join(man_dir, 'man1'), ['build/man/isrcsubmit.1']),
+        (os.path.join(man_dir, 'man5'), ['build/man/isrcsubmit-config.5'])
     ]
 else:
     man_pages = []
