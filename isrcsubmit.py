@@ -369,7 +369,7 @@ def find_backend():
     if backend is None:
         print_error("Cannot find a backend to extract the ISRCS!",
                     "Isrcsubmit can work with one of the following:",
-                    "  " + ", ".join(backend))
+                    "  " + ", ".join(BACKENDS))
         sys.exit(-1)
 
     return backend
