@@ -1060,11 +1060,13 @@ def main(argv):
         stream_handler.setLevel(logging.INFO)
 
         # adding log file
-        file_handler = logging.FileHandler("isrcsubmit.log", mode='w',
+        logfile = "isrcsubmit.log"
+        file_handler = logging.FileHandler(logfile, mode='w',
                             encoding="utf8", delay=True)
         formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
+        logger.info("Writing debug log to %s" % logfile)
         logging.getLogger().addHandler(file_handler)
 
         # add context to log file (DEBUG only added there)
