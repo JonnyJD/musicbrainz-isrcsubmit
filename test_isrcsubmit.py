@@ -153,7 +153,7 @@ def _read(device=None, features=[]):
         with open(file_name, "rb") as disc_file:
             return pickle.load(disc_file)
 
-discid.read = _read
+isrcsubmit.discid.read = _read
 
 
 # mock cdrdao reading
