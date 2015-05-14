@@ -12,7 +12,7 @@ Description
 -----------
 
 The configuration file contains various options controlling the behavior of
-:program:`isrcsubmit`. All the options given here can be overriden by passing
+:program:`isrcsubmit`. All the options given here can be overridden by passing
 command line arguments to :program:`isrcsubmit`.
 
 If **$XDG_CONFIG_HOME** is not set, **%APPDATA%** is used on Windows
