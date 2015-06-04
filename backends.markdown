@@ -1,6 +1,6 @@
 ---
 layout: default
-title: home
+title: backends
 ---
 
 ## Additional Backends
@@ -10,7 +10,7 @@ However there are other backend options available:
 
 ### Linux
 
- * [Cdrdao]((http://en.wikipedia.org/wiki/Cdrdao)
+ * [Cdrdao](http://en.wikipedia.org/wiki/Cdrdao)
    can read ISRCs from subchannel and CD-Text
 
 The Cdrdao backend can read ISRCs from CD-Text if no ISRCs are
@@ -30,7 +30,7 @@ give less duplicates than CD reader drives.
    This should give less duplicates on the same drive than other tools.
    However, there might be other problems.
    (see [Issue #34]({{ site.issues.url}}/34))
- * For [Cdrdao]((http://en.wikipedia.org/wiki/Cdrdao) there is a
+ * For [Cdrdao](http://en.wikipedia.org/wiki/Cdrdao) there is a
    [Windows Build](http://www.student.tugraz.at/thomas.plank/) available.
    You need ```cdrdao.exe```, ```cyggcc\_s-sjlj-1.dll``` and ```cygwin1.dll```.
    Put all of these in the ```%PATH%```
