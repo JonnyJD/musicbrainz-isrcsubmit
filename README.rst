@@ -126,9 +126,13 @@ You can create an account at http://musicbrainz.org/register free of charge.
 The core of the MusicBrainz dataset including the ISRC contributions is placed
 into the Public Domain.
 
+For a documentation of the available backends please refer to the manual
+or the `web page`_.
+
 You might find additional information about this script at the
 `MusicBrainz forums`_.
 
+.. _web page: http://jonnyjd.github.io/musicbrainz-isrcsubmit/backends
 .. _MusicBrainz forums: http://forums.musicbrainz.org/viewtopic.php?id=3444
 
 
