@@ -549,7 +549,7 @@ def ask_for_submission(url, print_url=False):
         submit_requested = True
     else:
         printf("Would you like to open the browser to submit the disc?")
-        submit_requested = user_input(" [y/N] ") == "y"
+        submit_requested = user_input(" [y/N] ").lower() == "y"
 
     if submit_requested:
         open_browser(url, exit=True, submit=True)
@@ -997,7 +997,8 @@ def check_global_duplicates(release, mb_tracks, isrcs):
     if duplicates > 0:
         printf("\nThere were %d ISRCs ", duplicates)
         print("that are attached to multiple tracks on this release.")
-        if user_input("Do you want to help clean those up? [y/N] ") == "y":
+        choice = user_input("Do you want to help clean those up? [y/N] ")
+        if choice.lower() == "y":
             cleanup_isrcs(release, isrcs)
 
 def cleanup_isrcs(release, isrcs):
@@ -1037,7 +1038,7 @@ def cleanup_isrcs(release, isrcs):
                     print("")
 
             url = "http://%s/isrc/%s" % (options.server, isrc)
-            if user_input("Open ISRC in the browser? [Y/n] ") != "n":
+            if user_input("Open ISRC in the browser? [Y/n] ").lower() != "n":
                 open_browser(url)
                 user_input("(press <return> when done with this ISRC) ")
 
@@ -1109,7 +1110,7 @@ def main(argv):
     else:
         if errors > 0:
             print_error("%d problems detected" % errors)
-        if user_input("Do you want to submit? [y/N] ") == "y":
+        if user_input("Do you want to submit? [y/N] ").lower() == "y":
             ws2.submit_isrcs(tracks2isrcs)
         else:
             update_intention = False
