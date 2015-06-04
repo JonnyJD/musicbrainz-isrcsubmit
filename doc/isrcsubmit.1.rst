@@ -34,7 +34,7 @@ Options
 -b <program>, --backend=<program>
     Force using a specific backend to extract ISRCs from the disc. Possible
     backends are: mediatools, media_info, cdrdao, libdiscid, discisrc. They are
-    tried in this order otherwise.
+    tried in this order otherwise. See also :strong:`BACKENDS`.
 --browser=<browser>
     Program to open URLs. This will be automatically deteced for most setups,
     if not chosen manually.
@@ -47,6 +47,43 @@ Options
 --no-keyring
     Do not use keyring.
 
+Backends
+--------
+
+:program:`isrcsubmit` is able to use various backends to extract the ISRC.
+The **ibdiscid** library is a requirement for isrcsubmit
+and can also be used as a backend on most systems.
+
+ISRCs are nearly always stored in the subchannel information
+and all tools read them from there.
+However, some drives tend to extract the same ISRC for adjacent tracks.
+Restarting the script might help and using a different drive might help.
+CD writers are reported to give better results than many CD reader drives.
+
+mediatools, media_info
+    These tools use an experimental algorithm to gather ISRCs from the disc.
+    This should give less duplicates on the same drive than with other tools.
+    However, there might be other problems. (only available for Windows)
+
+cdrdao
+    This tool can read ISRCs from CD-Text if no ISRCs are in the subchannel
+    information.
+    This is rarely the case. Most ISRCs are stored in the subchannel.
+    (usually available on Linux, but there are also Windows builds (plank))
+
+libdiscid
+    Starting with **libdiscid** 0.3.0 this can be used not only for
+    the disc ID, but also to extract ISRCs.
+    (Windows, Mac; Linux support with 0.3.1)
+
+discisrc
+    The **discisrc** binary is created from source builds of **libdiscid**.
+    There is an experimental branch *isrc_raw* that might give
+    better results regarding duplicate ISRCs on Linux.
+    You can use this binary separately without installing
+    an experimental libdiscid library on the system.
+
+
 See also
 --------
 
@@ -55,5 +92,5 @@ See also
 Author
 ------
 
-This manual page was written by Sebastian Ramacher. :program:`isrcsubmit` was
-written by Johannes Dewender.
+This manual was written by Sebastian Ramacher and Johannes Dewender.
+:program:`isrcsubmit` was written by Johannes Dewender.
