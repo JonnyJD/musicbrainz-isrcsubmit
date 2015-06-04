@@ -2,6 +2,7 @@
  * [#94] also install isrcsubmit-config.5
  * [#93] fix name 'FileNotFoundError' is not defined
  * [#96] fix display of "missing backend" error
+ * [#98] be case insensitive for Y/N prompts
 
 ### Changes in 2.0.0 (2014-05-05)
  * [#59] use libdiscid as isrc backend
