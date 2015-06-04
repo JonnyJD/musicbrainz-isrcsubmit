@@ -51,7 +51,7 @@ Backends
 --------
 
 :program:`isrcsubmit` is able to use various backends to extract the ISRC.
-The **ibdiscid** library is a requirement for isrcsubmit
+The **libdiscid** library is a requirement for isrcsubmit
 and can also be used as a backend on most systems.
 
 ISRCs are nearly always stored in the subchannel information
