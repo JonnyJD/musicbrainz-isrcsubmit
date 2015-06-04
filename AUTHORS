@@ -22,3 +22,6 @@ The following people have contributed to this isrcsubmit.py:
   Ulrich Klauer
   Jim Patterson
    - minor fixes
+
+  Ville Skyttä
+   - mocking fix for the tests
