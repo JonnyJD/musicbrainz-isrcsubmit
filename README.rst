@@ -1,5 +1,5 @@
 Isrcsubmit 2.0.1 for MusicBrainz
-====================================
+================================
 
 This python script extracts ISRCs_ from audio CDs
 and submits them to MusicBrainz_.

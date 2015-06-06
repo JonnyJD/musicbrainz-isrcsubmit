@@ -1,4 +1,4 @@
-### Changes in 2.0.1 (2015-01-??)
+### Changes in 2.0.1 (2015-06-06)
  * [#94] also install isrcsubmit-config.5
  * [#93] fix name 'FileNotFoundError' is not defined
  * [#96] fix display of "missing backend" error
