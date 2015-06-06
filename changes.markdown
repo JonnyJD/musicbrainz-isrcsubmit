@@ -2,6 +2,12 @@
 layout: default
 title: changes
 ---
+### Changes in 2.0.1 (2015-06-06)
+ * [#94]({{site.issues.url}}/94): also install isrcsubmit-config.5
+ * [#93]({{site.issues.url}}/93): fix name 'FileNotFoundError' is not defined
+ * [#96]({{site.issues.url}}/96): fix display of "missing backend" error
+ * [#98]({{site.issues.url}}/98): be case insensitive for Y/N prompts
+
 ### Changes in 2.0.0 (2014-05-05)
  * [#59]({{site.issues.url}}/59): use libdiscid as isrc backend
  * [#6]({{site.issues.url}}/6): use the NGS (WS/2) web service

@@ -19,14 +19,14 @@ This is rarely the case.
 
 When ISRCs are in the subchannel,
 all of these backends should yield the same results on the same drive.
-However, some drives tend to randomly give duplicats.
+However, some drives tend to extract the same ISRC to adjacent tracks.
 Restarting the script might help and often CD writer drives
 give less duplicates than CD reader drives.
 
 
 ### Windows
  * [mediatools](http://www.flanagan-family.com/mediatools.zip)
-   is a tool that uses a different algorithm to gather ISRCs from the disc.
+   is a tool that uses an experimental algorithm to gather ISRCs from the disc.
    This should give less duplicates on the same drive than other tools.
    However, there might be other problems.
    (see [Issue #34]({{ site.issues.url}}/34))
