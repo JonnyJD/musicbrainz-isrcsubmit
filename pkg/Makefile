@@ -1,4 +1,4 @@
-version := 2.0.0
+version := 2.0.1
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
@@ -139,4 +139,4 @@ clean:
 	rm -rf $(base_libs)
 	rm -rf mediatools mediatools.exe
 
-.PHONY: source_update
+.PHONY: $(source_ref)
