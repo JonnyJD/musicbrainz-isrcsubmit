@@ -10,7 +10,7 @@ python:
 before_install:
  - sudo apt-get update -qq
  - sudo apt-get install -qq libdiscid0 cdrdao
-install: pip install -q --use-mirrors discid musicbrainzngs
+install: pip install -q discid musicbrainzngs
 script: python setup.py test
 branches:
   except:
