@@ -247,7 +247,7 @@ def gather_options(argv):
         options.device = args[0]
         args = args[1:]
     if args:
-        logger.warning("Superfluous arguments: %s" % ", ".join(args))
+        logger.warning("Superfluous arguments: %s", ", ".join(args))
 
     # If an option is set in the config and not overriden on the command line,
     # assign them to options.
@@ -623,7 +623,7 @@ class WebService2():
             sys.exit(1)
 
     def submit_isrcs(self, tracks2isrcs):
-        logger.info("tracks2isrcs: %s" % tracks2isrcs)
+        logger.info("tracks2isrcs: %s", tracks2isrcs)
         while True:
             try:
                 self.authenticate()
@@ -659,8 +659,8 @@ class Disc(object):
     def __init__(self, device, backend, verified=False):
         if sys.platform == "darwin":
             self._device = get_real_mac_device(device)
-            logger.info("CD drive #%s corresponds to %s internally"
-                        % (device, self._device))
+            logger.info("CD drive #%s corresponds to %s internally",
+                        device, self._device)
         else:
             self._device = device
         self._disc = None
@@ -889,7 +889,7 @@ def gather_isrcs(disc, backend, device):
         tmpname = "cdrdao-%s.toc" % datetime.now()
         tmpname = tmpname.replace(":", "-")     # : is invalid on windows
         tmpfile = os.path.join(tempfile.gettempdir(), tmpname)
-        logger.info("Saving toc in %s.." % tmpfile)
+        logger.info("Saving toc in %s..", tmpfile)
         if os.name == "nt":
             if device != discid.get_default_device():
                 logger.warning("cdrdao uses the default device")
@@ -1067,13 +1067,13 @@ def main(argv):
         formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
-        logger.info("Writing debug log to %s" % logfile)
+        logger.info("Writing debug log to %s", logfile)
         logging.getLogger().addHandler(file_handler)
 
         # add context to log file (DEBUG only added there)
-        logger.debug("%s" % script_version())
+        logger.debug(script_version())
 
-    logger.info("using discid version %s" % discid.__version__)
+    logger.info("using discid version %s", discid.__version__)
     print("using %s" % get_prog_version(options.backend))
 
     disc = get_disc(options.device, options.backend)
