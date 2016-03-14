@@ -34,7 +34,7 @@ Dependencies:
 .. _python-discid: http://python-discid.readthedocs.org/
 .. _python-libdiscid: http://pythonhosted.org/python-libdiscid/
 .. _python-musicbrainzngs: http://python-musicbrainzngs.readthedocs.org/
-.. _keyring: https://bitbucket.org/kang/python-keyring-lib/
+.. _keyring: https://github.com/jaraco/keyring
 
 
 Usage:
