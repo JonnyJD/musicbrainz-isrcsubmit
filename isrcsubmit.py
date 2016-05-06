@@ -898,7 +898,10 @@ def gather_isrcs(disc, backend, device):
             args = [backend, "read-toc", "--fast-toc", "--device", device,
                 "-v", "0", tmpfile]
         try:
-            proc = Popen(args, stdout=devnull, stderr=devnull)
+            if options.debug:
+                proc = Popen(args, stdout=devnull)
+            else:
+                proc = Popen(args, stdout=devnull, stderr=devnull)
             if proc.wait() != 0:
                 print_error("%s returned with %i" % (backend, proc.returncode))
                 sys.exit(1)
