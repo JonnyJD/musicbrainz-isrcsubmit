@@ -176,7 +176,7 @@ class _Popen(Popen):
 isrcsubmit.Popen = _Popen
 
 def _open(name, mode):
-    if re.search("cdrdao-.*\.toc", name):
+    if re.search(r"cdrdao-.*\.toc", name):
         name = "%s%s_cdrdao.toc" % (TEST_DATA, mocked_disc_id)
     return open(name, mode)
 
