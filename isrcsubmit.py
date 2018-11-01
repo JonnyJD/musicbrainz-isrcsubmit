@@ -893,10 +893,9 @@ def gather_isrcs(disc, backend, device):
         if os.name == "nt":
             if device != discid.get_default_device():
                 logger.warning("cdrdao uses the default device")
-            args = [backend, "read-toc", "--fast-toc", "-v", "0", tmpfile]
+            args = [backend, "read-toc", "-v", "0", tmpfile]
         else:
-            args = [backend, "read-toc", "--fast-toc", "--device", device,
-                "-v", "0", tmpfile]
+            args = [backend, "read-toc", "--device", device, "-v", "0", tmpfile]
         try:
             if options.debug:
                 proc = Popen(args, stdout=devnull)
