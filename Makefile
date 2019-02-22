@@ -1,5 +1,5 @@
 #version := 2.1.0-dev
-version := 2.0.1
+version := 2.1.0
 
 build:
 	./setup.py build
@@ -24,6 +24,8 @@ version:
 	sed -i -e 's/\(Isrcsubmit\s\)[0-9.]\+[0-9a-z.-]*/\1$(version)/' README.rst
 	sed -i -e 's/\(__version__\s=\s"\)[0-9.]\+[0-9a-z.-]*/\1$(version)/' \
 		isrcsubmit.py
+	sed -i -e 's/\(version="\)[0-9.]\+[0-9a-z.-]*/\1$(version)/' \
+		setup.py
 
 clean:
 	rm -f *.pyc
