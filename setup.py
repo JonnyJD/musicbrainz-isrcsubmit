@@ -10,8 +10,6 @@ except ImportError:
     have_setuptools = False
 from distutils.command.build import build
 
-from isrcsubmit import __version__
-
 try:
     import sphinx
     from sphinx.setup_command import BuildDoc
@@ -96,7 +94,7 @@ with open("README.rst") as readme:
     long_description = readme.read()
 
 setup(name="isrcsubmit",
-        version=__version__,
+        version="2.0.1",
         description="submit ISRCs from disc to MusicBrainz",
         long_description=long_description,
         author="Johannes Dewender",
