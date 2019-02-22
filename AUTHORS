@@ -14,14 +14,16 @@ The following people have contributed to this isrcsubmit.py:
    - man pages
 
   Frederik "Freso" S. Olesen
+   - reducing duplicate ISRCs
    - multiple bugfixes
 
   jesus2099
    - tested the windows support excessively
 
+  Ville Skyttä
+   - multiple test fixes for recent Python
+
   Ulrich Klauer
   Jim Patterson
+  Guilherme Danno
    - minor fixes
-
-  Ville Skyttä
-   - mocking fix for the tests
