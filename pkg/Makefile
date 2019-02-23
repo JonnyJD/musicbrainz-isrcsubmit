@@ -1,10 +1,10 @@
-version := 2.0.1
+version := 2.1.0
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
 upload := ftp://isrcsubmit.jonnyjd.net/downloads/
-musicbrainzngs := musicbrainzngs-0.5
-discid := discid-1.1.0
+musicbrainzngs := musicbrainzngs-0.6
+discid := discid-1.1.1
 libdiscid := libdiscid-0.6.1
 
 scripts := isrcsubmit.py $(current).py
@@ -29,9 +29,9 @@ else
 endif
 
 ifeq ($(shell cd $(source_repo) && git tag -l v$(version)),)
-	source_checkout := cd $(source_repo) git checkout $(source_branch)
+	source_checkout := cd $(source_repo); git checkout $(source_branch)
 else
-	source_checkout := cd $(source_repo) git checkout v$(version)
+	source_checkout := cd $(source_repo); git checkout v$(version)
 endif
 
 define cp_source =
@@ -109,12 +109,12 @@ $(source_ref): $(source_dir)
 $(musicbrainzngs): $(musicbrainzngs).tar.gz
 	tar -xzf $^
 $(musicbrainzngs).tar.gz:
-	wget http://pypi.python.org/packages/source/m/musicbrainzngs/$@
+	wget https://pypi.python.org/packages/source/m/musicbrainzngs/$@
 
 $(discid): $(discid).tar.gz
 	tar -xzf $^
 $(discid).tar.gz:
-	wget http://pypi.python.org/packages/source/d/discid/$@
+	wget https://pypi.python.org/packages/source/d/discid/$@
 
 libdiscid: $(libdiscid)
 $(libdiscid): $(libdiscid).tar.gz
