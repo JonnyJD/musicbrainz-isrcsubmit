@@ -2,6 +2,15 @@
 layout: default
 title: changes
 ---
+### Changes in 2.1.0 (2019-02-22)
+ * [#120]({{site.issues.url}}/120): remove --fast-toc from cdrdao options (Freso)
+ * [#113]({{site.issues.url}}/113): show cdrdao stderr in debug mode
+ * [#121]({{site.issues.url}}/121): allow installing dependencies with pip
+ * [#111]({{site.issues.url}}/111): update keyring link (GuilhermeHideki)
+ * [#117]({{site.issues.url}}/117): fix escape sequence deprecation for Python 3.6 (scop)
+ * [#105]({{site.issues.url}}/105): CI test with Python 3.5 (scop)
+ * [#107]({{site.issues.url}}/107): improve logging code (scop)
+
 ### Changes in 2.0.1 (2015-06-06)
  * [#94]({{site.issues.url}}/94): also install isrcsubmit-config.5
  * [#93]({{site.issues.url}}/93): fix name 'FileNotFoundError' is not defined

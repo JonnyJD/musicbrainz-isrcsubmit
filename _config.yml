@@ -12,8 +12,8 @@ script:
   name: isrcsubmit
   old_version: 1.0.2
   old: isrcsubmit-1.0.2
-  version: 2.0.1
-  current: isrcsubmit-2.0.1
+  version: 2.1.0
+  current: isrcsubmit-2.1.0
 
 nav:
 - title: home
