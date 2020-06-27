@@ -43,6 +43,8 @@ from datetime import datetime
 from optparse import OptionParser
 from subprocess import Popen, PIPE, call
 
+os.add_dll_directory(os.getcwd())
+
 try:
     import discid
     from discid import DiscError
