@@ -11,8 +11,9 @@ scripts := isrcsubmit.py $(current).py
 #scripts := $(current).py
 tar := $(current)
 win32 := $(current)-win32
+win64 := $(current)-win64
 mac := $(current)-mac
-all := $(scripts) $(tar).tar.gz $(win32).zip $(mac).zip
+all := $(scripts) $(tar).tar.gz $(win32).zip $(win64).zip $(mac).zip
 
 source_repo := ..
 source_branch := master
@@ -83,6 +84,18 @@ $(win32).zip: $(source_ref) $(base_libs) $(libdiscid)-win32.zip mediatools
 	zip -qr $@ $(win32)
 	rm -rf $(libdiscid)-win32
 	rm -rf $(win32)
+
+win64: $(win64).zip
+$(win64).zip: $(source_ref) $(base_libs) $(libdiscid)-win64.zip mediatools
+	$(call cp_source, $(win64))
+	$(call cp_base_libs, $(win64))
+	unzip $(libdiscid)-win64.zip
+	cp -a $(libdiscid)-win64/discid.dll $(win64)/
+	cp -ar mediatools $(win64)/
+	cp -a mediatools.exe $(win64)/
+	zip -qr $@ $(win64)
+	rm -rf $(libdiscid)-win64
+	rm -rf $(win64)
 
 mac: $(mac).zip
 $(mac).zip: $(source_ref) $(base_libs) $(libdiscid)-mac.zip
