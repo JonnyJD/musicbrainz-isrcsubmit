@@ -728,13 +728,15 @@ class Disc(object):
 
         This will ask the user to choose if the discID is ambiguous.
         """
+        if options.force_submit:
+            # If asked to force submission, just return None straight
+            # away and skip all other logic, e.g. unneeded WS2 requests.
+            print("\nSubmission forced.")
+            return None
         includes = self._common_includes
         results = ws2.get_releases_by_discid(self.id, includes=includes)
         num_results = len(results)
-        if options.force_submit:
-            print("\nSubmission forced.")
-            selected_release = None
-        elif num_results == 0:
+        if num_results == 0:
             print("\nThis Disc ID is not in the database.")
             selected_release = None
         elif num_results > 1:
