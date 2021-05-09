@@ -467,6 +467,7 @@ def printf(format_string, *args):
 def decode(msg):
     """This will replace unsuitable characters and use stdin encoding
     """
+    print('DEBUG: ', msg, type(msg), sys.stdin.encoding)
     if isinstance(msg, bytes):
         return msg.decode(sys.stdin.encoding, "replace")
     else:

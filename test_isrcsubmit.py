@@ -2,6 +2,7 @@
 # Copyright (C) 2014  Johannes Dewender
 # This test is free. You can redistribute and/or modify it at will.
 
+from __future__ import print_function
 import os
 import re
 import sys
@@ -38,6 +39,11 @@ class TestInternal(unittest.TestCase):
     def test_encoding(self):
         self.assertTrue(type(isrcsubmit.encode("test")) is type(b"test"))
         self.assertEqual(isrcsubmit.encode("test"), b"test")
+        print('--- DEBUG OUTPUT ---', file=sys.stderr)
+        print(b"test", file=sys.stderr)
+        print(isrcsubmit.decode(b"test"), file=sys.stderr)
+        print(type(isrcsubmit.decode(b"test")), file=sys.stderr)
+        print('--- /DEBUG OUTPUT ---', file=sys.stderr)
         self.assertTrue(type(isrcsubmit.decode(b"test"))
                         is type(b"test".decode()))
         self.assertEqual(isrcsubmit.decode(b"test"), "test")
