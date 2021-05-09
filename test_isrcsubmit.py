@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (C) 2014  Johannes Dewender
 # This test is free. You can redistribute and/or modify it at will.
 
