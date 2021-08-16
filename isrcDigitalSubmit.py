@@ -1,0 +1,829 @@
+#!/usr/bin/env python
+# Copyright (C) 2009-2015 Johannes Dewender
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""This is a tool to submit ISRCs from a disc to MusicBrainz.
+
+Mutagen is used to gather the ISRCs
+and python-musicbrainz2 to submit them.
+The project is hosted on
+https://github.com/SheamusPatt/musicbrainz-isrcDigitalSubmit
+"""
+
+__version__ = "2.1.0"
+AGENT_NAME = "isrcDigitalSubmit.py"
+DEFAULT_SERVER = "musicbrainz.org"
+# starting with highest priority
+BROWSERS = ["xdg-open", "x-www-browser",
+            "firefox", "chromium", "chrome", "opera"]
+# The webbrowser module is used when nothing is found in this list.
+# This especially happens on Windows and Mac OS X (browser mostly not in PATH)
+
+import codecs
+import getpass
+import glob
+import logging
+import musicbrainzngs
+import mutagen
+import os
+import sys
+import webbrowser
+import zipfile
+from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
+from optparse import OptionParser
+from subprocess import Popen, PIPE, call
+
+# Maximum time difference between MB and audio files,
+#  else they will be considered different
+max_time_diff = 3
+
+try:
+    import keyring
+except ImportError:
+    keyring = None
+
+try:
+    from configparser import ConfigParser
+except ImportError:
+    from ConfigParser import ConfigParser
+
+if os.name == "nt":
+    SHELLNAME = "isrcDigitalSubmit.bat"
+else:
+    SHELLNAME = "isrcDigitalSubmit.sh"
+if os.path.isfile(SHELLNAME):
+    SCRIPTNAME = SHELLNAME
+else:
+    SCRIPTNAME = os.path.basename(sys.argv[0])
+
+# make code run on Python 2 and 3
+try:
+    user_input = raw_input
+except NameError:
+    user_input = input
+
+try:
+    unicode_string = unicode
+except NameError:
+    unicode_string = str
+
+# global variables
+options = None
+ws2 = None
+logger = logging.getLogger("isrcDigitalSubmit")
+
+
+def script_version():
+    return "isrcDigitalSubmit %s by SheamusPatt (based on isrcsubmit 2.1.0 by JonnyJD) for MusicBrainz" % __version__
+
+
+def print_help(option=None, opt=None, value=None, parser=None):
+    print("%s" % script_version())
+    print(
+"""
+This python script extracts ISRCs from audio files and submits them to MusicBrainz (musicbrainz.org).
+You need to have a MusicBrainz account, specify the username and will be asked for your password every time you execute the script.
+
+IsrcDigitalSubmit will warn you if there are any problems and won't actually submit anything to MusicBrainz without giving a final choice.
+
+IsrcDigitalSubmit will warn you if any duplicate ISRCs are detected and help you fix priviously inserted duplicate ISRCs.
+The ISRC-track relationship we found on our disc is taken as our correct evaluation.
+""")
+    parser.print_usage()
+    print("""\
+Please report bugs on https://github.com/SheamusPatt/musicbrainz-isrcDigitalSubmit""")
+    sys.exit(0)
+
+
+def print_usage(option=None, opt=None, value=None, parser=None):
+    print("%s\n" % script_version())
+    parser.print_help()
+    sys.exit(0)
+
+
+class Isrc(object):
+    def __init__(self, isrc, track=None):
+        self._id = isrc
+        self._tracks = []
+        if track is not None:
+            self._tracks.append(track)
+
+    def add_track(self, track):
+        if track not in self._tracks:
+            self._tracks.append(track)
+
+    def get_tracks(self):
+        return self._tracks
+
+    def get_track_numbers(self):
+        numbers = []
+        for track in self._tracks:
+            numbers.append(track["position"])
+        return ", ".join(numbers)
+
+
+class Track(dict):
+    """track with equality checking
+
+    This makes it easy to check if this track is already in a collection.
+    Only the element already in the collection needs to be hashable.
+    """
+    def __init__(self, track, number=None):
+        self._track = track
+        self._recording = track["recording"]
+        self._number = number
+        # check that we found the track with the correct number
+        assert(int(self._track["position"]) == self._number)
+
+    def __eq__(self, other):
+        return self["id"] == other["id"]
+
+    def __getitem__(self, item):
+        try:
+            return self._recording[item]
+        except KeyError:
+            return self._track[item]
+
+    def get(self, item, default=None):
+        try:
+            return self._recording.get(item, default)
+        except KeyError:
+            return self._track.get(item, default)
+
+
+def get_config_home():
+    """Returns the base directory for isrcDigitalSubmit's configuration files."""
+
+    if os.name == "nt":
+        default_location = os.environ.get("APPDATA")
+    else:
+        default_location = os.path.expanduser("~/.config")
+
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME", default_location)
+    return os.path.join(xdg_config_home, "isrcsubmit")
+
+
+def config_path():
+    """Returns isrcDigitalSubmit's config file location."""
+
+    return os.path.join(get_config_home(), "config")
+
+
+def gather_options(argv):
+    global options
+
+    config = ConfigParser()
+    config.read(config_path())
+
+    parser = OptionParser(version=script_version(), add_help_option=False)
+    parser.set_usage(
+            "{prog} [options] [user] audioFile...\n       {prog} -h".format(
+            prog=SCRIPTNAME))
+    parser.add_option("-h", action="callback", callback=print_usage,
+            help="Short usage help")
+    parser.add_option("--help", action="callback", callback=print_help,
+            help="Complete help for the script")
+    parser.add_option("-u", "--user", metavar="USERNAME",
+            help="MusicBrainz username, if not given as argument.")
+    parser.add_option("--release-id", metavar="RELEASE_ID",
+            help="Optional MusicBrainz ID of the release."
+            + " This will be gathered if not given.")
+    parser.add_option("--browser", metavar="BROWSER",
+            help="Program to open URLs. This will be automatically detected"
+            " for most setups, if not chosen manually.")
+    parser.add_option("--force-submit", action="store_true", default=False,
+            help="Always open TOC/disc ID in browser.")
+    parser.add_option("--server", metavar="SERVER",
+            help="Server to send ISRCs to. Default: %s" % DEFAULT_SERVER)
+    parser.add_option("--debug", action="store_true", default=False,
+            help="Show debug messages."
+            + " Currently shows some backend messages.")
+    parser.add_option("--keyring", action="store_true", dest="keyring",
+            help="Use keyring if available.")
+    parser.add_option("--no-keyring", action="store_false", dest="keyring",
+            help="Disable keyring.")
+    (options, args) = parser.parse_args(argv[1:])
+
+    print("%s" % script_version())
+
+    # assign positional arguments to options
+    if options.user is None and args:
+        options.user = args[0]
+        args = args[1:]
+    if not args:
+        print_error("No audio files to process")
+        sys.exit(1)
+    options.audioFiles = []
+    for arg in args:
+        for f in glob.glob(arg):
+            options.audioFiles.append(f)
+
+    # If an option is set in the config and not overriden on the command line,
+    # assign them to options.
+    if options.keyring is None and config.has_option("general", "keyring"):
+        options.keyring = config.getboolean("general", "keyring")
+    if options.browser is None and config.has_option("general", "browser"):
+        options.browser = config.get("general", "browser")
+    if options.server is None and config.has_option("musicbrainz", "server"):
+        options.server = config.get("musicbrainz", "server")
+    if options.user is None and config.has_option("musicbrainz", "user"):
+        options.user = config.get("musicbrainz", "user")
+
+    # assign remaining options automatically
+    options.sane_which = test_which()
+    if options.browser is None:
+        options.browser = find_browser()
+    if options.server is None:
+        options.server = DEFAULT_SERVER
+    if options.keyring is None:
+        options.keyring = True
+
+    return options
+
+
+def test_which():
+    """There are some old/buggy "which" versions on Windows.
+    We want to know if the user has a "sane" which we can trust.
+    Unxutils has a broken 2.4 version. Which >= 2.16 should be fine.
+    """
+    with open(os.devnull, "w") as devnull:
+        try:
+            # "which" should at least find itself
+            return_code = call(["which", "which"],
+                               stdout=devnull, stderr=devnull)
+        except OSError:
+            return False        # no which at all
+        else:
+            if (return_code == 0):
+                return True
+            else:
+                print('warning: your version of the tool "which"'
+                      ' is buggy/outdated')
+                if os.name == "nt":
+                    print('         unxutils is old/broken, GnuWin32 is good.')
+                return False
+
+
+def has_program(program, strict=False):
+    """When the backend is only a symlink to another backend,
+       we will return False, unless we strictly want to use this backend.
+    """
+    with open(os.devnull, "w") as devnull:
+        if options.sane_which:
+            p_which = Popen(["which", program], stdout=PIPE, stderr=devnull)
+            program_path = p_which.communicate()[0].strip()
+            if p_which.returncode == 0:
+                # check if it is only a symlink to another backend
+                real_program = os.path.basename(os.path.realpath(program_path))
+                if program != real_program and (real_program in BROWSERS):
+                    if strict:
+                        print("WARNING: %s is a symlink to %s"
+                              % (program, real_program))
+                        return True
+                    else:
+                        return False # use real program (target) instead
+                return True
+            else:
+                return False
+        else:
+            return False
+
+
+def find_browser():
+    """search for an available browser
+    """
+    for browser in BROWSERS:
+        if has_program(browser):
+            return browser
+
+    # This will use the webbrowser module to find a default
+    return None
+
+
+def open_browser(url, exit=False, submit=False):
+    """open url in the selected browser, default if none
+    """
+    if options.browser:
+        if exit:
+            try:
+                if os.name == "nt":
+                    # silly but necessary for spaces in the path
+                    os.execlp(options.browser, '"' + options.browser + '"', url)
+                else:
+                    # linux/unix works fine with spaces
+                    os.execlp(options.browser, options.browser, url)
+            except OSError as err:
+                error = ["Couldn't open the url in %s: %s"
+                         % (options.browser, str(err))]
+                if submit:
+                    error.append("Please submit via: %s" % url)
+                print_error(*error)
+                sys.exit(1)
+        else:
+            try:
+                if options.debug:
+                    Popen([options.browser, url])
+                else:
+                    with open(os.devnull, "w") as devnull:
+                        Popen([options.browser, url], stdout=devnull)
+            except OSError as err:
+                error = ["Couldn't open the url in %s: %s"
+                            % (options.browser, str(err))]
+                if submit:
+                    error.append("Please submit via: %s" % url)
+                print_error(*error)
+    else:
+        try:
+            if options.debug:
+                webbrowser.open(url)
+            else:
+                # this supresses stdout
+                webbrowser.get().open(url)
+        except webbrowser.Error as err:
+            error = ["Couldn't open the url: %s" % str(err)]
+            if submit:
+                error.append("Please submit via: %s" % url)
+            print_error(*error)
+        if exit:
+            sys.exit(1)
+
+
+def cp65001(name):
+    """This might be buggy, but better than just a LookupError
+    """
+    if name.lower() == "cp65001":
+        return codecs.lookup("utf-8")
+
+
+codecs.register(cp65001)
+
+
+def printf(format_string, *args):
+    """Print with the % and without additional spaces or newlines
+    """
+    if not args:
+        # make it convenient to use without args -> different to C
+        args = (format_string, )
+        format_string = "%s"
+    sys.stdout.write(format_string % args)
+
+
+def decode(msg):
+    """This will replace unsuitable characters and use stdin encoding
+    """
+    if isinstance(msg, bytes):
+        return msg.decode(sys.stdin.encoding, "replace")
+    else:
+        return unicode_string(msg)
+
+
+def encode(msg):
+    """This will replace unsuitable characters and use stdout encoding
+    """
+    if isinstance(msg, unicode_string):
+        return msg.encode(sys.stdout.encoding, "replace")
+    else:
+        return bytes(msg)
+
+
+def print_encoded(*args):
+    """This will replace unsuitable characters and doesn't append a newline
+    """
+    stringArgs = ()
+    for arg in args:
+        stringArgs += encode(arg),
+    msg = b" ".join(stringArgs)
+    if not msg.endswith(b"\n"):
+        msg += b" "
+    if os.name == "nt":
+        os.write(sys.stdout.fileno(), msg)
+    else:
+        try:
+            sys.stdout.buffer.write(msg)
+        except AttributeError:
+            sys.stdout.write(msg)
+
+
+def print_release(release, position=None):
+    """Print information about a release.
+
+    If the position is given, this should be an entry
+    in a list of releases (choice)
+    """
+    country = (release.get("country") or "").ljust(2)
+    date = (release.get("date") or "").ljust(10)
+    barcode = (release.get("barcode") or "").rjust(13)
+    label_list = release.get("label-info-list")
+    catnumber_list = []
+    if label_list:
+        for label in label_list:
+            cat_number = label.get("catalog-number")
+            if cat_number:
+                catnumber_list.append(cat_number)
+    catnumbers = ", ".join(catnumber_list)
+
+    if position is None:
+        print_encoded("Artist:\t\t%s\n" % release.get("artist-credit-phrase"))
+        print_encoded("Release:\t%s" % release.get("title"))
+    else:
+        print_encoded("%#2d:" % position)
+        print_encoded("%s - %s" % (
+                      release.get("artist-credit-phrase"), release.get("title")))
+    if release.get("status"):
+        print("(%s)" % release.get("status"))
+    else:
+        print("")
+    if position is None:
+        print_encoded("Release Event:\t%s\t%s\n" % (date, country))
+        print_encoded("Barcode:\t%s\n" % release.get("barcode") or "")
+        print_encoded("Catalog No.:\t%s\n" % catnumbers)
+        print_encoded("MusicBrainz ID:\t%s\n" % release.get("id"))
+    else:
+        print_encoded("\t%s\t%s\t%s\t%s\n" % (
+                      country, date, barcode, catnumbers))
+
+
+def print_error(*args):
+    string_args = tuple([str(arg) for arg in args])
+    logger.error("\n       ".join(string_args))
+
+
+class WebService2():
+    """A web service wrapper that asks for a password when first needed.
+
+    This uses musicbrainzngs as a wrapper itself.
+    """
+
+    def __init__(self, username=None):
+        self.auth = False
+        self.keyring_failed = False
+        self.username = username
+        musicbrainzngs.set_hostname(options.server)
+        musicbrainzngs.set_useragent(AGENT_NAME, __version__,
+                "http://github.com/JonnyJD/musicbrainz-isrcsubmit")
+
+    def authenticate(self):
+        """Sets the password if not set already
+        """
+        if not self.auth:
+            print("")
+            if self.username is None:
+                printf("Please input your MusicBrainz username (empty=abort): ")
+                self.username = user_input()
+            if len(self.username) == 0:
+                print("(aborted)")
+                sys.exit(1)
+            password = None
+            if keyring is not None and options.keyring and not self.keyring_failed:
+                password = keyring.get_password(options.server, self.username)
+            if password is None:
+                password = getpass.getpass(
+                                    "Please input your MusicBrainz password: ")
+            print("")
+            musicbrainzngs.auth(self.username, password)
+            self.auth = True
+            self.keyring_failed = False
+            if keyring is not None and options.keyring:
+                keyring.set_password(options.server, self.username, password)
+
+    def get_release_by_id(self, release_id, includes=[]):
+        try:
+            return musicbrainzngs.get_release_by_id(release_id,
+                                                    includes=includes)
+        except WebServiceError as err:
+            print_error("Couldn't fetch release: %s" % err)
+            sys.exit(1)
+
+    def tracks_match(self, mb_tracks, tracks):
+        if len(mb_tracks) != len(tracks):
+            return False
+        mbIter = mb_tracks.iter()
+        trackIter = tracks.iter()
+        mbTrack = mbIter.next()
+        while mbTrack:
+            track = trackIter.next()
+            if abs(track.info.length - mbTrack.length) > max_time_diff:
+                return False
+        return True
+
+    def get_releases_by_name(self, artist, title, tracks):
+        query = '{} AND artist:"{}" AND tracks:{} AND format:"Digital Media"'.format(title, artist, len(tracks));
+        try:
+            response = musicbrainzngs.search_releases(query, strict=True)
+        except ResponseError as err:
+            if err.cause.code == 404:
+                return []
+            else:
+                print_error("Couldn't fetch release: %s" % err)
+                sys.exit(1)
+        except WebServiceError as err:
+            print_error("Couldn't fetch release: %s" % err)
+            sys.exit(1)
+        return response['release-list']
+
+    def get_recordings_by_isrc(self, isrc, includes=[]):
+        try:
+            response = musicbrainzngs.get_recordings_by_isrc(isrc, includes)
+        except WebServiceError as err:
+            print_error("Couldn't fetch recordings for isrc %s: %s" % (isrc, err))
+            sys.exit(1)
+        return response.get('isrc')['recording-list']
+
+    def submit_isrcs(self, tracks2isrcs):
+        logger.info("tracks2isrcs: %s", tracks2isrcs)
+        while True:
+            try:
+                self.authenticate()
+                musicbrainzngs.submit_isrcs(tracks2isrcs)
+            except AuthenticationError as err:
+                print_error("Invalid credentials: %s" % err)
+                self.auth = False
+                self.keyring_failed = True
+                self.username = None
+                continue
+            except WebServiceError as err:
+                print_error("Couldn't send ISRCs: %s" % err)
+                sys.exit(1)
+            else:
+                print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
+                break
+
+
+def tracknumbergetter(track):
+    return int(track["tracknumber"][0])
+
+
+def gather_tracks(audioFiles):
+    """read the disc in the device with the backend and extract the ISRCs
+    """
+    tracks = []
+
+    for file in audioFiles:
+        if zipfile.is_zipfile(file):
+            zf = zipfile.ZipFile(file)
+            for name in zf.namelist():
+                member = zf.open(name)
+                track = mutagen.File(member)
+                if (track):
+                        tracks.append(track)
+                else:
+                    printf("Ignoring non-music member %s" % member)
+        else:
+            track = mutagen.File(file)
+            if (track):
+                tracks.append(track)
+            else:
+                printf("Ignoring non-music file %s" % file)
+    tracks.sort(key=tracknumbergetter)
+    return tracks
+
+
+def check_isrcs_local(tracks, mb_tracks):
+    """check tracls for (local) duplicates and inconsistencies
+    """
+    isrcs = dict()          # isrcs found on disc
+    tracks2isrcs = dict()   # isrcs to be submitted
+    errors = 0
+
+    for track in tracks:
+        track_number = int(track['tracknumber'][0])
+        if len(track['isrc']) > 1:
+            print_error("Track %s %s has multipl ISRCs. Has this file been tagged already?"
+                        % (track_number, track['title']), isrc)
+            errors += 1
+        else:
+            isrc = track['isrc'][0]
+            mb_track = mb_tracks[track_number - 1]
+            if isrc in isrcs:
+                # found this ISRC for multiple tracks
+                isrcs[isrc].add_track(mb_track)
+            else:
+                isrcs[isrc] = Isrc(isrc, mb_track)
+            # check if the ISRC was already added to the track
+            isrc_attached = False
+            mbIsrcList = mb_track["recording"].get("isrc-list")
+            if mbIsrcList:
+                for mb_isrc in mbIsrcList:
+                    if isrc == mb_isrc:
+                        print("%s is already attached to track %d"
+                              % (isrc, track_number))
+                        isrc_attached = True
+                        break
+            if not isrc_attached:
+                # single isrcs work in python-musicbrainzngs 0.4, but not 0.3
+                # lists of isrcs don't work in 0.4 though, see pymbngs #113
+                tracks2isrcs[mb_track["id"]] = isrc
+                print("found new ISRC for track %d: %s"
+                      % (track_number, isrc))
+
+    # Check for multiple ISRCs on different tracks
+    for isrc in isrcs.items():
+        if len(isrc[1].get_tracks()) > 1:
+            print("ISRC %s found on more than one track" % isrc._id)
+            for track in isrc.get_tracks():
+                print("-> %s" % track)
+            errors += 1
+
+    return isrcs, tracks2isrcs, errors
+
+
+def check_global_duplicates(release, mb_tracks, isrcs):
+    """Help cleaning up global duplicates of any of the isrcs from this digital release
+    """
+    duplicates = []
+    # add already attached ISRCs
+    for isrc in isrcs:
+        recordings = ws2.get_recordings_by_isrc(isrc)
+        if len(recordings) > 1:
+            duplicates.append(isrc._id)
+
+    if len(duplicates) > 0:
+        printf("\nThere were %d ISRCs ", len(duplicates))
+        print("that are attached to multiple tracks.")
+        choice = user_input("Do you want to help clean those up? [y/N] ")
+        if choice.lower() == "y":
+            cleanup_isrcs(release, duplicates)
+
+
+def cleanup_isrcs(release, isrcs):
+    """Show information about duplicate ISRCs
+
+    Our attached ISRCs should be correct -> helps to delete from other tracks
+    """
+    global options
+    for isrc in isrcs:
+        tracks = isrcs[isrc].get_tracks()
+        print("\nISRC %s attached to:" % isrc)
+        for track in tracks:
+            printf("\t")
+            artist = track.get("artist-credit-phrase")
+            if artist and artist != release.get("artist-credit-phrase"):
+                string = "%s - %s" % (artist, track["title"])
+            else:
+                string = "%s" % track["title"]
+            print_encoded(string)
+            # tab alignment
+            if len(string) >= 32:
+                printf("\n%s",  " " * 40)
+            else:
+                if len(string) < 7:
+                    printf("\t")
+                if len(string) < 15:
+                    printf("\t")
+                if len(string) < 23:
+                    printf("\t")
+                if len(string) < 31:
+                    printf("\t")
+
+            printf("\t track %s", track["position"])
+
+            url = "http://%s/isrc/%s" % (options.server, isrc)
+            if user_input("Open ISRC in the browser? [Y/n] ").lower() != "n":
+                open_browser(url)
+                user_input("(press <return> when done with this ISRC) ")
+
+
+def find_release(tracks, common_includes):
+    global options
+    global ws2
+    artists = set()
+    albums = set()
+    for track in tracks:
+        if (track.tags.get('albumartist')):
+            artists.add(track.tags.get('albumartist')[0])
+        elif (track.tags.get('artist')):
+            artists.add(track.tags.get('artist')[0])
+        albums.add(track.tags.get('album')[0])
+    if len(artists)>1:
+        print("Release should have just one Album Artist, found %d: %s", len(artists), str(artists))
+        sys.exit(1)
+    if len(albums)>1:
+        print("Release should have just one Album, found %d: %s", len(albums), str(albums))
+        sys.exit(1)
+    albumtitle = albums.pop()
+    # We have a unique artist and album. See if we can locate it in MB
+    if (len(artists)):
+        albumartist = artists.pop()
+        results = ws2.get_releases_by_name(albumartist, albumtitle, tracks)
+    else:
+        results = []
+    if (len(results) == 0):
+        # Various Artists downloads might not use Various Artists as the album artist,
+        # or might not name an album artist at all
+        results = ws2.get_releases_by_name("Various Artists", albumtitle, tracks)
+    num_results = len(results)
+    selected_release = None
+    if num_results == 0:
+        print("\n\"{}\" by \"{}\" is not in the database.".format(albumartist, albumtitle))
+        sys.exit(1)
+    elif num_results > 1:
+        print("\nMultiple releases found, please pick one:")
+        print(" 0: none of these\n")
+        for i in range(num_results):
+            release = results[i]
+            # printed list is 1..n, not 0..n-1 !
+            print_release(release, i + 1)
+        try:
+            num = user_input("Which one do you want? [0-%d] "
+                             % num_results)
+            if int(num) not in range(0, num_results + 1):
+                raise IndexError
+            if int(num) == 0:
+                print("Release not found. You can resubmit using the --release-id option\n")
+                sys.exit(1)
+            else:
+                selected_release = results[int(num) - 1]
+        except (ValueError, IndexError):
+            print_error("Invalid Choice")
+            sys.exit(1)
+        except KeyboardInterrupt:
+            print("\nexiting..")
+            sys.exit(1)
+    else:
+        print("Found unique release\n")
+        selected_release = results[0]
+
+
+    return ws2.get_release_by_id(selected_release["id"], common_includes)
+
+
+def main(argv):
+    global options
+    global ws2
+    common_includes = ["artists", "labels", "recordings", "isrcs",
+                       "artist-credits"]
+    # preset logger
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logging.getLogger().addHandler(stream_handler) # add to root handler
+
+    # global variables
+    options = gather_options(argv)
+    ws2 = WebService2(options.user)
+
+    if options.debug:
+        logging.getLogger().setLevel(logging.DEBUG)
+        stream_handler.setLevel(logging.INFO)
+
+        # adding log file
+        logfile = "isrcDigitalSubmit.log"
+        file_handler = logging.FileHandler(logfile, mode='w',
+                            encoding="utf8", delay=True)
+        formatter = logging.Formatter("%(levelname)s:%(name)s: %(message)s")
+        file_handler.setFormatter(formatter)
+        file_handler.setLevel(logging.DEBUG)
+        logger.info("Writing debug log to %s", logfile)
+        logging.getLogger().addHandler(file_handler)
+
+        # add context to log file (DEBUG only added there)
+        logger.debug(script_version())
+
+    tracks = gather_tracks(options.audioFiles)
+    if (options.release_id):
+        release = ws2.get_release_by_id(options.release_id, common_includes)
+    else:
+        release = find_release(tracks, common_includes)
+
+    print("")
+    print_release(release.get('release'))
+
+    # list, dict
+    mb_tracks = release.get('release')['medium-list'][0]['track-list']
+    isrcs, tracks2isrcs, errors = check_isrcs_local(tracks, mb_tracks)
+
+    if isrcs:
+        print("")
+    # try to submit the ISRCs
+    update_intention = True
+    if not tracks2isrcs:
+        print("No new ISRCs could be found.")
+    else:
+        if errors > 0:
+            print_error("%d problems detected" % errors)
+        if user_input("Do you want to submit? [y/N] ").lower() == "y":
+            ws2.submit_isrcs(tracks2isrcs)
+        else:
+            update_intention = False
+            print("Nothing was submitted to the server.")
+
+    # check for overall duplicate ISRCs, including server provided
+    if update_intention:
+        # the ISRCs are deemed correct, so we can use them to check others
+        check_global_duplicates(release, mb_tracks, isrcs)
+
+if __name__ == "__main__":
+    main(sys.argv)
+
+
+# vim:set shiftwidth=4 smarttab expandtab:
