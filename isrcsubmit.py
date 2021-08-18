@@ -170,7 +170,7 @@ class OwnTrack(Track):
     """A track found on an analyzed (own) disc"""
     pass
 
-def get_config_home():
+def get_config_home(tool="isrcsubmit"):
     """Returns the base directory for isrcsubmit's configuration files."""
 
     if os.name == "nt":
@@ -179,12 +179,31 @@ def get_config_home():
         default_location = os.path.expanduser("~/.config")
 
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME", default_location)
-    return os.path.join(xdg_config_home, "isrcsubmit")
+    return os.path.join(xdg_config_home, tool)
 
-def config_path():
+def config_path(tool="isrcsubmit"):
     """Returns isrsubmit's config file location."""
 
-    return os.path.join(get_config_home(), "config")
+    return os.path.join(get_config_home(tool), "config")
+
+def setDefaultOptions(config, options):
+    # If an option is set in the config and not overriden on the command line,
+    # assign them to options.
+    if options.keyring is None and config.has_option("general", "keyring"):
+        options.keyring = config.getboolean("general", "keyring")
+    if options.browser is None and config.has_option("general", "browser"):
+        options.browser = config.get("general", "browser")
+    if options.server is None and config.has_option("musicbrainz", "server"):
+        options.server = config.get("musicbrainz", "server")
+    if options.user is None and config.has_option("musicbrainz", "user"):
+        options.user = config.get("musicbrainz", "user")
+    options.sane_which = test_which()
+    if options.browser is None:
+        options.browser = find_browser()
+    if options.server is None:
+        options.server = DEFAULT_SERVER
+    if options.keyring is None:
+        options.keyring = True
 
 def gather_options(argv):
     global options
@@ -249,35 +268,20 @@ def gather_options(argv):
     if args:
         logger.warning("Superfluous arguments: %s", ", ".join(args))
 
-    # If an option is set in the config and not overriden on the command line,
-    # assign them to options.
-    if options.keyring is None and config.has_option("general", "keyring"):
-        options.keyring = config.getboolean("general", "keyring")
+    setDefaultOptions(config, options)
+
+    # assign remaining options automatically
+    if options.device is None and config.has_option("general", "device"):
+        options.device = config.get("general", "device")
+    if options.device is None:
+        options.device = default_device
+
     if options.backend is None and config.has_option("general", "backend"):
         options.backend = config.get("general", "backend")
         if options.backend not in BACKENDS:
             print_error("Backend given in config file is not a valid choice.",
                         "Choose a backend from %s" % ", ".join(BACKENDS))
             sys.exit(-1)
-    if options.browser is None and config.has_option("general", "browser"):
-        options.browser = config.get("general", "browser")
-    if options.device is None and config.has_option("general", "device"):
-        options.device = config.get("general", "device")
-    if options.server is None and config.has_option("musicbrainz", "server"):
-        options.server = config.get("musicbrainz", "server")
-    if options.user is None and config.has_option("musicbrainz", "user"):
-        options.user = config.get("musicbrainz", "user")
-
-    # assign remaining options automatically
-    if options.device is None:
-        options.device = default_device
-    options.sane_which = test_which()
-    if options.browser is None:
-        options.browser = find_browser()
-    if options.server is None:
-        options.server = DEFAULT_SERVER
-    if options.keyring is None:
-        options.keyring = True
     if options.backend and not has_program(options.backend, strict=True):
         print_error("Chosen backend not found. No ISRC extraction possible!",
                     "Make sure that %s is installed." % options.backend)
