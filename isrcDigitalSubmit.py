@@ -22,6 +22,9 @@ https://github.com/SheamusPatt/musicbrainz-isrcDigitalSubmit
 """
 
 __version__ = "2.1.0"
+
+import operator
+
 AGENT_NAME = "isrcDigitalSubmit.py"
 DEFAULT_SERVER = "musicbrainz.org"
 # starting with highest priority
@@ -102,7 +105,7 @@ The ISRC-track relationship we found on our disc is taken as our correct evaluat
 """)
     parser.print_usage()
     print("""\
-Please report bugs on https://github.com/SheamusPatt/musicbrainz-isrcDigitalSubmit""")
+Please report bugs on https://github.com/SheamusPatt/musicbrainz-isrcsubmit""")
     sys.exit(0)
 
 
@@ -140,26 +143,55 @@ class Track(dict):
     Only the element already in the collection needs to be hashable.
     """
     def __init__(self, track, number=None):
-        self._track = track
-        self._recording = track["recording"]
+        self._recording = track
         self._number = number
-        # check that we found the track with the correct number
-        assert(int(self._track["position"]) == self._number)
+        if track.__class__ == mutagen.ogg.OggFileType or track.__class__ == mutagen.flac.FLAC :
+            if not self._number:
+                self._number = int(track.get("tracknumber")[0])
+            if (track.tags.get('artist')):
+                self._artist = self._albumartist = track.tags.get('artist')[0]
+            else:
+                self._artist = None
+            if (track.tags.get('albumartist')):
+                self._albumartist = track.tags.get('albumartist')[0]
+            else:
+                self._albumartist = None
+            self._album = track.get("album")[0]
+            self._title = track.get("title")[0]
+            self._isrc = track.get("ISRC")
+        elif track.__class__ == mutagen.mp3.MP3:
+            if not self._number:
+                trck = track.get("TRCK") or track.get("TRK")
+                self._number = int(trck.text[0].partition("/")[0])
+            if track.get("TPE1"):
+                self._artist = track.get("TPE1")[0]
+            elif track.get("TP1"):
+                self._artist = track.get("TP1")[0]
+            else:
+                self._artist = None
+            self._albumartist = None
+            if track.get("TALB"):
+                self._album = track.get("TALB")[0]
+            elif track.get("TAL"):
+                self._album = track.get("TAL")[0]
+            else:
+                self._album = None
+            if track.get("TIT2"):
+                self._title = track.get("TIT2")[0]
+            elif track.get("TT2"):
+                self._title = track.get("TT2")[0]
+            else:
+                self._title = None
+            self._isrc = track.get("TSRC")
 
     def __eq__(self, other):
         return self["id"] == other["id"]
 
     def __getitem__(self, item):
-        try:
-            return self._recording[item]
-        except KeyError:
-            return self._track[item]
+        return self._recording[item]
 
     def get(self, item, default=None):
-        try:
-            return self._recording.get(item, default)
-        except KeyError:
-            return self._track.get(item, default)
+        return self._recording.get(item, default)
 
 
 def get_config_home():
@@ -471,7 +503,7 @@ class WebService2():
         self.username = username
         musicbrainzngs.set_hostname(options.server)
         musicbrainzngs.set_useragent(AGENT_NAME, __version__,
-                "http://github.com/JonnyJD/musicbrainz-isrcsubmit")
+                "http://github.com/SheamusPatt/musicbrainz-isrcsubmit")
 
     def authenticate(self):
         """Sets the password if not set already
@@ -560,10 +592,6 @@ class WebService2():
                 break
 
 
-def tracknumbergetter(track):
-    return int(track["tracknumber"][0])
-
-
 def gather_tracks(audioFiles):
     """read the disc in the device with the backend and extract the ISRCs
     """
@@ -572,20 +600,22 @@ def gather_tracks(audioFiles):
     for file in audioFiles:
         if zipfile.is_zipfile(file):
             zf = zipfile.ZipFile(file)
-            for name in zf.namelist():
-                member = zf.open(name)
-                track = mutagen.File(member)
-                if (track):
-                        tracks.append(track)
-                else:
-                    printf("Ignoring non-music member %s" % member)
+            for info in zf.infolist():
+                if not info.is_dir() and not info.filename.startswith('__MACOSX/._'):
+                    # Ignore AppleDouble resource files
+                    member = zf.open(info.filename)
+                    track = mutagen.File(member)
+                    if (track):
+                        tracks.append(Track(track))
+                    else:
+                        printf("Ignoring non-music member %s" % info.filename)
         else:
             track = mutagen.File(file)
             if (track):
-                tracks.append(track)
+                tracks.append(Track(track))
             else:
                 printf("Ignoring non-music file %s" % file)
-    tracks.sort(key=tracknumbergetter)
+    tracks.sort(key=operator.attrgetter("_number"))
     return tracks
 
 
@@ -597,13 +627,15 @@ def check_isrcs_local(tracks, mb_tracks):
     errors = 0
 
     for track in tracks:
-        track_number = int(track['tracknumber'][0])
-        if len(track['isrc']) > 1:
+        track_number = track._number
+        if track._isrc == None:
+            print("Track %s %s has no ISRC" % (track_number, track._title))
+        elif len(track._isrc) > 1:
             print_error("Track %s %s has multipl ISRCs. Has this file been tagged already?"
-                        % (track_number, track['title']), isrc)
+                        % (track_number, track._title, track._isrc))
             errors += 1
         else:
-            isrc = track['isrc'][0]
+            isrc = track._isrc[0]
             mb_track = mb_tracks[track_number - 1]
             if isrc in isrcs:
                 # found this ISRC for multiple tracks
@@ -700,11 +732,8 @@ def find_release(tracks, common_includes):
     artists = set()
     albums = set()
     for track in tracks:
-        if (track.tags.get('albumartist')):
-            artists.add(track.tags.get('albumartist')[0])
-        elif (track.tags.get('artist')):
-            artists.add(track.tags.get('artist')[0])
-        albums.add(track.tags.get('album')[0])
+        artists.add(track._albumartist)
+        albums.add(track._album)
     if len(artists)>1:
         print("Release should have just one Album Artist, found %d: %s", len(artists), str(artists))
         sys.exit(1)

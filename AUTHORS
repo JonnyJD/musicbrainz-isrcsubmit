@@ -1,6 +1,7 @@
 This is just one isrcsubmit.
 There are other isrc submission tools by different people.
-
+This project also contains isrcDigitalSubmit, a derived tool
+which extracts ISRC codes from digital media instead of CDs.
 
 The following people have contributed to this isrcsubmit.py:
 
@@ -27,3 +28,7 @@ The following people have contributed to this isrcsubmit.py:
   Jim Patterson
   Guilherme Danno
    - minor fixes
+
+The following people have contributed to isrcDigitalSubmit.py:
+  Jim Patterson
+
