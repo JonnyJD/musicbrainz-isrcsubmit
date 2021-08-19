@@ -400,7 +400,7 @@ def cleanup_isrcs(release, isrcs):
                 open_browser(url)
                 user_input("(press <return> when done with this ISRC) ")
 
-
+FEATURED_ARTIST_SEP = [' feat. ']
 def find_release(tracks, common_includes):
     global options
     global ws2
@@ -420,7 +420,20 @@ def find_release(tracks, common_includes):
     elif len(artists) == 1:
         albumartist = artists.pop()
     else:
-        albumartist = 'Various Artists'
+        # Might still be a single artist album with 'featured' artists. Look for a common prefix
+        # after breaking at common featured artist tags
+        albumartist = None
+        for otherartist in artists:
+            for feat in FEATURED_ARTIST_SEP:
+                otherartist = otherartist.partition(feat)[0]
+            if not albumartist or len(otherartist) < len(albumartist):
+                albumartist = otherartist
+        for otherartist in artists:
+            if len(albumartist) > len(otherartist) and albumartist.startswith(otherartist):
+                albumartist = otherartist
+            elif not otherartist.startswith(albumartist):
+                albumartist = 'Various Artists'
+                break
 
     if len(albums)>1:
         print("Release should have just one Album, found %d: %s", len(albums), str(albums))
