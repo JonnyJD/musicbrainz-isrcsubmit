@@ -510,7 +510,7 @@ def print_release(release, position=None):
     country = (release.get("country") or "").ljust(2)
     date = (release.get("date") or "").ljust(10)
     barcode = (release.get("barcode") or "").rjust(13)
-    label_list = release["label-info-list"]
+    label_list = release.get("label-info-list") or []
     catnumber_list = []
     for label in label_list:
         cat_number = label.get("catalog-number")
@@ -625,6 +625,14 @@ class WebService2():
         except WebServiceError as err:
             print_error("Couldn't fetch release: %s" % err)
             sys.exit(1)
+
+    def get_recordings_by_isrc(self, isrc, includes=[]):
+        try:
+           response = musicbrainzngs.get_recordings_by_isrc(isrc, includes)
+        except WebServiceError as err:
+           print_error("Couldn't fetch recordings for isrc %s: %s" % (isrc, err))
+           sys.exit(1)
+        return response.get('isrc')['recording-list']
 
     def submit_isrcs(self, tracks2isrcs):
         logger.info("tracks2isrcs: %s", tracks2isrcs)
