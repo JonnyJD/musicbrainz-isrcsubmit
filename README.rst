@@ -1,11 +1,17 @@
 Isrcsubmit 2.1.0 for MusicBrainz
 ================================
 
-This python script extracts ISRCs_ from audio CDs
-and submits them to MusicBrainz_.
+This project includes two python scripts that extracts ISRCs
+and submits them to MusicBrainz_. isrcsubmit extracts ISRCs from
+Audio CDs. isrcDigitalSubmit extracts ISRCs from audio files.
 
-This script uses python-musicbrainzngs to access the MusicBrainz API
-and python-discid to create an identifier for the disc.
+These scripts use python-musicbrainzngs to access the MusicBrainz API.
+
+isrcsubmit uses python-discid to create an identifier for the disc which
+is used to locate corresponding releases in MusicBrainz. 
+
+isrcDigitalSubmit uses mutagen to analyze audio files, and locates matching
+MusicBrainz releases based on embedded Artist, Album and AlbumArtist tags.
 
 The script works for Linux, Mac OS X and Windows.
 
@@ -15,11 +21,11 @@ The script works for Linux, Mac OS X and Windows.
 Features:
 ---------
 
-* read ISRCs from disc
-* search for releases with the TOC of the disc
+* read ISRCs from disc or audio files
+* search for releases with the TOC of the disc or embedded tags
 * display release information from MusicBrainz
 * submit ISRCs
-* submit discIds / TOCs
+* submit discIds / TOCs (isrcsubmit)
 * duplicate ISRC detection (local and on server)
 
 
@@ -29,12 +35,14 @@ Dependencies:
 * Python 2 >= 2.6 or Python 3 >= 3.1
 * python-discid_ >= 1.0.0 (or python-libdiscid_ >= 0.2.0)
 * python-musicbrainzngs_ >= 0.4
+* mutagen >= 1.45.1
 * keyring_ (optional)
 
 .. _python-discid: http://python-discid.readthedocs.org/
 .. _python-libdiscid: http://pythonhosted.org/python-libdiscid/
 .. _python-musicbrainzngs: http://python-musicbrainzngs.readthedocs.org/
-.. _keyring: https://github.com/jaraco/keyring
+.. _keyring: https://github.com/jaraco/keyring/
+.. _mutaagen: https://mutagen.readthedocs.io/
 
 
 Usage:
@@ -42,10 +50,16 @@ Usage:
 ::
 
     isrcsubmit.py [options] [username] [device]
+    isrcDigitalSubmit.py [options] [username] audioFiles ...
 
-All arguments are optional. For detailed usage see::
+All arguments are optional other than audioFiles for isrcDigitalSubmit.
+AudioFiles may be zipped (so a ZIP file as distributed by the vendor can
+usually be passed directly to the script).
+
+For detailed usage see::
 
     isrcsubmit.py -h
+    isrcDigitalSubmit.py -h
 
 
 Windows Usage:
@@ -54,6 +68,7 @@ Windows Usage:
 Windows users should use::
 
     isrcsubmit.bat
+    isrcDigitalSubmit.bat
 
 
 Mac Usage:
@@ -62,6 +77,7 @@ Mac Usage:
 Mac users should rather use::
 
     isrcsubmit.sh
+    isrcDigitalSubmit.sh
 
 This also works on Linux.
 
@@ -82,6 +98,31 @@ If the disc is known to MusicBrainz, additional information about it
 is fetched from MusicBrainz.
 If the disc is unknown, you will be given the chance to submit the ID
 to the server.
+
+Identifying Releases from Tags
+------------------------------
+
+A Digital Media release has no equivalent of a DiscID as defined for CDs.
+Instead, it uses tags that are embedded in the digital media files. The
+tags of interest are Album, AlbumArtist and Artist. (Other formats eg. MP3
+might name these different; this discussion will use the Vorbis tag names).
+
+Identifying a release is most straightforward if the albumartist tag is found. 
+The same albumartist tag must be on all tracks. isrcDigitalSubmit will look for
+a Digital Media release with that album artist and title. If more tha one is found,
+the user will be asked to choose.
+
+If no Album Artist is found, the artist will be treated as an album artist. 
+An attempt is made to strip away any "featured artist" from tracks, either by looking
+for connectors like "feat." or "duet with", or by checking for a common name that
+is found on all artist name strings. If it can't identify a single artist, it will
+look for a "Various Artists" release.
+
+If all else fails, the user can point the script to a specific release by use of
+the --release-id= option.
+
+isrcDigitalRelease always verifies that the digital media release matches the MusicBrainz
+release by checking for matching titles and artists and similar track times.
 
 
 "Installation":
