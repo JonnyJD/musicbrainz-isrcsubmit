@@ -35,7 +35,7 @@ Dependencies:
 * Python 2 >= 2.6 or Python 3 >= 3.1
 * python-discid_ >= 1.0.0 (or python-libdiscid_ >= 0.2.0)
 * python-musicbrainzngs_ >= 0.4
-* mutagen >= 1.45.1
+* mutagen_ >= 1.45.1
 * keyring_ (optional)
 
 .. _python-discid: http://python-discid.readthedocs.org/
@@ -174,7 +174,7 @@ You might find additional information about this script at the
 `MusicBrainz forums`_.
 
 .. _web page: http://jonnyjd.github.io/musicbrainz-isrcsubmit/backends
-.. _MusicBrainz forums: http://forums.musicbrainz.org/viewtopic.php?id=3444
+.. _MusicBrainz forums: https://community.metabrainz.org/search?q=isrcsubmit
 
 
 Bugs:
