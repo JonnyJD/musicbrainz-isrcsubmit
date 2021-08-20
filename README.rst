@@ -41,8 +41,8 @@ Dependencies:
 .. _python-discid: http://python-discid.readthedocs.org/
 .. _python-libdiscid: http://pythonhosted.org/python-libdiscid/
 .. _python-musicbrainzngs: http://python-musicbrainzngs.readthedocs.org/
-.. _keyring: https://github.com/jaraco/keyring
-.. _mutaagen: https://github.com/quodlibet/mutagen
+.. _keyring: https://github.com/jaraco/keyring/
+.. _mutaagen: https://mutagen.readthedocs.io/
 
 
 Usage:
