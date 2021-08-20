@@ -400,7 +400,8 @@ def cleanup_isrcs(release, isrcs):
                 open_browser(url)
                 user_input("(press <return> when done with this ISRC) ")
 
-FEATURED_ARTIST_SEP = [' feat. ']
+FEATURED_ARTIST_SEP = [' feat. ', ' duet with ']
+
 def find_release(tracks, common_includes):
     global options
     global ws2
@@ -408,10 +409,10 @@ def find_release(tracks, common_includes):
     artists = set()
     albums = set()
     for track in tracks:
-        artists.add(track._artist)
+        artists.add(track._artist.lower().strip())
         if (track._albumartist):
-            albumartists.add(track._albumartist)
-        albums.add(track._album)
+            albumartists.add(track._albumartist.lower().strip())
+        albums.add(track._album.lower().strip())
     if len(albumartists)>1:
         print("Release should have just one Album Artist, found %d: %s", len(artists), str(artists))
         sys.exit(1)
