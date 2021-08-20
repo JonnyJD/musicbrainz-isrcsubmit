@@ -22,7 +22,7 @@ Features:
 ---------
 
 * read ISRCs from disc or audio files
-* search for releases with the TOC of the disc
+* search for releases with the TOC of the disc or embedded tags
 * display release information from MusicBrainz
 * submit ISRCs
 * submit discIds / TOCs (isrcsubmit)
@@ -35,14 +35,14 @@ Dependencies:
 * Python 2 >= 2.6 or Python 3 >= 3.1
 * python-discid_ >= 1.0.0 (or python-libdiscid_ >= 0.2.0)
 * python-musicbrainzngs_ >= 0.4
-* mutagen >= `1.45.1
+* mutagen >= 1.45.1
 * keyring_ (optional)
 
 .. _python-discid: http://python-discid.readthedocs.org/
 .. _python-libdiscid: http://pythonhosted.org/python-libdiscid/
 .. _python-musicbrainzngs: http://python-musicbrainzngs.readthedocs.org/
 .. _keyring: https://github.com/jaraco/keyring
-.. mutaagen: https://github.com/quodlibet/mutagen
+.. _mutaagen: https://github.com/quodlibet/mutagen
 
 
 Usage:
@@ -52,7 +52,11 @@ Usage:
     isrcsubmit.py [options] [username] [device]
     isrcDigitalSubmit.py [options] [username] audioFiles ...
 
-All arguments are optional. For detailed usage see::
+All arguments are optional other than audioFiles for isrcDigitalSubmit.
+AudioFiles may be zipped (so a ZIP file as distributed by the vendor can
+usually be passed directly to the script).
+
+For detailed usage see::
 
     isrcsubmit.py -h
     isrcDigitalSubmit.py -h
