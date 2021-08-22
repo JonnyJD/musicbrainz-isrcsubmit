@@ -249,6 +249,10 @@ class WebService2(isrcsubmit.WebService2):
             track = trackIter.next()
             if abs(track.info.length - mbTrack.length) > max_time_diff:
                 return False
+            if mbTrack.get("artist").lower() != track._artist.lower():
+                return False
+            if mbTrack.get("album").lower() != track._album.lower():                return False
+
         return True
 
     def get_releases_by_name(self, artist, title, tracks, extra=""):
