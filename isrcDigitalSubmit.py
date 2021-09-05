@@ -24,6 +24,10 @@ https://github.com/SheamusPatt/musicbrainz-isrcDigitalSubmit
 __version__ = "2.1.0"
 
 import operator
+import re
+import unicodedata
+
+from unidecode import unidecode
 
 AGENT_NAME = "isrcDigitalSubmit.py"
 TOOL_NAME = "isrcDigitalSubmit"
@@ -298,8 +302,25 @@ def gather_tracks(audioFiles):
     return tracks
 
 
+"""Return an ASCII version of str with all punctuation replaced by spaces
+"""
+def simplestr(str):
+    result = unidecode(str)
+    result = result.lower()
+    words = re.split(r'\W+', result)
+    return " ".join(words)
+
+
+"""Do a fuzzy compare, ignoring case, accents and punctuation.
+Returns true if strings are the same under those conditions.
+"""
+def fuzzycompare(str1, str2):
+    return simplestr(str1) == simplestr(str2)
+
+
 def check_isrcs_local(tracks, mb_tracks):
     """check tracls for (local) duplicates and inconsistencies
+    Also verify that local tracks match those in MusicBrainz release
     """
     isrcs = dict()          # isrcs found on disc
     tracks2isrcs = dict()   # isrcs to be submitted
@@ -316,6 +337,20 @@ def check_isrcs_local(tracks, mb_tracks):
         else:
             isrc = track._isrc[0]
             mb_track = mb_tracks[track_number - 1]
+            if not fuzzycompare(track._artist, mb_track["artist-credit-phrase"]):
+                print_error("Track {} credited to {} which does not match credit in MusicBrainz: {}"
+                            .format(track_number, track._artist, mb_track["artist-credit-phrase"]))
+                errors += 1
+            if not fuzzycompare(track._title, mb_track["recording"]["title"]):
+                print_error("Track {} title {} does not match that in MusicBrainz: {}"
+                            .format(track_number, track._title, mb_track["recording"]["title"]))
+                errors += 1
+            if abs(track._recording.info.length - float(mb_track["recording"]["length"])/1000)\
+                    > max_time_diff:
+                print_error("Track {} recording length {} more than {} seconds different than length in MusicBrainz: {}"
+                            .format(track_number, track._recording.info.length,
+                                    max_time_diff, float(mb_track["recording"]["length"])/1000))
+                errors += 1
             if isrc in isrcs:
                 # found this ISRC for multiple tracks
                 isrcs[isrc].add_track(mb_track)
