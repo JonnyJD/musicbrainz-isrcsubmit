@@ -48,7 +48,8 @@ else:
 
 args = {}
 if have_setuptools:
-    args["install_requires"] = ["discid >=1.0.0", "musicbrainzngs >=0.4"],
+    args["install_requires"] = ["discid >=1.0.0", "musicbrainzngs >=0.4",
+                                "Unidecode >=1.2.0", "mutagen >=1.45.1" ]
     # we load isrcsubmit on setup
     args["setup_requires"] = args["install_requires"],
 
