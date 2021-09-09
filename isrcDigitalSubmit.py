@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Copyright (C) 2009-2015 Johannes Dewender
+# Copyright (C) 2021 Jim Patterson
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +14,7 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""This is a tool to submit ISRCs from a disc to MusicBrainz.
+"""This is a tool to submit ISRCs from audio files to MusicBrainz.
 
 Mutagen is used to gather the ISRCs
 and python-musicbrainz2 to submit them.
@@ -25,7 +26,6 @@ __version__ = "2.1.0"
 
 import operator
 import re
-import unicodedata
 
 from unidecode import unidecode
 
@@ -39,7 +39,7 @@ import mutagen
 import os
 import sys
 import zipfile
-from musicbrainzngs import AuthenticationError, ResponseError, WebServiceError
+from musicbrainzngs import ResponseError, WebServiceError
 from optparse import OptionParser
 
 import isrcsubmit
@@ -78,13 +78,17 @@ def print_help(option=None, opt=None, value=None, parser=None):
     print("%s" % script_version())
     print(
 """
-This python script extracts ISRCs from audio files and submits them to MusicBrainz (musicbrainz.org).
-You need to have a MusicBrainz account, specify the username and will be asked for your password every time you execute the script.
+This python script extracts ISRCs from audio files and submits them 
+to MusicBrainz (musicbrainz.org). You need to have a MusicBrainz account,
+specify the username and will be asked for your password when you 
+submit ISRCs (keyring may be used to retain credentials between invocations).
 
-IsrcDigitalSubmit will warn you if there are any problems and won't actually submit anything to MusicBrainz without giving a final choice.
+IsrcDigitalSubmit will warn you if there are any problems and won't actually
+submit anything to MusicBrainz without giving a final choice.
 
-IsrcDigitalSubmit will warn you if any duplicate ISRCs are detected and help you fix previously inserted duplicate ISRCs.
-The ISRC-track relationship we found in the audio files is taken as our correct evaluation.
+IsrcDigitalSubmit will warn you if any duplicate ISRCs are detected and help 
+you fix previously inserted duplicate ISRCs. The ISRC-track relationship we
+found in the audio files is taken as our correct evaluation.
 """)
     parser.print_usage()
     print("""\
@@ -119,33 +123,39 @@ class Isrc(object):
         return ", ".join(numbers)
 
 
+trackNumMatcher = re.compile(r'(^|/)(\d+)[^/]+$')
+
+
 class Track(dict):
     """track with equality checking
 
     This makes it easy to check if this track is already in a collection.
     Only the element already in the collection needs to be hashable.
     """
-    def __init__(self, track, number=None):
+    def __init__(self, track, trackName):
         self._recording = track
-        self._number = number
+        self._trackName = trackName
+        self._number = None
         if track.__class__ == mutagen.ogg.OggFileType or track.__class__ == mutagen.flac.FLAC :
             if not self._number:
-                self._number = int(track.get("tracknumber")[0])
-            if (track.tags.get('artist')):
-                self._artist = track.tags.get('artist')[0]
+                if track.get("tracknumber") and track.get("tracknumber")[0]:
+                    self._number = int(track.get("tracknumber")[0])
+            if (track.get('artist')):
+                self._artist = track.get('artist')[0]
             else:
                 self._artist = None
-            if (track.tags.get('albumartist')):
+            if (track.get('albumartist')):
                 self._albumartist = track.tags.get('albumartist')[0]
             else:
                 self._albumartist = None
-            self._album = track.get("album")[0]
-            self._title = track.get("title")[0]
+            self._album = track.get("album")[0] if track.get("album") else None
+            self._title = track.get("title")[0] if track.get("title") else None
             self._isrc = track.get("ISRC")
         elif track.__class__ == mutagen.mp3.MP3:
             if not self._number:
                 trck = track.get("TRCK") or track.get("TRK")
-                self._number = int(trck.text[0].partition("/")[0])
+                if trck:
+                    self._number = int(trck.text[0].partition("/")[0])
             if track.get("TPE1"):
                 self._artist = track.get("TPE1")[0]
             elif track.get("TP1"):
@@ -166,6 +176,13 @@ class Track(dict):
             else:
                 self._title = None
             self._isrc = track.get("TSRC")
+        if not self._number:
+            match = trackNumMatcher.search(trackName)
+            if match:
+                self._number = match.group(2)
+            else:
+                print_error("All tracks must have a Track Number. None found on {}"
+                            .format(trackName))
 
     def __eq__(self, other):
         return self["id"] == other["id"]
@@ -259,8 +276,8 @@ class WebService2(isrcsubmit.WebService2):
 
         return True
 
-    def get_releases_by_name(self, artist, title, tracks, extra=""):
-        query = '{} AND artist:"{}" AND tracks:{}{}'.format(title, artist, len(tracks), extra);
+    def get_releases_by_name(self, title, tracks, extra=""):
+        query = '{} AND tracks:{}{}'.format(title, len(tracks), extra);
         try:
             response = musicbrainzngs.search_releases(query, strict=True)
         except ResponseError as err:
@@ -284,20 +301,26 @@ def gather_tracks(audioFiles):
         if zipfile.is_zipfile(file):
             zf = zipfile.ZipFile(file)
             for info in zf.infolist():
-                if not info.is_dir() and not info.filename.startswith('__MACOSX/._'):
+                if not info.is_dir() and not info.filename.startswith('__MACOSX/'):
                     # Ignore AppleDouble resource files
                     member = zf.open(info.filename)
-                    track = mutagen.File(member)
-                    if (track):
-                        tracks.append(Track(track))
-                    else:
-                        printf("Ignoring non-music member %s\n" % info.filename)
+                    try:
+                        track = mutagen.File(member)
+                        if (track):
+                            tracks.append(Track(track, info.filename))
+                        else:
+                            printf("Ignoring non-music member %s\n" % info.filename)
+                    except Exception as e:
+                        print_error("Failed to load track {}: {}".format(info.filename, e))
         else:
-            track = mutagen.File(file)
-            if (track):
-                tracks.append(Track(track))
-            else:
-                printf("Ignoring non-music file %s\n" % file)
+            try:
+                track = mutagen.File(file)
+                if (track):
+                    tracks.append(Track(track, file))
+                else:
+                    printf("Ignoring non-music file %s\n" % file)
+            except Exception as e:
+                print_error("Failed to load track {}: {}".format(info.filename, e))
     tracks.sort(key=operator.attrgetter("_number"))
     return tracks
 
@@ -328,16 +351,17 @@ def check_isrcs_local(tracks, mb_tracks):
 
     for track in tracks:
         track_number = track._number
-        if track._isrc == None:
+        if track._isrc == None or not track._isrc[0]:
             print("Track %s %s has no ISRC" % (track_number, track._title))
         elif len(track._isrc) > 1:
-            print_error("Track %s %s has multipl ISRCs. Has this file been tagged already?"
+            print_error("Track %s %s has multiple ISRCs. Has this file been tagged already?"
                         % (track_number, track._title, track._isrc))
             errors += 1
         else:
             isrc = track._isrc[0]
             mb_track = mb_tracks[track_number - 1]
-            if not fuzzycompare(track._artist, mb_track["artist-credit-phrase"]):
+            if not fuzzycompare(track._artist, mb_track["artist-credit-phrase"])\
+                    and track._artist.lower() != "various artists":
                 print_error("Track {} credited to {} which does not match credit in MusicBrainz: {}"
                             .format(track_number, track._artist, mb_track["artist-credit-phrase"]))
                 errors += 1
@@ -448,10 +472,15 @@ def find_release(tracks, common_includes):
     artists = set()
     albums = set()
     for track in tracks:
-        artists.add(track._artist.lower().strip())
+        artists.add(track._artist.strip())
         if (track._albumartist):
-            albumartists.add(track._albumartist.lower().strip())
-        albums.add(track._album.lower().strip())
+            albumartists.add(track._albumartist.strip())
+        albumtitle = track._album
+        if not albumtitle:
+            print_error("Track {} is missing an album name. \
+We cannot search for an album unless all tracks have an album title".format(track._number))
+            sys.exit(1)
+        albums.add(albumtitle.strip().lower())
     if len(albumartists)>1:
         print("Release should have just one Album Artist, found %d: %s", len(artists), str(artists))
         sys.exit(1)
@@ -476,27 +505,39 @@ def find_release(tracks, common_includes):
                 break
 
     if len(albums)>1:
-        print("Release should have just one Album, found %d: %s", len(albums), str(albums))
+        print("Release should have just one Album, found %d: %s" % (len(albums), str(albums)))
         sys.exit(1)
-    albumtitle = albums.pop()
     # We have a unique artist and album. See if we can locate it in MB
-    results = ws2.get_releases_by_name(albumartist, albumtitle, tracks, ' AND format:"Digital Media"')
+    formatQuery = ' AND format:"Digital Media"'
+    if albumartist:
+        artistQuery = ' AND artist:"{}"'.format(albumartist)
+        results = ws2.get_releases_by_name(albumtitle, tracks, artistQuery + formatQuery)
+        if len(results) == 0:
+            results = ws2.get_releases_by_name(albumtitle, tracks, artistQuery)
+            if len(results) > 0:
+                print_error("Found a release but format is not Digital Media")
+                print_release(results[0])
+                sys.exit(1)
+    else:
+        results = []
     if len(results) == 0:
-        results = ws2.get_releases_by_name(albumartist, albumtitle, tracks)
-        if len(results) > 0:
-            print_error("Found a release but format is not Digital Media")
-            print_release(results[0])
-            sys.exit(1)
-        else:
-            # Various Artists downloads might not use Various Artists as the album artist
-            results = ws2.get_releases_by_name("Various Artists", albumtitle, tracks, 'AND format:"Digital Media"')
+        # Try without the artist name. This can find Various Artists releases under odd names
+        # or cases where the artist on tracks doesn't match MusicBrainz (it happens)
+        results = ws2.get_releases_by_name(albumtitle, tracks, formatQuery)
+        if len(results) == 0:
+            results = ws2.get_releases_by_name(albumtitle, tracks)
+            if len(results) > 0:
+                print_error("Found a release but format is not Digital Media")
+                print_release(results[0])
+                sys.exit(1)
     num_results = len(results)
-    selected_release = None
     if num_results == 0:
-        print("\n\"{}\" by \"{}\" is not in the database.".format(albumartist, albumtitle))
+        print("\n\"Cannot find {}\" by \"{}\" with {} tracks in the database."
+              .format(albumartist, albumtitle, len(tracks)))
         sys.exit(1)
     elif num_results > 1:
-        print("\nMultiple releases found for '{}' by '{}', please pick one:".format(albumtitle, albumartist))
+        print("\nMultiple releases found for '{0}' ({1} tracks) by '{2}', please pick one:"
+              .format(albumtitle, len(tracks), albumartist))
         print(" 0: none of these\n")
         for i in range(num_results):
             release = results[i]
@@ -521,6 +562,7 @@ def find_release(tracks, common_includes):
     else:
         print("Found unique release\n")
         selected_release = results[0]
+        print_release(selected_release)
 
     return ws2.get_release_by_id(selected_release["id"], common_includes)
 
@@ -557,13 +599,14 @@ def main(argv):
         logger.debug(script_version())
 
     tracks = gather_tracks(options.audioFiles)
+    if (len(tracks) == 0):
+        print_error("No valid tracks found")
+        sys.exit(1)
     if (options.release_id):
         release = ws2.get_release_by_id(options.release_id, common_includes)
+        print_release(release.get('release'))
     else:
         release = find_release(tracks, common_includes)
-
-    print("")
-    print_release(release.get('release'))
 
     # list, dict
     mb_tracks = release.get('release')['medium-list'][0]['track-list']
