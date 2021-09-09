@@ -104,28 +104,31 @@ Identifying Releases from Tags
 
 A Digital Media release has no equivalent of a DiscID as defined for CDs.
 Instead, it uses tags that are embedded in the digital media files. The
-tags of interest are Album, AlbumArtist and Artist. (Other formats eg. MP3
-might name these different; this discussion will use the Vorbis tag names).
+tags of interest are Album, AlbumArtist, Artist and TrackNumber. (Other
+formats eg. MP3 might name these different; this discussion will use the
+Vorbis tag names).
 
 Identifying a release is most straightforward if the albumartist tag is found. 
 The same albumartist tag must be on all tracks. isrcDigitalSubmit will look for
-a Digital Media release with that album artist and title. If more tha one is found,
+a Digital Media release with that album artist and title. If more than one is found,
 the user will be asked to choose.
 
 If no Album Artist is found, the artist will be treated as an album artist. 
 An attempt is made to strip away any "featured artist" from tracks, either by looking
 for connectors like "feat." or "duet with", or by checking for a common name that
 is found on all artist name strings. If it can't identify a single artist, it will
-look for a "Various Artists" release.
+look for a release without specifying an artist.
 
 If all else fails, the user can point the script to a specific release by use of
 the --release-id= option.
 
 isrcDigitalRelease always verifies that the digital media release matches the MusicBrainz
-release by checking for matching titles and artists and similar track times.
+release by checking for matching titles and artists and similar track times. It also
+verifies that the format is "Digital Media"; it will not attach
+IRCs to releases with a different format.
 
 
-"Installation":
+Installation:
 ---------------
 
 If you downloaded isrcsubmit as a zip package for your platform
@@ -144,7 +147,7 @@ but "python setup.py install" might work for you.
 However, the backends and libraries should get
 installed so that the script has access to them.
 
-On Linux you just install the above mentioneed dependencies with
+On Linux you just install the above mentioned dependencies with
 the package manager of your distribution.
 For Ubuntu all dependencies should be in the MusicBrainz Stable PPA,
 if not in the official repositories.
