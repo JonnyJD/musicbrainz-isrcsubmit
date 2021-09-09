@@ -92,12 +92,14 @@ options = None
 ws2 = None
 logger = logging.getLogger("isrcsubmit")
 
+
 def script_version():
     return "isrcsubmit %s by JonnyJD for MusicBrainz" % __version__
 
+
 def print_help(option=None, opt=None, value=None, parser=None):
     print("%s" % script_version())
-    print(\
+    print(
 """
 This python script extracts ISRCs from audio cds and submits them to MusicBrainz (musicbrainz.org).
 You need to have a MusicBrainz account, specify the username and will be asked for your password every time you execute the script.
@@ -112,10 +114,12 @@ The ISRC-track relationship we found on our disc is taken as our correct evaluat
 Please report bugs on https://github.com/JonnyJD/musicbrainz-isrcsubmit""")
     sys.exit(0)
 
+
 def print_usage(option=None, opt=None, value=None, parser=None):
     print("%s\n" % script_version())
     parser.print_help()
     sys.exit(0)
+
 
 class Isrc(object):
     def __init__(self, isrc, track=None):
@@ -166,9 +170,11 @@ class Track(dict):
         except KeyError:
             return self._track.get(item, default)
 
+
 class OwnTrack(Track):
     """A track found on an analyzed (own) disc"""
     pass
+
 
 def get_config_home(tool="isrcsubmit"):
     """Returns the base directory for isrcsubmit's configuration files."""
@@ -181,10 +187,12 @@ def get_config_home(tool="isrcsubmit"):
     xdg_config_home = os.environ.get("XDG_CONFIG_HOME", default_location)
     return os.path.join(xdg_config_home, tool)
 
+
 def config_path(tool="isrcsubmit"):
     """Returns isrsubmit's config file location."""
 
     return os.path.join(get_config_home(tool), "config")
+
 
 def setDefaultOptions(config, options):
     # If an option is set in the config and not overriden on the command line,
@@ -204,6 +212,7 @@ def setDefaultOptions(config, options):
         options.server = DEFAULT_SERVER
     if options.keyring is None:
         options.keyring = True
+
 
 def gather_options(argv):
     global options
@@ -314,6 +323,7 @@ def test_which():
                     print('         unxutils is old/broken, GnuWin32 is good.')
                 return False
 
+
 def get_prog_version(prog):
     if prog == "libdiscid":
         version = discid.LIBDISCID_VERSION_STRING
@@ -324,6 +334,7 @@ def get_prog_version(prog):
         version = prog
 
     return decode(version)
+
 
 def has_program(program, strict=False):
     """When the backend is only a symlink to another backend,
@@ -361,6 +372,7 @@ def has_program(program, strict=False):
         else:
             return False
 
+
 def find_backend():
     """search for an available backend
     """
@@ -378,6 +390,7 @@ def find_backend():
 
     return backend
 
+
 def find_browser():
     """search for an available browser
     """
@@ -387,6 +400,7 @@ def find_browser():
 
     # This will use the webbrowser module to find a default
     return None
+
 
 def open_browser(url, exit=False, submit=False):
     """open url in the selected browser, default if none
@@ -435,6 +449,7 @@ def open_browser(url, exit=False, submit=False):
         if exit:
             sys.exit(1)
 
+
 def get_real_mac_device(option_device):
     """drutil takes numbers as drives.
 
@@ -451,13 +466,16 @@ def get_real_mac_device(option_device):
     # libdiscid needs the "raw" version
     return given.replace("/disk", "/rdisk")
 
+
 def cp65001(name):
     """This might be buggy, but better than just a LookupError
     """
     if name.lower() == "cp65001":
         return codecs.lookup("utf-8")
 
+
 codecs.register(cp65001)
+
 
 def printf(format_string, *args):
     """Print with the % and without additional spaces or newlines
@@ -468,6 +486,7 @@ def printf(format_string, *args):
         format_string = "%s"
     sys.stdout.write(format_string % args)
 
+
 def decode(msg):
     """This will replace unsuitable characters and use stdin encoding
     """
@@ -476,6 +495,7 @@ def decode(msg):
     else:
         return unicode_string(msg)
 
+
 def encode(msg):
     """This will replace unsuitable characters and use stdout encoding
     """
@@ -483,6 +503,7 @@ def encode(msg):
         return msg.encode(sys.stdout.encoding, "replace")
     else:
         return bytes(msg)
+
 
 def print_encoded(*args):
     """This will replace unsuitable characters and doesn't append a newline
@@ -500,6 +521,7 @@ def print_encoded(*args):
             sys.stdout.buffer.write(msg)
         except AttributeError:
             sys.stdout.write(msg)
+
 
 def print_release(release, position=None):
     """Print information about a release.
@@ -538,6 +560,7 @@ def print_release(release, position=None):
         print_encoded("\t%s\t%s\t%s\t%s\n" % (
                       country, date, barcode, catnumbers))
 
+
 def print_error(*args):
     string_args = tuple([str(arg) for arg in args])
     logger.error("\n       ".join(string_args))
@@ -547,6 +570,7 @@ def backend_error(err):
     print_error("Couldn't gather ISRCs with %s: %i - %s"
                 % (options.backend, err.errno, err.strerror))
     sys.exit(1)
+
 
 def ask_for_submission(url, print_url=False):
     if options.force_submit:
@@ -560,6 +584,7 @@ def ask_for_submission(url, print_url=False):
     elif print_url:
         print("Please submit the Disc ID with this url:")
         print(url)
+
 
 class WebService2():
     """A web service wrapper that asks for a password when first needed.
@@ -652,7 +677,6 @@ class WebService2():
             else:
                 print("Successfully submitted %d ISRCS." % len(tracks2isrcs))
                 break
-
 
 
 class Disc(object):
@@ -780,7 +804,6 @@ class Disc(object):
 
         return selected_release
 
-
     def get_release(self, verified=False):
         """This will get a release the ISRCs will be added to.
         """
@@ -853,7 +876,7 @@ def gather_isrcs(disc, backend, device):
         except OSError as err:
             backend_error(err)
         for line in isrcout:
-            line = decode(line) # explicitely decode from pipe
+            line = decode(line) # explicitly decode from pipe
             ext_logger = logging.getLogger("discisrc")
             ext_logger.debug(line.rstrip())    # rstrip newline
             if line.startswith("Track") and len(line) > 12:
@@ -881,7 +904,7 @@ def gather_isrcs(disc, backend, device):
         except OSError as err:
             backend_error(err)
         for line in isrcout:
-            line = decode(line) # explicitely decode from pipe
+            line = decode(line) # explicitly decode from pipe
             ext_logger = logging.getLogger("mediatools")
             ext_logger.debug(line.rstrip())    # rstrip newline
             if line.startswith("ISRC") and not line.startswith("ISRCS"):
@@ -950,6 +973,7 @@ def gather_isrcs(disc, backend, device):
     devnull.close()
     return backend_output
 
+
 def check_isrcs_local(backend_output, mb_tracks):
     """check backend_output for (local) duplicates and inconsistencies
     """
@@ -991,6 +1015,7 @@ def check_isrcs_local(backend_output, mb_tracks):
 
     return isrcs, tracks2isrcs, errors
 
+
 def check_global_duplicates(release, mb_tracks, isrcs):
     """Help cleaning up global duplicates with the information we got
     from our disc.
@@ -1016,6 +1041,7 @@ def check_global_duplicates(release, mb_tracks, isrcs):
         choice = user_input("Do you want to help clean those up? [y/N] ")
         if choice.lower() == "y":
             cleanup_isrcs(release, isrcs)
+
 
 def cleanup_isrcs(release, isrcs):
     """Show information about duplicate ISRCs
