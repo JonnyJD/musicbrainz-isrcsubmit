@@ -53,6 +53,10 @@ define cp_base_libs =
 	cp -ar $(discid)/discid $(1)/
 	cp -ar $(discid) $(1)/src/
 	cp -ar $(libdiscid) $(1)/src/
+	cp -ar $(mutagen)/mutagen $(1)/
+	cp -ar $(mutagen) $(1)/src/
+	cp -ar unidecode-$(unidecode)/unidecode $(1)/
+	cp -ar unidecode-$(unidecode) $(1)/src/
 endef
 
 
