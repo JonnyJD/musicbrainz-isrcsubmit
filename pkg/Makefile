@@ -129,10 +129,10 @@ $(libdiscid): $(libdiscid).tar.gz
 	tar -xzf $^
 
 $(libdiscid).tar.gz:
-	wget https://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
+	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
 
 $(libdiscid)-%.zip:
-	wget https://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
+	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
 
 $(unidecode).tar.gz:
 	wget https://github.com/avian2/unidecode/archive/refs/tags/$@
