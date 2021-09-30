@@ -22,7 +22,7 @@ The project is hosted on
 https://github.com/SheamusPatt/musicbrainz-isrcDigitalSubmit
 """
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 import operator
 import re
