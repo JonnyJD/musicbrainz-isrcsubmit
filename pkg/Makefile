@@ -8,7 +8,7 @@ discid := discid-1.1.1
 libdiscid := libdiscid-0.6.1
 unidecode := unidecode-1.2.0
 mutagen_ver := 1.45.1
-mutagen := mutagen-release-$(mutagen_ver)
+mutagen := mutagen-$(mutagen_ver)
 
 scripts := isrcsubmit.py isrcsubmit-$(version).py \
 	isrcDigitalSubmit.py isrcDigitalSubmit-$(version).py
@@ -134,20 +134,19 @@ $(libdiscid).tar.gz:
 $(libdiscid)-%.zip:
 	wget https://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
 
-$(unidecode).zip:
-	wget https://codeload.github.com/avian2/unidecode/zip/refs/tags/$@
+$(unidecode).tar.gz:
+	wget https://github.com/avian2/unidecode/archive/refs/tags/$@
 
 unidecode: $(unidecode)
-$(unidecode): $(unidecode).zip
-	unzip $^
+$(unidecode): $(unidecode).tar.gz
+	tar xfz $^
 
-$(mutagen).zip:
-	wget https://codeload.github.com/quodlibet/mutagen/zip/refs/tags/release-$(mutagen_ver).zip
-	mv release-$(mutagen_ver).zip $@
+$(mutagen).tar.gz:
+	wget https://github.com/quodlibet/mutagen/releases/download/release-$(mutagen_ver)/$@
 
 mutagen: $(mutagen)
-$(mutagen): $(mutagen).zip
-	unzip $^
+$(mutagen): $(mutagen).tar.gz
+	tar xfz $^
 
 clean:
 	rm -rf $(source_dir)
