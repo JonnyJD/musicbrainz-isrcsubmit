@@ -32,7 +32,6 @@ from unidecode import unidecode
 import isrcshared
 
 AGENT_NAME = "isrcDigitalSubmit.py"
-TOOL_NAME = "isrcDigitalSubmit"
 
 import glob
 import logging
@@ -225,7 +224,7 @@ def gather_options(argv):
     global options
 
     config = ConfigParser()
-    config.read(config_path(TOOL_NAME))
+    config.read(config_path())
 
     parser = OptionParser(version=script_version(), add_help_option=False)
     parser.set_usage(

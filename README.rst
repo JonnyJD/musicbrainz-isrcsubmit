@@ -36,6 +36,7 @@ Dependencies:
 * python-discid_ >= 1.0.0 (or python-libdiscid_ >= 0.2.0)
 * python-musicbrainzngs_ >= 0.4
 * mutagen_ >= 1.45.1
+* unidecode >= 1.2.0
 * keyring_ (optional)
 
 .. _python-discid: http://python-discid.readthedocs.org/
@@ -43,7 +44,7 @@ Dependencies:
 .. _python-musicbrainzngs: http://python-musicbrainzngs.readthedocs.org/
 .. _keyring: https://github.com/jaraco/keyring/
 .. _mutaagen: https://mutagen.readthedocs.io/
-
+.. _unicode: https://github.com/avian2/unidecode
 
 Usage:
 ------
@@ -125,7 +126,7 @@ the --release-id= option.
 isrcDigitalRelease always verifies that the digital media release matches the MusicBrainz
 release by checking for matching titles and artists and similar track times. It also
 verifies that the format is "Digital Media"; it will not attach
-IRCs to releases with a different format.
+ISRCs to releases with a different format.
 
 
 Installation:

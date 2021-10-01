@@ -41,7 +41,7 @@ Options
 See also
 --------
 
-:manpage:`isrcDigitalSubmit-config(5)`
+:manpage:`isrcsubmit-config(5)`
 
 Author
 ------
