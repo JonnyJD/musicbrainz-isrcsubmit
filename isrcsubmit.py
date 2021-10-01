@@ -40,7 +40,7 @@ import isrcshared
 from isrcshared import print_error, decode, printf, \
     user_input, open_browser, print_release, \
     has_program, logger, print_encoded, WebService2, \
-    config_path, setDefaultOptions
+    config_path, setDefaultOptions, encode
 
 try:
     import discid

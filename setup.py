@@ -95,7 +95,7 @@ with open("README.rst") as readme:
     long_description = readme.read()
 
 setup(name="isrcsubmit",
-        version="2.1.0",
+        version="2.2.0",
         description="submit ISRCs from disc to MusicBrainz",
         long_description=long_description,
         author="Johannes Dewender",

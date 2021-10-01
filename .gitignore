@@ -8,4 +8,6 @@ musicbrainz2
 *.pyc
 .tox
 .idea
+venv
+
 
