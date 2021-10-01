@@ -124,7 +124,7 @@ class Isrc(object):
         return ", ".join(numbers)
 
 
-trackNumMatcher = re.compile(r'(^|/)(\d+)[^/]+$')
+trackNumMatcher = re.compile(r'(^|[/ -])(\d\d)\D[^/]+$')
 
 
 class Track(dict):
@@ -177,6 +177,32 @@ class Track(dict):
             else:
                 self._title = None
             self._isrc = track.get("TSRC")
+        elif track.__class__ == mutagen.mp4.MP4:
+            if not self._number:
+                trck = track.get("trkn")
+                if trck:
+                    self._number = trck[0][0]
+            if track.get("\xa9ART"):
+                self._artist = track.get("\xa9ART")[0]
+            else:
+                self._artist = None
+            if track.get("aART"):
+                self._albumartist = track.get("aART")[0]
+            else:
+                self._albumartist = None
+            if track.get("\xa9alb"):
+                self._album = track.get("\xa9alb")[0]
+            else:
+                self._album = None
+            if track.get("\xa9nam"):
+                self._title = track.get("\xa9nam")[0]
+            else:
+                self._title = None
+            self._isrc = track.get("----:com.apple.iTunes:ISRC")
+            if (len(self._isrc)>0):
+                # The M4A class wraps ISRC values - we need to convert
+                # them to simple strings.
+                self._isrc = (str(self._isrc[0],'UTF-8'),)
         if not self._number:
             match = trackNumMatcher.search(trackName)
             if match:
@@ -320,7 +346,7 @@ def gather_tracks(audioFiles):
                 else:
                     printf("Ignoring non-music file %s\n" % file)
             except Exception as e:
-                print_error("Failed to load track {}: {}".format(info.filename, e))
+                print_error("Failed to load track {}: {}".format(file, e))
     tracks.sort(key=operator.attrgetter("_number"))
     return tracks
 
@@ -355,7 +381,7 @@ def check_isrcs_local(tracks, mb_tracks):
             print("Track %s %s has no ISRC" % (track_number, track._title))
         elif len(track._isrc) > 1:
             print_error("Track %s %s has multiple ISRCs. Has this file been tagged already?"
-                        % (track_number, track._title, track._isrc))
+                        % (track_number, track._title))
             errors += 1
         else:
             isrc = track._isrc[0]
