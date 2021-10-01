@@ -137,7 +137,7 @@ class Track(dict):
         self._recording = track
         self._trackName = trackName
         self._number = None
-        if track.__class__ == mutagen.ogg.OggFileType or track.__class__ == mutagen.flac.FLAC :
+        if track.__class__ == mutagen.oggvorbis.OggVorbis or track.__class__ == mutagen.flac.FLAC :
             if not self._number:
                 if track.get("tracknumber") and track.get("tracknumber")[0]:
                     self._number = int(track.get("tracknumber")[0])
@@ -498,7 +498,8 @@ def find_release(tracks, common_includes):
     artists = set()
     albums = set()
     for track in tracks:
-        artists.add(track._artist.strip())
+        if (track._artist):
+            artists.add(track._artist.strip())
         if (track._albumartist):
             albumartists.add(track._albumartist.strip())
         albumtitle = track._album
