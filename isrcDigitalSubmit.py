@@ -29,6 +29,8 @@ import re
 
 from unidecode import unidecode
 
+import isrcshared
+
 AGENT_NAME = "isrcDigitalSubmit.py"
 TOOL_NAME = "isrcDigitalSubmit"
 
@@ -42,8 +44,7 @@ import zipfile
 from musicbrainzngs import ResponseError, WebServiceError
 from optparse import OptionParser
 
-import isrcsubmit
-from isrcsubmit import open_browser, config_path, user_input, \
+from isrcshared import open_browser, config_path, user_input, \
     printf, print_encoded, print_error, print_release, setDefaultOptions
 
 # Maximum time difference between MB and audio files,
@@ -219,7 +220,7 @@ def gather_options(argv):
     parser.add_option("--force-submit", action="store_true", default=False,
             help="Always open TOC/disc ID in browser.")
     parser.add_option("--server", metavar="SERVER",
-            help="Server to send ISRCs to. Default: %s" % isrcsubmit.DEFAULT_SERVER)
+            help="Server to send ISRCs to. Default: %s" % isrcshared.DEFAULT_SERVER)
     parser.add_option("--debug", action="store_true", default=False,
             help="Show debug messages."
             + " Currently shows some backend messages.")
@@ -228,7 +229,6 @@ def gather_options(argv):
     parser.add_option("--no-keyring", action="store_false", dest="keyring",
             help="Disable keyring.")
     (options, args) = parser.parse_args(argv[1:])
-    isrcsubmit.options = options
 
     print("%s" % script_version())
 
@@ -249,14 +249,14 @@ def gather_options(argv):
     return options
 
 
-class WebService2(isrcsubmit.WebService2):
+class WebService2(isrcshared.WebService2):
     """A web service wrapper that asks for a password when first needed.
 
     This uses musicbrainzngs as a wrapper itself.
     """
 
     def __init__(self, username=None):
-        isrcsubmit.WebService2.__init__(self, username)
+        isrcshared.WebService2.__init__(self, username)
         musicbrainzngs.set_useragent(AGENT_NAME, __version__,
                 "http://github.com/SheamusPatt/musicbrainz-isrcsubmit")
 
@@ -578,7 +578,8 @@ def main(argv):
     logging.getLogger().addHandler(stream_handler) # add to root handler
 
     # global variables
-    options = gather_options(argv)
+    options = isrcshared.options = gather_options(argv)
+
     ws2 = WebService2(options.user)
 
     if options.debug:
