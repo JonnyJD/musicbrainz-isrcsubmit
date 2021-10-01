@@ -199,7 +199,7 @@ class Track(dict):
             else:
                 self._title = None
             self._isrc = track.get("----:com.apple.iTunes:ISRC")
-            if (len(self._isrc)>0):
+            if (self._isrc and len(self._isrc)>0):
                 # The M4A class wraps ISRC values - we need to convert
                 # them to simple strings.
                 self._isrc = (str(self._isrc[0],'UTF-8'),)
