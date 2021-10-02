@@ -9,5 +9,4 @@ musicbrainz2
 .tox
 .idea
 venv
-
-
+.eggs
