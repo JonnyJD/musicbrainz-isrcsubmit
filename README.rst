@@ -1,4 +1,4 @@
-Isrcsubmit 2.2.1 for MusicBrainz
+Isrcsubmit 2.2.2 for MusicBrainz
 ================================
 
 This project includes two python scripts that extracts ISRCs

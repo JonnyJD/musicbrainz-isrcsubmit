@@ -24,6 +24,8 @@ import webbrowser
 import getpass
 from subprocess import Popen, PIPE, call
 
+__version__ = "2.2.2"
+
 import musicbrainzngs
 from musicbrainzngs import AuthenticationError, WebServiceError
 

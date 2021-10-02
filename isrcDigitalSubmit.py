@@ -22,8 +22,6 @@ The project is hosted on
 https://github.com/SheamusPatt/musicbrainz-isrcDigitalSubmit
 """
 
-__version__ = "2.2.0"
-
 import operator
 import re
 
@@ -43,8 +41,9 @@ import zipfile
 from musicbrainzngs import ResponseError, WebServiceError
 from optparse import OptionParser
 
-from isrcshared import open_browser, config_path, user_input, \
-    printf, print_encoded, print_error, print_release, setDefaultOptions
+from isrcshared import __version__, open_browser, config_path, \
+    user_input, printf, print_encoded, print_error, print_release, \
+    setDefaultOptions
 
 # Maximum time difference between MB and audio files,
 #  else they will be considered different

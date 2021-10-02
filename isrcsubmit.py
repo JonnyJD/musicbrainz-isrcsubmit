@@ -21,8 +21,6 @@ The project is hosted on
 https://github.com/JonnyJD/musicbrainz-isrcsubmit
 """
 
-__version__ = "2.2.0"
-
 AGENT_NAME = "isrcsubmit.py"
 # starting with highest priority
 BACKENDS = ["mediatools", "media_info", "cdrdao", "libdiscid", "discisrc"]
@@ -37,8 +35,8 @@ from datetime import datetime
 from optparse import OptionParser
 from subprocess import Popen, PIPE
 import isrcshared
-from isrcshared import print_error, decode, printf, \
-    user_input, open_browser, print_release, \
+from isrcshared import __version__, print_error, decode, \
+    printf, user_input, open_browser, print_release, \
     has_program, logger, print_encoded, WebService2, \
     config_path, setDefaultOptions, encode
 
