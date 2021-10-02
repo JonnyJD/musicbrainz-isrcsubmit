@@ -21,7 +21,7 @@ import os
 import sys
 import codecs
 import webbrowser
-from getpass import getpass
+import getpass
 from subprocess import Popen, PIPE, call
 
 import musicbrainzngs
