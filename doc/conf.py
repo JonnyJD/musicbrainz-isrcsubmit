@@ -175,7 +175,8 @@ htmlhelp_basename = 'isrcsubmitdoc'
 # (source start file, name, description, authors, manual section).
 man_pages = [
     ('isrcsubmit.1', 'isrcsubmit', u'isrcsubmit Documentation', [], 1),
-    ('isrcsubmit-config.5', 'isrcsubmit-config', u'isrcsubmit Documentation',
+    ('isrcDigitalSubmit.1', 'isrcDigitalSubmit', u'isrcDigitalSubmit Documentation', [], 1),
+    ('isrcsubmit-config.5', 'isrcsubmit-config', u'isrcsubmit and isrcDigitalSubmit Configuration Documentation',
      [], 5)
 ]
 
