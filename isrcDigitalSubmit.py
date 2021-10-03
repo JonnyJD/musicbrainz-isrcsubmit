@@ -149,7 +149,8 @@ class Track(dict):
                 self._albumartist = None
             self._album = track.get("album")[0] if track.get("album") else None
             self._title = track.get("title")[0] if track.get("title") else None
-            self._isrc = track.get("ISRC")
+            self._isrc = track.get("ISRC") if track.get("ISRC") \
+                    else track.get("93a74bea-ce97-5571-a56a-c5084dba9873")
         elif track.__class__ == mutagen.mp3.MP3:
             if not self._number:
                 trck = track.get("TRCK") or track.get("TRK")
