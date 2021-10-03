@@ -7,3 +7,6 @@ musicbrainz2
 /*.toc
 *.pyc
 .tox
+.idea
+venv
+.eggs

@@ -27,7 +27,6 @@ SCRIPT_NAME = "isrcsubmit.py"
 TEST_DATA = "test_data/"
 SAVE_RUN = False
 
-
 class TestInternal(unittest.TestCase):
     def setUp(self):
         # suppress output
@@ -188,7 +187,7 @@ isrcsubmit.open = _open
 _isrcsubmit_has_program = isrcsubmit.has_program
 _isrcsubmit_get_prog_version = isrcsubmit.get_prog_version
 
-def _has_program(program, strict=False):
+def _has_program(program, choices=(), strict=False):
     if program == "libdiscid":
         # we mock it anyways
         # libdiscid >= 0.2.2 still needed to load discid
@@ -197,7 +196,7 @@ def _has_program(program, strict=False):
         # also mocked
         return True
     else:
-        return _isrcsubmit_has_program(program, strict)
+        return _isrcsubmit_has_program(program, choices, strict)
 
 def _get_prog_version(prog):
     if prog == "libdiscid":

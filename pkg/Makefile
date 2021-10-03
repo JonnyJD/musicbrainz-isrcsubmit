@@ -1,4 +1,4 @@
-version := 2.1.0
+version := 2.2.0
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
@@ -6,8 +6,12 @@ upload := ftp://isrcsubmit.jonnyjd.net/downloads/
 musicbrainzngs := musicbrainzngs-0.6
 discid := discid-1.1.1
 libdiscid := libdiscid-0.6.1
+unidecode := unidecode-1.2.0
+mutagen_ver := 1.45.1
+mutagen := mutagen-$(mutagen_ver)
 
-scripts := isrcsubmit.py $(current).py
+scripts := isrcsubmit.py isrcsubmit-$(version).py \
+	isrcDigitalSubmit.py isrcDigitalSubmit-$(version).py
 #scripts := $(current).py
 tar := $(current)
 win32 := $(current)-win32
@@ -39,7 +43,7 @@ define cp_source =
 	rm -rf $(1)/.git
 endef
 
-base_libs := $(musicbrainzngs) $(discid) $(libdiscid)
+base_libs := $(musicbrainzngs) $(discid) $(libdiscid) $(unidecode) $(mutagen)
 define cp_base_libs =
 	mv $(1)/COPYING $(1)/COPYING.isrcsubmit
 	mv $(1)/AUTHORS $(1)/AUTHORS.isrcsubmit
@@ -49,6 +53,10 @@ define cp_base_libs =
 	cp -ar $(discid)/discid $(1)/
 	cp -ar $(discid) $(1)/src/
 	cp -ar $(libdiscid) $(1)/src/
+	cp -ar $(mutagen)/mutagen $(1)/
+	cp -ar $(mutagen) $(1)/src/
+	cp -ar unidecode-$(unidecode)/unidecode $(1)/
+	cp -ar unidecode-$(unidecode) $(1)/src/
 endef
 
 
@@ -63,8 +71,14 @@ upload: $(all)
 isrcsubmit.py: $(source_ref)
 	cp -a $(source_dir)/isrcsubmit.py .
 
-$(current).py: $(source_ref)
-	cp -a $(source_dir)/isrcsubmit.py $(current).py
+isrcsubmit-$(version).py: $(source_ref)
+	cp -a $(source_dir)/isrcsubmit.py isrcsubmit-$(version).py
+
+isrcDigitalSubmit.py: $(source_ref)
+	cp -a $(source_dir)/isrcDigitalSubmit.py .
+
+isrcDigitalSubmit-$(version).py: $(source_ref)
+	cp -a $(source_dir)/isrcDigitalSubmit.py isrcDigitalSubmit-$(version).py
 
 tar: $(tar).tar.gz
 $(tar).tar.gz: $(source_ref)
@@ -73,13 +87,11 @@ $(tar).tar.gz: $(source_ref)
 	rm -rf $(tar)
 
 win32: $(win32).zip
-$(win32).zip: $(source_ref) $(base_libs) $(libdiscid)-win32.zip mediatools
+$(win32).zip: $(source_ref) $(base_libs) $(libdiscid)-win32.zip
 	$(call cp_source, $(win32))
 	$(call cp_base_libs, $(win32))
 	unzip $(libdiscid)-win32.zip
 	cp -a $(libdiscid)-win32/discid.dll $(win32)/
-	cp -ar mediatools $(win32)/
-	cp -a mediatools.exe $(win32)/
 	zip -qr $@ $(win32)
 	rm -rf $(libdiscid)-win32
 	rm -rf $(win32)
@@ -126,17 +138,23 @@ $(libdiscid).tar.gz:
 $(libdiscid)-%.zip:
 	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
 
-mediatools: mediatools.zip
-	unzip -o $^
+$(unidecode).tar.gz:
+	wget https://github.com/avian2/unidecode/archive/refs/tags/$@
 
-mediatools.zip:
-	wget http://www.flanagan-family.com/$@
+unidecode: $(unidecode)
+$(unidecode): $(unidecode).tar.gz
+	tar xfz $^
 
+$(mutagen).tar.gz:
+	wget https://github.com/quodlibet/mutagen/releases/download/release-$(mutagen_ver)/$@
+
+mutagen: $(mutagen)
+$(mutagen): $(mutagen).tar.gz
+	tar xfz $^
 
 clean:
 	rm -rf $(source_dir)
 	rm -f $(all)
 	rm -rf $(base_libs)
-	rm -rf mediatools mediatools.exe
 
 .PHONY: $(source_ref)

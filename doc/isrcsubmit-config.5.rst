@@ -12,8 +12,8 @@ Description
 -----------
 
 The configuration file contains various options controlling the behavior of
-:program:`isrcsubmit`. All the options given here can be overridden by passing
-command line arguments to :program:`isrcsubmit`.
+:program:`isrcsubmit` and :program:`isrcDigitalubmit`. All the options given here can be overridden by passing
+command line arguments.
 
 If **$XDG_CONFIG_HOME** is not set, **%APPDATA%** is used on Windows
 and **~/.config** for all other systems.
@@ -25,7 +25,7 @@ This refers to the ``[general]`` section of the configuration file.
 
 backend
 ^^^^^^^
-Force using a specific backend to extract ISRCs from the disc. Possible
+(:program:`isrcsubmit` only). Force using a specific backend to extract ISRCs from the disc. Possible
 backends are: mediatools, media_info, cdrdao, libdiscid, discisrc.
 
 browser
@@ -34,7 +34,7 @@ Program to open URLs.
 
 device
 ^^^^^^
-CD device with a loaded audio CD.
+(:program:`isrcsubmit` only). CD device with a loaded audio CD.
 
 keyring
 ^^^^^^^
