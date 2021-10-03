@@ -10,3 +10,5 @@ musicbrainz2
 .idea
 venv
 .eggs
+/build/scripts-3.9/isrcsubmit.py
+/build/scripts-3.9/isrcDigitalSubmit.py

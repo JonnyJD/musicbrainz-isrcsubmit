@@ -40,6 +40,7 @@ if using_sphinx:
     import os.path
     man_pages = [
         (os.path.join(man_dir, 'man1'), ['build/man/isrcsubmit.1']),
+        (os.path.join(man_dir, 'man1'), ['build/man/isrcDigitalSubmit.1']),
         (os.path.join(man_dir, 'man5'), ['build/man/isrcsubmit-config.5'])
     ]
 else:
@@ -101,9 +102,10 @@ setup(name="isrcsubmit",
         author="Johannes Dewender",
         author_email="brainz@JonnyJD.net",
         url="https://github.com/JonnyJD/musicbrainz-isrcsubmit",
-        requires=["discid(>=1.0.0)", "musicbrainzngs(>=0.4)"],
+        requires=["discid(>=1.0.0)", "musicbrainzngs(>=0.4)",
+                  "mutagen(>=1.45)", "unidecode(>=1.20)"],
         python_requires='>=2.6',
-        scripts=["isrcsubmit.py"],
+        scripts=["isrcsubmit.py", "isrcDigitalSubmit.py"],
         license="GPLv3+",
         classifiers=[
             "Development Status :: 5 - Production/Stable",
