@@ -1,3 +1,11 @@
+### Changes in 2.1.1 (2022-12-07)
+ * NOTE: This is the last release with any semblance of Python 2 support!
+ * Deployment and packaging updates and fixes (JonnyJD)
+ * [#129] Don’t make WS2 requests for --force-submit (Freso)
+ * [#132] Replace Travis with GitHub actions (Freso)
+ * Declare required Python version in setup.py (Freso)
+ * [#127] Windows 64 bit (libdiscid) discid.dll (jesus2099 & JonnyJD)
+
 ### Changes in 2.1.0 (2019-02-22)
  * [#120] remove --fast-toc from cdrdao options (Freso)
  * [#113] show cdrdao stderr in debug mode
