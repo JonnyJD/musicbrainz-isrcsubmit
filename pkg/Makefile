@@ -21,7 +21,7 @@ mac := $(current)-mac
 all := $(scripts) $(tar).tar.gz $(win32).zip $(win64).zip $(mac).zip
 
 source_repo := ..
-source_branch := master
+source_branch := main
 source_dir := isrcsubmit
 
 # TODO: make sure isrcsubmit.py is really updated!
