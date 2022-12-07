@@ -439,7 +439,7 @@ def get_real_mac_device(option_device):
     """
     proc = Popen(["drutil", "status", "-drive", option_device], stdout=PIPE)
     try:
-        given = proc.communicate()[0].splitlines()[3].split("Name:")[1].strip()
+        given = decode(proc.communicate()[0]).splitlines()[3].split("Name:")[1].strip()
     except IndexError:
         print_error("could not find real device",
                      "maybe there is no disc in the drive?")
