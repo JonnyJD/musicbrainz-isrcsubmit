@@ -20,6 +20,8 @@ version:
 		isrcsubmit.py
 	sed -i -e 's/\(version="\)[0-9.]\+[0-9a-z.-]*/\1$(version)/' \
 		setup.py
+	sed -i -e 's/\(version\s:=\s\)[0-9.]\+[0-9a-z.-]*/\1$(version)/' \
+		pkg/Makefile
 
 clean:
 	rm -f *.pyc
