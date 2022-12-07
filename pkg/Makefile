@@ -5,14 +5,20 @@ downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
 upload := ftp://isrcsubmit.jonnyjd.net/downloads/
 musicbrainzngs := musicbrainzngs-0.6
 discid := discid-1.1.1
-libdiscid := libdiscid-0.6.1
+libdiscid := libdiscid-0.6.2
+libdiscid_mac := libdiscid-0.6.1
+libdiscid_win32 := libdiscid-0.6.1
+libdiscid_win64 := libdiscid-0.6.2
+# tag must match above for the GitHub download
+libdiscid_win64_tag := v0.6.2
 
 scripts := isrcsubmit.py $(current).py
 #scripts := $(current).py
 tar := $(current)
 win32 := $(current)-win32
+win64 := $(current)-win64
 mac := $(current)-mac
-all := $(scripts) $(tar).tar.gz $(win32).zip $(mac).zip
+all := $(scripts) $(tar).tar.gz $(win32).zip $(win64).zip $(mac).zip
 
 source_repo := ..
 source_branch := master
@@ -73,25 +79,37 @@ $(tar).tar.gz: $(source_ref)
 	rm -rf $(tar)
 
 win32: $(win32).zip
-$(win32).zip: $(source_ref) $(base_libs) $(libdiscid)-win32.zip mediatools
+$(win32).zip: $(source_ref) $(base_libs) $(libdiscid_win32)-win32.zip mediatools
 	$(call cp_source, $(win32))
 	$(call cp_base_libs, $(win32))
-	unzip $(libdiscid)-win32.zip
-	cp -a $(libdiscid)-win32/discid.dll $(win32)/
+	unzip $(libdiscid_win32)-win32.zip
+	cp -a $(libdiscid_win32)-win32/discid.dll $(win32)/
 	cp -ar mediatools $(win32)/
 	cp -a mediatools.exe $(win32)/
 	zip -qr $@ $(win32)
-	rm -rf $(libdiscid)-win32
+	rm -rf $(libdiscid_win32)-win32
 	rm -rf $(win32)
 
+win64: $(win64).zip
+$(win64).zip: $(source_ref) $(base_libs) $(libdiscid_win64)-win64.zip mediatools
+	$(call cp_source, $(win64))
+	$(call cp_base_libs, $(win64))
+	unzip -d $(libdiscid_win64)-win64 $(libdiscid_win64)-win64.zip
+	cp -a $(libdiscid_win64)-win64/discid.dll $(win64)/
+	cp -ar mediatools $(win64)/
+	cp -a mediatools.exe $(win64)/
+	zip -qr $@ $(win64)
+	rm -rf $(libdiscid_win64)-win64
+	rm -rf $(win64)
+
 mac: $(mac).zip
-$(mac).zip: $(source_ref) $(base_libs) $(libdiscid)-mac.zip
+$(mac).zip: $(source_ref) $(base_libs) $(libdiscid_mac)-mac.zip
 	$(call cp_source, $(mac))
 	$(call cp_base_libs, $(mac))
-	unzip $(libdiscid)-mac.zip
-	cp -a $(libdiscid)-mac/universal/libdiscid.0.dylib $(mac)/
+	unzip $(libdiscid_mac)-mac.zip
+	cp -a $(libdiscid_mac)-mac/universal/libdiscid.0.dylib $(mac)/
 	zip -qr $@ $(mac)
-	rm -rf $(libdiscid)-mac
+	rm -rf $(libdiscid_mac)-mac
 	rm -rf $(mac)
 
 # sources:
@@ -123,8 +141,14 @@ $(libdiscid): $(libdiscid).tar.gz
 $(libdiscid).tar.gz:
 	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
 
-$(libdiscid)-%.zip:
+$(libdiscid_mac)-mac.zip:
 	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
+
+$(libdiscid_win32)-win32.zip:
+	wget http://ftp.musicbrainz.org/pub/musicbrainz/libdiscid/$@
+
+$(libdiscid_win64)-win64.zip:
+	wget https://github.com/metabrainz/libdiscid/releases/download/${libdiscid_win64_tag}/$@
 
 mediatools: mediatools.zip
 	unzip -o $^
