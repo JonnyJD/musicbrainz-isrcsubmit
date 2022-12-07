@@ -1,5 +1,5 @@
-#version := 2.1.1-dev
-version := 2.1.1
+version := 3.0.0-dev
+#version := 3.0.0
 
 build:
 	./setup.py build

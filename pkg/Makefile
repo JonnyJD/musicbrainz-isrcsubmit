@@ -1,4 +1,4 @@
-version := 2.1.1
+version := 3.0.0-dev
 current := isrcsubmit-$(version)
 
 downloads := ../web/isrcsubmit.jonnyjd.net/downloads/
