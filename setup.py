@@ -102,6 +102,7 @@ setup(name="isrcsubmit",
         url="https://github.com/JonnyJD/musicbrainz-isrcsubmit",
         requires=["discid(>=1.0.0)", "musicbrainzngs(>=0.4)"],
         python_requires='>=3.7',
+        packages=["isrcsubmit"],
         scripts=["isrcsubmit.py"],
         license="GPLv3+",
         classifiers=[
