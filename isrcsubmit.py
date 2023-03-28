@@ -43,7 +43,9 @@ from datetime import datetime
 from optparse import OptionParser
 from subprocess import Popen, PIPE, call
 
-os.add_dll_directory(os.getcwd())
+# Windows Python 3.8+ scan current folder for discid.dll
+if os.name == "nt" and sys.version_info >= (3,8):
+    os.add_dll_directory(os.getcwd())
 
 try:
     import discid
