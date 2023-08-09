@@ -1,5 +1,6 @@
 @echo off
-for /f "tokens=2 delims=:." %%x in ('chcp') do set cp=%%x
-chcp 65001>NUL & cmd /c "isrcsubmit.py %*" & chcp %cp%>NUL
 echo.
-pause
+for /f "tokens=2 delims=:." %%x in ('chcp') do set cp=%%x
+chcp 65001 >NUL
+python "%~dp0isrcsubmit.py" %*
+chcp %cp% >NUL
