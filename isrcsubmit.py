@@ -1047,7 +1047,10 @@ def cleanup_isrcs(release, isrcs):
                 user_input("(press <return> when done with this ISRC) ")
 
 
-def main(argv):
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+
     global options
     global ws2
 
