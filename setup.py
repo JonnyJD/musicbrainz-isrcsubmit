@@ -105,7 +105,7 @@ setup(name="isrcsubmit",
         py_modules=["isrcsubmit"],
         entry_points={
             'console_scripts': [
-                'isrcsubmit.py=isrcsubmit:main',
+                'isrcsubmit=isrcsubmit:main',
             ],
         },
         license="GPLv3+",
